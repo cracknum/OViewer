@@ -2,7 +2,7 @@
 #define PATIENT_CXX_H
 #include <qstring.h>
 
-struct Patient
+struct PatientInformation
 {
     /**
      * @brief 姓名

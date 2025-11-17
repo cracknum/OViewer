@@ -1,0 +1,15 @@
+/*--------------------------------------------------------------
+ * do not modify this file, which is generate by cmake
+ *-------------------------------------------------------------*/
+#ifndef @MODULE_NAME@_EXPORT_OPENGL_H
+#define @MODULE_NAME@_EXPORT_OPENGL_H
+
+#ifdef @MODULE_NAME@_EXPORTS
+    #define @MODULE_NAME@_API __declspec(dllexport)
+#else
+    #define @MODULE_NAME@_API __declspec(dllimport)
+#endif
+
+#endif
+
+#endif //@MODULE_NAME@_EXPORT_OPENGL_H
