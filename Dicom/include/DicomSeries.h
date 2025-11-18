@@ -1,31 +1,39 @@
 #ifndef DICOM_DATA_H
 #define DICOM_DATA_H
-#include <memory>
+#include <itkObject.h>
 #include <vector>
+#include "Macros.h"
+
 struct EquipmentInformation;
 struct ImageInformation;
 struct PatientInformation;
 struct SeriesInformation;
 struct StudyInformation;
 
-class DicomSeries
+class DicomSeries: public itk::Object
 {
-public:
-  DicomSeries();
-  ~DicomSeries();
+  public:
+  itkTypeMacro(DicomSeries, itk::Object);
+  itkSetPointerDeclare(DicomSeries);
+  itkFactorylessNewMacro(Self);
+  ITK_DISALLOW_COPY_AND_MOVE(Self);
 
-  EquipmentInformation* getEquipmentInfo() const;
-  PatientInformation* getPatient() const;
-  SeriesInformation* getSeriesInfo() const;
-  StudyInformation* getStudyInfo() const;
-
-  std::vector<ImageInformation*> getImages() const;
-
-  void addImage(ImageInformation* image);
+  itkGetConstMacro(EquipInfo, EquipmentInformation*);
+  itkGetConstMacro(PatientInfo, PatientInformation*);
+  itkGetConstMacro(SeriesInfo, SeriesInformation*);
+  itkGetConstMacro(StudyInfo, StudyInformation*);
+  itkGetConstMacro(ImageInfo, ImageInformation*);
+  
+protected:
+  DicomSeries(){}
+  ~DicomSeries() override{}
 
 private:
-  struct Impl;
-  std::unique_ptr<Impl> mImpl;
+  itk::SmartPointer<EquipmentInformation> m_EquipInfo;
+  itk::SmartPointer<PatientInformation> m_PatientInfo;
+  itk::SmartPointer<SeriesInformation> m_SeriesInfo;
+  itk::SmartPointer<StudyInformation> m_StudyInfo;
+  itk::SmartPointer<ImageInformation> m_ImageInfo;
 };
 
 #endif //DICOM_DATA_H

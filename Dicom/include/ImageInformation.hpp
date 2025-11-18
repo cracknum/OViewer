@@ -1,66 +1,121 @@
 #ifndef IMAGE_INFORMATION_CXX_H
 #define IMAGE_INFORMATION_CXX_H
-#include <QString>
+#include <string>
+#include <itkObject.h>
 
-struct ImageInformation
+class ImageInformation final : public itk::Object
 {
-    /**
-     * @brief 全球唯一标识
-     */
-    QString instanceUID;
-    /**
-     * @brief 图像序列中的编号
-     */
-    QString instanceNumber;
-    /**
-     * @brief 图像行数
-     */
-    QString rows;
-    /**
-     * @brief 图像列数
-     */
-    QString columns;
-    /**
-     * @brief 行像素spacing
-     */
-    QString rowPixelSpacing;
-    /**
-     * @brief 列像素spacing
-     */
-    QString columnPixelSpacing;
-    /**
-     * @brief 像素所占位数
-     */
-    QString bitsAllocated;
-    /**
-     * @brief 像素是否存在符号(0=无符号，1=有符号)
-     */
-    QString pixelRepresentation;
-    /**
-     * @brief [多值：像素的来源|图像在检查中的角色可选的附加信息]
-     */
-    QString imageType;
-    /**
-     * @brief 窗位
-     */
-    QString windowCenter;
-    /**
-     * @brief 窗宽
-     */
-    QString windowWidth;
-    /**
-     * @brief 每个像素表示的分量个数，结合photoMetricInterpretation解释图像
-     * 
-     */
-    QString samplesPerPixel;
-    /**
-     * @brief 光度解释，就是对samplsPerPixel字段的分量的解释，例如如果这个值为RGB则sampersPerPixel三通道就分别表示RGB
-     */
-    QString photoMetricInterpretation;
-    /**
-     * @brief 实际存储数据
-     */
-    void* data;
+public:
+  itkTypeMacro(ImageInformation, itk::Object);
+  itkSetPointerDeclare(ImageInformation);
+  itkFactorylessNewMacro(Self);
+  ITK_DISALLOW_COPY_AND_MOVE(Self);
+
+  itkSetStringMacro(InstanceUID);
+  itkGetConstMacro(InstanceUID, std::string);
+
+  itkSetStringMacro(InstanceNumber);
+  itkGetConstMacro(InstanceNumber, std::string);
+
+  itkSetStringMacro(Rows);
+  itkGetConstMacro(Rows, std::string);
+
+  itkSetStringMacro(Columns);
+  itkGetConstMacro(Columns, std::string);
+
+  itkSetStringMacro(RowPixelSpacing);
+  itkGetConstMacro(RowPixelSpacing, std::string);
+
+  itkSetStringMacro(ColumnPixelSpacing);
+  itkGetConstMacro(ColumnPixelSpacing, std::string);
+
+  itkSetStringMacro(BitsAllocated);
+  itkGetConstMacro(BitsAllocated, std::string);
+
+  itkSetStringMacro(PixelRepresentation);
+  itkGetConstMacro(PixelRepresentation, std::string);
+
+  itkSetStringMacro(ImageType);
+  itkGetConstMacro(ImageType, std::string);
+
+  itkSetStringMacro(WindowCenter);
+  itkGetConstMacro(WindowCenter, std::string);
+
+  itkSetStringMacro(WindowWidth);
+  itkGetConstMacro(WindowWidth, std::string);
+
+  itkSetStringMacro(SamplesPerPixel);
+  itkGetConstMacro(SamplesPerPixel, std::string);
+
+  itkSetStringMacro(PhotoMetricInterpretation);
+  itkGetConstMacro(PhotoMetricInterpretation, std::string);
+
+  itkSetMacro(Volume, void*);
+  itkGetConstMacro(Volume, void*);
+
+protected:
+  ImageInformation() {}
+  ~ImageInformation() override {}
+
+private:
+  /**
+   * @brief 全球唯一标识
+   */
+  std::string m_InstanceUID;
+  /**
+   * @brief 图像序列中的编号
+   */
+  std::string m_InstanceNumber;
+  /**
+   * @brief 图像行数
+   */
+  std::string m_Rows;
+  /**
+   * @brief 图像列数
+   */
+  std::string m_Columns;
+  /**
+   * @brief 行像素spacing
+   */
+  std::string m_RowPixelSpacing;
+  /**
+   * @brief 列像素spacing
+   */
+  std::string m_ColumnPixelSpacing;
+  /**
+   * @brief 像素所占位数
+   */
+  std::string m_BitsAllocated;
+  /**
+   * @brief 像素是否存在符号(0=无符号，1=有符号)
+   */
+  std::string m_PixelRepresentation;
+  /**
+   * @brief [多值：像素的来源|图像在检查中的角色可选的附加信息]
+   */
+  std::string m_ImageType;
+  /**
+   * @brief 窗位
+   */
+  std::string m_WindowCenter;
+  /**
+   * @brief 窗宽
+   */
+  std::string m_WindowWidth;
+  /**
+   * @brief 每个像素表示的分量个数，结合photoMetricInterpretation解释图像
+   *
+   */
+  std::string m_SamplesPerPixel;
+  /**
+   * @brief
+   * 光度解释，就是对samplsPerPixel字段的分量的解释，例如如果这个值为RGB则sampersPerPixel三通道就分别表示RGB
+   */
+  std::string m_PhotoMetricInterpretation;
+  /**
+   * @brief 实际存储数据
+   */
+  void* m_Volume;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H

@@ -1,28 +1,55 @@
 #ifndef STUDY_INFORMATION_CXX_H
 #define STUDY_INFORMATION_CXX_H
-#include <QString>
+#include <itkObject.h>
+#include <string>
 
-struct StudyInformation
+class StudyInformation : public itk::Object
 {
-    /**
-     * @brief 全球唯一标识
-     */
-    QString instanceUID;
-    /**
-     * @brief 检查日期
-     */
-    QString date;
-    /**
-     * @brief 检查时间
-     */
-    QString time;
-    /**
-     * @brief 检查描述
-     */
-    QString description;
-    /**
-     * @brief 检查标识（在一定范围内唯一）
-     */
-    QString id;
+public:
+  itkTypeMacro(StudyInformation, itk::Object);
+  itkSetPointerDeclare(StudyInformation);
+  itkFactorylessNewMacro(Self);
+  ITK_DISALLOW_COPY_AND_MOVE(Self);
+
+  itkSetStringMacro(InstanceUID);
+  itkGetConstMacro(InstanceUID, std::string);
+
+  itkSetStringMacro(Date);
+  itkGetConstMacro(Date, std::string);
+
+  itkSetStringMacro(Time);
+  itkGetConstMacro(Time, std::string);
+
+  itkSetStringMacro(Description);
+  itkGetConstMacro(Description, std::string);
+
+  itkSetStringMacro(Id);
+  itkGetConstMacro(Id, std::string);
+
+protected:
+  StudyInformation() {}
+  ~StudyInformation() override {}
+
+private:
+  /**
+   * @brief 全球唯一标识
+   */
+  std::string m_InstanceUID;
+  /**
+   * @brief 检查日期
+   */
+  std::string m_Date;
+  /**
+   * @brief 检查时间
+   */
+  std::string m_Time;
+  /**
+   * @brief 检查描述
+   */
+  std::string m_Description;
+  /**
+   * @brief 检查标识（在一定范围内唯一）
+   */
+  std::string m_Id;
 };
 #endif // STUDY_INFORMATION_CXX_H

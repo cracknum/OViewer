@@ -1,37 +1,70 @@
 #ifndef PATIENT_CXX_H
 #define PATIENT_CXX_H
-#include <qstring.h>
+#include <itkObject.h>
+#include <string>
 
-struct PatientInformation
+class PatientInformation : public itk::Object
 {
-    /**
-     * @brief 姓名
-     */
-    QString name;
-    /**
-     * @brief id
-     */
-    QString id;
-    /**
-     * @brief 出生日期
-     */
-    QString birthDay;
-    /**
-     * @brief 性别
-     */
-    QString sex;
-    /**
-     * @brief 年龄
-     */
-    QString age;
-    /**
-     * @brief 身高
-     */
-    QString size;
-    /**
-     * @brief 体重
-     */
-    QString weight;
+public:
+  itkTypeMacro(PatientInformation, itk::Object);
+  itkSetPointerDeclare(PatientInformation);
+  itkFactorylessNewMacro(Self);
+  ITK_DISALLOW_COPY_AND_MOVE(Self);
+
+  itkSetStringMacro(Name);
+  itkGetConstMacro(Name, std::string);
+
+  itkSetStringMacro(Id);
+  itkGetConstMacro(Id, std::string);
+
+  itkSetStringMacro(BirthDay);
+  itkGetConstMacro(BirthDay, std::string);
+
+  itkSetStringMacro(Sex);
+  itkGetConstMacro(Sex, std::string);
+
+  itkSetStringMacro(Age);
+  itkGetConstMacro(Age, std::string);
+
+  itkSetStringMacro(Size);
+  itkGetConstMacro(Size, std::string);
+
+  itkSetStringMacro(Weight);
+  itkGetConstMacro(Weight, std::string);
+
+protected:
+  PatientInformation() {}
+  ~PatientInformation() override {}
+
+private:
+  /**
+   * @brief 姓名
+   */
+  std::string m_Name;
+  /**
+   * @brief id
+   */
+  std::string m_Id;
+  /**
+   * @brief 出生日期
+   */
+  std::string m_BirthDay;
+  /**
+   * @brief 性别
+   */
+  std::string m_Sex;
+  /**
+   * @brief 年龄
+   */
+  std::string m_Age;
+  /**
+   * @brief 身高
+   */
+  std::string m_Size;
+  /**
+   * @brief 体重
+   */
+  std::string m_Weight;
 };
 
 #endif // PATIENT_CXX_H
