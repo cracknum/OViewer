@@ -1,13 +1,13 @@
 #ifndef EQUIPMENT_INFORMATION_CXX_H
 #define EQUIPMENT_INFORMATION_CXX_H
+#include "InformationParser.h"
 #include "Macros.h"
-#include <itkObject.h>
 #include <string>
 
-class EquipmentInformation : public itk::Object
+class EquipmentInformation : public InformationParser
 {
 public:
-  itkTypeMacro(EquipmentInformation, itk::Object);
+  itkTypeMacro(EquipmentInformation, InformationParser);
   itkSetPointerDeclare(EquipmentInformation);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
@@ -24,8 +24,8 @@ public:
   itkSetStringMacro(SpacingBetweenSlices);
   itkGetConstMacro(SpacingBetweenSlices, std::string);
 
-  itkSetStringMacro(ProtocalName);
-  itkGetConstMacro(ProtocalName, std::string);
+  itkSetStringMacro(ProtocolName);
+  itkGetConstMacro(ProtocolName, std::string);
 
   itkSetStringMacro(EchoTime);
   itkGetConstMacro(EchoTime, std::string);
@@ -35,10 +35,11 @@ public:
 
   itkSetStringMacro(XRayTubeCurrent);
   itkGetConstMacro(XRayTubeCurrent, std::string);
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
 protected:
-  EquipmentInformation(){}
-  ~EquipmentInformation() override {}
+  EquipmentInformation() = default;
+  ~EquipmentInformation() override = default;
 
 private:
   /**
@@ -60,7 +61,7 @@ private:
   /**
    * @brief 扫描协议名称
    */
-  std::string m_ProtocalName;
+  std::string m_ProtocolName;
   /**
    * @brief 回波时间(MRI)
    */

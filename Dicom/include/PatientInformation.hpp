@@ -1,5 +1,7 @@
 #ifndef PATIENT_CXX_H
 #define PATIENT_CXX_H
+#include "Macros.h"
+
 #include <itkObject.h>
 #include <string>
 

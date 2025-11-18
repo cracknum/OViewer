@@ -1,5 +1,7 @@
 #ifndef STUDY_INFORMATION_CXX_H
 #define STUDY_INFORMATION_CXX_H
+#include "Macros.h"
+
 #include <itkObject.h>
 #include <string>
 

@@ -1,21 +1,20 @@
 #ifndef IMAGE_INFORMATION_CXX_H
 #define IMAGE_INFORMATION_CXX_H
-#include <string>
-#include <itkObject.h>
+#include "Macros.h"
 
-class ImageInformation final : public itk::Object
+#include <string>
+#include "InformationParser.h"
+
+class ImageInformation final : public InformationParser
 {
 public:
-  itkTypeMacro(ImageInformation, itk::Object);
+  itkTypeMacro(ImageInformation, InformationParser);
   itkSetPointerDeclare(ImageInformation);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
 
   itkSetStringMacro(InstanceUID);
   itkGetConstMacro(InstanceUID, std::string);
-
-  itkSetStringMacro(InstanceNumber);
-  itkGetConstMacro(InstanceNumber, std::string);
 
   itkSetStringMacro(Rows);
   itkGetConstMacro(Rows, std::string);
@@ -52,20 +51,17 @@ public:
 
   itkSetMacro(Volume, void*);
   itkGetConstMacro(Volume, void*);
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
 protected:
-  ImageInformation() {}
-  ~ImageInformation() override {}
+  ImageInformation();
+  ~ImageInformation() override = default;
 
 private:
   /**
    * @brief 全球唯一标识
    */
   std::string m_InstanceUID;
-  /**
-   * @brief 图像序列中的编号
-   */
-  std::string m_InstanceNumber;
   /**
    * @brief 图像行数
    */
