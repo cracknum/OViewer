@@ -21,6 +21,12 @@ add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)
 
+option(enable_testing OFF)
+
+if (enable_testing)
+    add_subdirectory(Testing)
+endif()
+
 
 
 
