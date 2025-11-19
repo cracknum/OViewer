@@ -1,19 +1,18 @@
 #ifndef DICOM_DATA_H
 #define DICOM_DATA_H
-#include <itkObject.h>
-#include <vector>
-#include "Macros.h"
+#include "EquipmentInformation.hpp"
+#include "ImageInformation.hpp"
 #include "InformationParser.h"
+#include "Macros.h"
+#include "PatientInformation.hpp"
+#include "SeriesInformation.hpp"
+#include "StudyInformation.hpp"
+#include <itkObject.h>
+#include "DicomExport.h"
 
-struct EquipmentInformation;
-struct ImageInformation;
-struct PatientInformation;
-struct SeriesInformation;
-struct StudyInformation;
-
-class DicomSeries: public InformationParser
+class DICOM_API DicomSeries : public InformationParser
 {
-  public:
+public:
   itkTypeMacro(DicomSeries, InformationParser);
   itkSetPointerDeclare(DicomSeries);
   itkFactorylessNewMacro(Self);
@@ -24,11 +23,12 @@ class DicomSeries: public InformationParser
   itkGetConstMacro(SeriesInfo, SeriesInformation*);
   itkGetConstMacro(StudyInfo, StudyInformation*);
   itkGetMacro(ImageInfo, ImageInformation*);
-  
+
   void parseInfo(const itk::MetaDataDictionary& metaData) override;
+
 protected:
-  DicomSeries(){}
-  ~DicomSeries() override{}
+  DicomSeries();
+  ~DicomSeries() override = default;
 
 private:
   itk::SmartPointer<EquipmentInformation> m_EquipInfo;
@@ -38,4 +38,4 @@ private:
   itk::SmartPointer<ImageInformation> m_ImageInfo;
 };
 
-#endif //DICOM_DATA_H
+#endif // DICOM_DATA_H

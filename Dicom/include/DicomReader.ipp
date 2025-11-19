@@ -6,18 +6,11 @@
 #include <itkGDCMImageIO.h>
 #include <itkGDCMSeriesFileNames.h>
 #include <itkImageSeriesReader.h>
-#include <omp.h>
+#include <itkImage.h>
 
 template <typename OutputImageType>
 DicomReadReader<OutputImageType>::DicomReadReader() = default;
-template <typename OutputImageType>
-itk::SmartPointer<DicomSeries> DicomReadReader<OutputImageType>::parseSeries(
-  const OutputImageType* image) const
-{
-  itk::Image<short, 3> imagei;
-  auto& metaData = imagei.GetMetaDataDictionary();
-  metaData
-}
+
 template <typename OutputImageType>
 void DicomReadReader<OutputImageType>::GenerateData()
 {
@@ -54,9 +47,10 @@ void DicomReadReader<OutputImageType>::GenerateData()
     {
       reader->Update();
       OutputImageType::Pointer image = reader->GetOutput();
+      m_Series[i] = DicomSeries::New();
       itk::SmartPointer<DicomSeries> dicomSeries = m_Series.at(i);
-      dicomSeries->parseInfo(image->GetMetaDataDirectory());
-      dicomSeries->GetImageInfo()->SetVolume(image);
+      dicomSeries->parseInfo(image->GetMetaDataDictionary());
+      dicomSeries->GetImageInfo()->SetVolume<OutputImageType::PixelType>(image);
     }
     catch (itk::ExceptionObject& e)
     {
@@ -69,7 +63,7 @@ void DicomReadReader<OutputImageType>::GenerateData()
     const auto& err = errors.at(i);
     if (!err.empty())
     {
-      itk::ExceptionObject("series " << i << " read error" << err);
+      itkExceptionMacro("series " << std::to_string(i).c_str() << " read error" << err);
     }
   }
 }

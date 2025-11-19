@@ -29,8 +29,6 @@ public:
 protected:
   DicomReadReader();
   ~DicomReadReader() override = default;
-
-  itk::SmartPointer<DicomSeries> parseSeries(const OutputImageType * image) const;
 private:
   std::string m_DicomDirectory;
 

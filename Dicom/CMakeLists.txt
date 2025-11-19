@@ -13,7 +13,7 @@ if (NOT TARGET ITKIOImageBase)
 endif ()
 
 add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core ITKIOImageBase Common)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core ITKCommon ITKIOImageBase ITKIOGDCM Common)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 export_model(${export_config_file_path} ${PROJECT_NAME})
 

@@ -7,7 +7,7 @@
 #include "DicomExport.h"
 #include "InformationParser.h"
 
-class DICOM_API StudyInformation : public InformationParser
+class DICOM_API StudyInformation final : public InformationParser
 {
 public:
   itkTypeMacro(StudyInformation, InformationParser);

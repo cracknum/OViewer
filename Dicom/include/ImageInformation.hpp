@@ -7,6 +7,7 @@
 #include <string>
 #include "DicomExport.h"
 #include <any>
+#include <itkImageRegion.h>
 
 class DICOM_API ImageInformation final : public InformationParser
 {
@@ -41,6 +42,7 @@ public:
   itkGetConstMacro(PhotoMetricInterpretation, std::string);
 
   itkGetConstMacro(Volume, itk::Object::Pointer);
+  itkGetConstMacro(Dimensions, itk::Size<3>);
   void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
   template <typename TPixel, typename ImageType = itk::Image<TPixel, 3>>
@@ -50,6 +52,7 @@ public:
     m_Direction = image->GetDirection();
     m_Spacing = image->GetSpacing();
     m_Volume = image;
+    m_Dimensions = image->GetLargestPossibleRegion().GetSize();
   }
 
 protected:
@@ -115,15 +118,16 @@ private:
   /**
    * @brief 体数据的spacing
    */
-  itk::Vector<double, 3> m_Spacing;
+  itk::Vector<double> m_Spacing;
   /**
    * @brief 体数据的原点
    */
-  itk::Point<double, 3> m_Origin;
+  itk::Point<double> m_Origin;
   /**
    * @brief 体数据的方向矩阵，注意，这是方向矩阵，并不包含缩放，缩放由对角线的spacing提供
    */
   itk::Matrix<double> m_Direction;
+  itk::Size<3> m_Dimensions;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H
