@@ -6,6 +6,10 @@ project(OViewer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOMOC ON)
+
 find_package(Qt5 COMPONENTS Widgets Core Gui OpenGL)
 find_package(CUDAToolkit REQUIRED) # image process
 find_package(ITK CONFIG REQUIRED) # read dicom files
@@ -20,6 +24,7 @@ include(cmake/ExportFunction.cmake)
 add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)
+add_subdirectory(UI)
 
 option(enable_testing OFF)
 

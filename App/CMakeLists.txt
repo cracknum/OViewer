@@ -7,4 +7,4 @@ if (NOT TARGET Qt5::Core)
 endif ()
 
 add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets Dicom)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Widgets UI)
