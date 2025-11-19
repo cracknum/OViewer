@@ -1,6 +1,8 @@
 #ifndef DICOM_READ_FILTER_IPP
 #define DICOM_READ_FILTER_IPP
 #include "DicomReader.hpp"
+#include "DicomSeries.h"
+#include "ImageInformation.hpp"
 #include <itkGDCMImageIO.h>
 #include <itkGDCMSeriesFileNames.h>
 #include <itkImageSeriesReader.h>
@@ -38,6 +40,7 @@ void DicomReadReader<OutputImageType>::GenerateData()
 
   m_Series.resize(seriesUIDs.size());
   std::vector<std::string> errors(seriesUIDs.size());
+
 #pragma omp parallel for
   for (int i = 0; i < seriesUIDs.size(); ++i)
   {
@@ -50,14 +53,24 @@ void DicomReadReader<OutputImageType>::GenerateData()
     try
     {
       reader->Update();
+      OutputImageType::Pointer image = reader->GetOutput();
+      itk::SmartPointer<DicomSeries> dicomSeries = m_Series.at(i);
+      dicomSeries->parseInfo(image->GetMetaDataDirectory());
+      dicomSeries->GetImageInfo()->SetVolume(image);
     }
     catch (itk::ExceptionObject& e)
     {
       errors[i] = std::string("failed to read dicom series: ") + e.what();
     }
+  }
 
-    // TODO: 增加对每个series的信息解析
-    // reader->GetOutput()
+  for (int i = 0; i < errors.size(); ++i)
+  {
+    const auto& err = errors.at(i);
+    if (!err.empty())
+    {
+      itk::ExceptionObject("series " << i << " read error" << err);
+    }
   }
 }
 

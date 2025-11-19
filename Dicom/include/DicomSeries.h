@@ -3,6 +3,7 @@
 #include <itkObject.h>
 #include <vector>
 #include "Macros.h"
+#include "InformationParser.h"
 
 struct EquipmentInformation;
 struct ImageInformation;
@@ -10,10 +11,10 @@ struct PatientInformation;
 struct SeriesInformation;
 struct StudyInformation;
 
-class DicomSeries: public itk::Object
+class DicomSeries: public InformationParser
 {
   public:
-  itkTypeMacro(DicomSeries, itk::Object);
+  itkTypeMacro(DicomSeries, InformationParser);
   itkSetPointerDeclare(DicomSeries);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
@@ -22,8 +23,9 @@ class DicomSeries: public itk::Object
   itkGetConstMacro(PatientInfo, PatientInformation*);
   itkGetConstMacro(SeriesInfo, SeriesInformation*);
   itkGetConstMacro(StudyInfo, StudyInformation*);
-  itkGetConstMacro(ImageInfo, ImageInformation*);
+  itkGetMacro(ImageInfo, ImageInformation*);
   
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 protected:
   DicomSeries(){}
   ~DicomSeries() override{}
