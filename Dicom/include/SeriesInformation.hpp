@@ -4,11 +4,13 @@
 
 #include <itkObject.h>
 #include <string>
+#include "DicomExport.h"
+#include "InformationParser.h"
 
-class SeriesInformation : public itk::Object
+class DICOM_API SeriesInformation : public InformationParser
 {
 public:
-  itkTypeMacro(SeriesInformation, itk::Object);
+  itkTypeMacro(SeriesInformation, InformationParser);
   itkSetPointerDeclare(SeriesInformation);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
@@ -16,14 +18,16 @@ public:
   itkSetStringMacro(InstanceUID);
   itkGetConstMacro(InstanceUID, std::string);
 
-  itkSetStringMacro(Mdality);
-  itkGetConstMacro(Mdality, std::string);
+  itkSetStringMacro(Modality);
+  itkGetConstMacro(Modality, std::string);
 
   itkSetStringMacro(Description);
   itkGetConstMacro(Description, std::string);
 
   itkSetStringMacro(Number);
   itkGetConstMacro(Number, std::string);
+
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
 protected:
   SeriesInformation() {}
@@ -37,7 +41,7 @@ private:
   /**
    * @brief 模态（CT|MR|US|DX etc.）
    */
-  std::string m_Mdality;
+  std::string m_Modality;
   /**
    * @brief 检查描述
    */

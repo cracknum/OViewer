@@ -4,11 +4,13 @@
 
 #include <itkObject.h>
 #include <string>
+#include "DicomExport.h"
+#include "InformationParser.h"
 
-class StudyInformation : public itk::Object
+class DICOM_API StudyInformation : public InformationParser
 {
 public:
-  itkTypeMacro(StudyInformation, itk::Object);
+  itkTypeMacro(StudyInformation, InformationParser);
   itkSetPointerDeclare(StudyInformation);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
@@ -27,6 +29,8 @@ public:
 
   itkSetStringMacro(Id);
   itkGetConstMacro(Id, std::string);
+
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
 protected:
   StudyInformation() {}

@@ -2,10 +2,13 @@
 #define IMAGE_INFORMATION_CXX_H
 #include "Macros.h"
 
-#include <string>
 #include "InformationParser.h"
+#include <itkImage.h>
+#include <string>
+#include "DicomExport.h"
+#include <any>
 
-class ImageInformation final : public InformationParser
+class DICOM_API ImageInformation final : public InformationParser
 {
 public:
   itkTypeMacro(ImageInformation, InformationParser);
@@ -13,45 +16,41 @@ public:
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
 
-  itkSetStringMacro(InstanceUID);
   itkGetConstMacro(InstanceUID, std::string);
 
-  itkSetStringMacro(Rows);
   itkGetConstMacro(Rows, std::string);
 
-  itkSetStringMacro(Columns);
   itkGetConstMacro(Columns, std::string);
 
-  itkSetStringMacro(RowPixelSpacing);
   itkGetConstMacro(RowPixelSpacing, std::string);
 
-  itkSetStringMacro(ColumnPixelSpacing);
   itkGetConstMacro(ColumnPixelSpacing, std::string);
 
-  itkSetStringMacro(BitsAllocated);
   itkGetConstMacro(BitsAllocated, std::string);
 
-  itkSetStringMacro(PixelRepresentation);
   itkGetConstMacro(PixelRepresentation, std::string);
 
-  itkSetStringMacro(ImageType);
   itkGetConstMacro(ImageType, std::string);
 
-  itkSetStringMacro(WindowCenter);
   itkGetConstMacro(WindowCenter, std::string);
 
-  itkSetStringMacro(WindowWidth);
   itkGetConstMacro(WindowWidth, std::string);
 
-  itkSetStringMacro(SamplesPerPixel);
   itkGetConstMacro(SamplesPerPixel, std::string);
 
-  itkSetStringMacro(PhotoMetricInterpretation);
   itkGetConstMacro(PhotoMetricInterpretation, std::string);
 
-  itkSetMacro(Volume, void*);
-  itkGetConstMacro(Volume, void*);
+  itkGetConstMacro(Volume, itk::Object::Pointer);
   void parseInfo(const itk::MetaDataDictionary& metaData) override;
+
+  template <typename TPixel, typename ImageType = itk::Image<TPixel, 3>>
+  void SetVolume(typename ImageType::Pointer image)
+  {
+    m_Origin = image->GetOrigin();
+    m_Direction = image->GetDirection();
+    m_Spacing = image->GetSpacing();
+    m_Volume = image;
+  }
 
 protected:
   ImageInformation();
@@ -111,7 +110,20 @@ private:
   /**
    * @brief 实际存储数据
    */
-  void* m_Volume;
+  itk::Object::Pointer m_Volume;
+
+  /**
+   * @brief 体数据的spacing
+   */
+  itk::Vector<double, 3> m_Spacing;
+  /**
+   * @brief 体数据的原点
+   */
+  itk::Point<double, 3> m_Origin;
+  /**
+   * @brief 体数据的方向矩阵，注意，这是方向矩阵，并不包含缩放，缩放由对角线的spacing提供
+   */
+  itk::Matrix<double> m_Direction;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H

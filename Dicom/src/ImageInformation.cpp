@@ -4,8 +4,9 @@
 #include <qstringlist.h>
 
 ImageInformation::ImageInformation()
-  :m_Volume(nullptr)
-{}
+  : m_Volume(nullptr)
+{
+}
 inline void ImageInformation::parseInfo(const itk::MetaDataDictionary& metaData)
 {
   m_InstanceUID = parseTag(metaData, DicomTags::SeriesInstanceUID);
@@ -33,7 +34,4 @@ inline void ImageInformation::parseInfo(const itk::MetaDataDictionary& metaData)
   m_WindowWidth = parseTag(metaData, DicomTags::WindowWidth);
   m_SamplesPerPixel = parseTag(metaData, DicomTags::SamplesPerPixel);
   m_PhotoMetricInterpretation = parseTag(metaData, DicomTags::PhotometricInterpretation);
-
-  // TODO: 读取series中的data创建volume
-
 }

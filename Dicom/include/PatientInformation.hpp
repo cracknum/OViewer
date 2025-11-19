@@ -2,37 +2,37 @@
 #define PATIENT_CXX_H
 #include "Macros.h"
 
-#include <itkObject.h>
+#include "InformationParser.h"
 #include <string>
+#include "DicomExport.h"
 
-class PatientInformation : public itk::Object
+namespace itk
+{
+class MetaDataDictionary;
+}
+class DICOM_API PatientInformation : public InformationParser
 {
 public:
-  itkTypeMacro(PatientInformation, itk::Object);
+  itkTypeMacro(PatientInformation, InformationParser);
   itkSetPointerDeclare(PatientInformation);
   itkFactorylessNewMacro(Self);
   ITK_DISALLOW_COPY_AND_MOVE(Self);
 
-  itkSetStringMacro(Name);
   itkGetConstMacro(Name, std::string);
 
-  itkSetStringMacro(Id);
   itkGetConstMacro(Id, std::string);
 
-  itkSetStringMacro(BirthDay);
   itkGetConstMacro(BirthDay, std::string);
 
-  itkSetStringMacro(Sex);
   itkGetConstMacro(Sex, std::string);
 
-  itkSetStringMacro(Age);
   itkGetConstMacro(Age, std::string);
 
-  itkSetStringMacro(Size);
   itkGetConstMacro(Size, std::string);
 
-  itkSetStringMacro(Weight);
   itkGetConstMacro(Weight, std::string);
+
+  void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
 protected:
   PatientInformation() {}

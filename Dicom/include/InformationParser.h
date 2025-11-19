@@ -5,11 +5,12 @@
 #include <itkMetaDataObject.h>
 #include <itkObject.h>
 #include "DicomTags.h"
+#include "DicomExport.h"
 namespace itk
 {
 class MetaDataDictionary;
 }
-class InformationParser: public itk::Object
+class DICOM_API InformationParser: public itk::Object
 {
 public:
   itkTypeMacro(InformationParser, itk::Object);

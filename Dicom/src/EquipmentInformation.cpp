@@ -1,8 +1,8 @@
 #include "EquipmentInformation.hpp"
-#include <itkMetaDataDictionary.h>
-#include <itkImageSeriesReader.h>
-#include <itkGDCMSeriesFileNames.h>
 #include "DicomTags.h"
+#include <itkGDCMSeriesFileNames.h>
+#include <itkImageSeriesReader.h>
+#include <itkMetaDataDictionary.h>
 void EquipmentInformation::parseInfo(const itk::MetaDataDictionary& metaData)
 {
   m_Manufacturer = parseTag(metaData, DicomTags::Manufacturer);

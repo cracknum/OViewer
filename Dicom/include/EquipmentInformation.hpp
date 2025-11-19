@@ -3,8 +3,9 @@
 #include "InformationParser.h"
 #include "Macros.h"
 #include <string>
+#include "DicomExport.h"
 
-class EquipmentInformation : public InformationParser
+class DICOM_API EquipmentInformation : public InformationParser
 {
 public:
   itkTypeMacro(EquipmentInformation, InformationParser);
@@ -51,11 +52,11 @@ private:
    */
   std::string m_ModelName;
   /**
-   * @brief 层厚(CT/MR)
+   * @brief 层厚(CT/MR)，扫描时使用
    */
   std::string m_SliceThickness;
   /**
-   * @brief 层间距
+   * @brief 层间距，理想情况下和zspacing相同，但是大多数时候不提供，需要通过计算相邻坐标的z值差值得到
    */
   std::string m_SpacingBetweenSlices;
   /**
