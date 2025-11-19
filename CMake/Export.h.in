@@ -10,6 +10,4 @@
     #define @MODULE_NAME@_API __declspec(dllimport)
 #endif
 
-#endif
-
 #endif //@MODULE_NAME@_EXPORT_OPENGL_H
