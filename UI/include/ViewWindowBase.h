@@ -3,22 +3,22 @@
 #include "ViewWindowConfig.h"
 #include <QObject>
 
-class QOpenGLContext;
+class QOpenGLFunctions_4_4_Core;
 class ViewWindowBase : public QObject
 {
   Q_OBJECT
 
 public:
   explicit ViewWindowBase(
-    QOpenGLContext* context, const ViewWindowConfig& config, QObject* parent = nullptr);
+    QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent = nullptr);
   /**
    * @brief 设置view的上下文
    */
-  void setContext(QOpenGLContext* context) { m_Context = context; }
+  void setFunction(QOpenGLFunctions_4_4_Core* function) { m_Function = function; }
   /**
    * @brief 判断上下文是否有效
    */
-  bool isContextVaild() { return m_Context != nullptr; }
+  bool isContextVaild() { return m_Function != nullptr; }
   void update();
 
   /**
@@ -27,7 +27,7 @@ public:
   virtual void drawWindow() = 0;
 
 protected:
-  QOpenGLContext* m_Context;
+  QOpenGLFunctions_4_4_Core* m_Function;
   ViewWindowConfig m_Config;
 };
 

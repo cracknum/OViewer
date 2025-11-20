@@ -1,7 +1,7 @@
 #include "ViewWindowBase.h"
 
-ViewWindowBase::ViewWindowBase(QOpenGLContext* context, const ViewWindowConfig& config, QObject* parent)
-  : m_Context(context)
+ViewWindowBase::ViewWindowBase(QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent)
+  : m_Function(function)
   , m_Config(config)
   , QObject(parent)
 {

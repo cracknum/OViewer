@@ -3,13 +3,13 @@
 #include "ViewWindowBase.h"
 
 class ViewWindowConfig;
-class QOpenGLContext;
+class QOpenGLFunctions_4_4_Core;
 class ViewWindow final : public ViewWindowBase
 {
   Q_OBJECT
 
 public:
-  explicit ViewWindow(QOpenGLContext* context, const ViewWindowConfig& config, QObject* parent = nullptr);
+  explicit ViewWindow(QOpenGLFunctions_4_4_Core* context, const ViewWindowConfig& config, QObject* parent = nullptr);
   void drawWindow() override;
 };
 #endif

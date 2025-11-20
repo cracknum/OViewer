@@ -16,7 +16,7 @@ inline Window::Window(QWidget* parent)
 inline Window::~Window() {}
 void Window::addViewWindow(const ViewWindowConfig& config)
 {
-  auto* viewWindow = new ViewWindow(this->context(), config, this);
+  auto* viewWindow = new ViewWindow(this, config, this);
   m_Impl->m_ViewWindows.push_back(viewWindow);
 }
 void Window::initializeGL()
@@ -26,7 +26,7 @@ void Window::initializeGL()
   {
     if (!viewWindow->isContextVaild())
     {
-      viewWindow->setContext(this->context());
+      viewWindow->setFunction(this);
     }
   }
 
@@ -40,6 +40,7 @@ void Window::resizeGL(int w, int h)
 void Window::paintGL()
 {
   glClear(GL_COLOR_BUFFER_BIT);
+  
 }
 
 void Window::mousePressEvent(QMouseEvent* event)
