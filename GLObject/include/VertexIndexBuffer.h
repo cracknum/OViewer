@@ -8,14 +8,14 @@ class QOpenGLFunctions_4_4_Core;
 class VertexIndexBuffer
 {
 public:
-  VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
+  explicit VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
   ~VertexIndexBuffer();
-  void createBuffer(const Vertices& vertices);
-  void draw();
+  void createBuffer(const Vertices& vertices) const;
+  void draw() const;
 
 private:
-  void bind();
-  void unbind();
+  void bind() const;
+  void unbind() const;
   void deleteBuffer();
 
 private:

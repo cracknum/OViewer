@@ -6,12 +6,14 @@
 struct Vertices
 {
   GLfloat* m_Data;
-  GLuint m_DataSize;
-  GLfloat* m_Indices;
-  GLuint m_IndicesSize;
-  using Attribute = std::pair<GLboolean, std::array<GLuint, 2>>;
-  Attribute m_Normal;
-  Attribute m_Texture;
+  GLsizeiptr m_DataSize;
+  GLuint* m_Indices;
+  GLsizei m_IndicesSize;
+  // std::pair<enable, size> size: number of elements
+  using Attribute = std::pair<GLboolean, GLsizei>;
+  Attribute m_NormalAttribute;
+  Attribute m_TextureAttribute;
+  Attribute m_DataAttribute;
 
   Vertices()
     : m_Data(nullptr)
@@ -19,8 +21,9 @@ struct Vertices
     , m_Indices(nullptr)
     , m_IndicesSize(0)
   {
-    m_Normal.first = false;
-    m_Texture.first = false;
+    m_NormalAttribute.first = false;
+    m_TextureAttribute.first = false;
+    m_DataAttribute.first = false;
   }
 };
 #endif // VERTICES_OPENGL_H
