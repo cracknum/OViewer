@@ -1,47 +1,72 @@
 #include "Window.h"
 #include "Style.h"
-inline Window::Window(QWidget* parent): QWidget(parent)
+#include "ViewWindow.h"
+#include "ViewWindowConfig.h"
+
+struct Window::Impl
 {
-  setStyleSheet(Style::WindowStyle);
+  ViewWindowVector m_ViewWindows;
+};
+
+inline Window::Window(QWidget* parent)
+  : QOpenGLWidget(parent)
+{
+  m_Impl = std::make_unique<Impl>();
 }
 inline Window::~Window() {}
-inline void Window::mousePressEvent(QMouseEvent* event)
+void Window::addViewWindow(const ViewWindowConfig& config)
+{
+  auto* viewWindow = new ViewWindow(this->context(), config, this);
+  m_Impl->m_ViewWindows.push_back(viewWindow);
+}
+void Window::initializeGL()
+{
+  this->initializeOpenGLFunctions();
+  for (auto* viewWindow : m_Impl->m_ViewWindows)
+  {
+    if (!viewWindow->isContextVaild())
+    {
+      viewWindow->setContext(this->context());
+    }
+  }
+
+  glClearColor(Style::WindowBackground[0], Style::WindowBackground[1], Style::WindowBackground[2],
+    Style::WindowBackground[3]);
+}
+void Window::resizeGL(int w, int h)
+{
+  glViewport(0, 0, w, h);
+}
+void Window::paintGL()
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void Window::mousePressEvent(QMouseEvent* event)
 {
   QWidget::mousePressEvent(event);
 }
-inline void Window::mouseReleaseEvent(QMouseEvent* event)
+void Window::mouseReleaseEvent(QMouseEvent* event)
 {
   QWidget::mouseReleaseEvent(event);
 }
-inline void Window::mouseDoubleClickEvent(QMouseEvent* event)
+void Window::mouseDoubleClickEvent(QMouseEvent* event)
 {
   QWidget::mouseDoubleClickEvent(event);
 }
-inline void Window::mouseMoveEvent(QMouseEvent* event)
+void Window::mouseMoveEvent(QMouseEvent* event)
 {
   QWidget::mouseMoveEvent(event);
 }
-inline void Window::wheelEvent(QWheelEvent* event)
+void Window::wheelEvent(QWheelEvent* event)
 {
   QWidget::wheelEvent(event);
 }
-inline void Window::keyPressEvent(QKeyEvent* event)
+void Window::keyPressEvent(QKeyEvent* event)
 {
   QWidget::keyPressEvent(event);
 }
-inline void Window::keyReleaseEvent(QKeyEvent* event)
+void Window::keyReleaseEvent(QKeyEvent* event)
 {
   QWidget::keyReleaseEvent(event);
-}
-inline void Window::enterEvent(QEvent* event)
-{
-  QWidget::enterEvent(event);
-}
-inline void Window::leaveEvent(QEvent* event)
-{
-  QWidget::leaveEvent(event);
-}
-inline void Window::resizeEvent(QResizeEvent* event)
-{
-  QWidget::resizeEvent(event);
 }
