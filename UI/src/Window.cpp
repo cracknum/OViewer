@@ -8,10 +8,14 @@ struct Window::Impl
   ViewWindowVector m_ViewWindows;
 };
 
-inline Window::Window(QWidget* parent)
-  : QOpenGLWidget(parent)
+inline Window::Window(QWindow* parent)
+  : QOpenGLWindow(QOpenGLWindow::PartialUpdateBlit, parent)
 {
   m_Impl = std::make_unique<Impl>();
+
+  QSurfaceFormat format(this->format());
+  format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+  this->setFormat(format);
 }
 inline Window::~Window() {}
 void Window::addViewWindow(const ViewWindowConfig& config)
@@ -56,29 +60,22 @@ void Window::paintGL()
 
 void Window::mousePressEvent(QMouseEvent* event)
 {
-  QWidget::mousePressEvent(event);
 }
 void Window::mouseReleaseEvent(QMouseEvent* event)
 {
-  QWidget::mouseReleaseEvent(event);
 }
 void Window::mouseDoubleClickEvent(QMouseEvent* event)
 {
-  QWidget::mouseDoubleClickEvent(event);
 }
 void Window::mouseMoveEvent(QMouseEvent* event)
 {
-  QWidget::mouseMoveEvent(event);
 }
 void Window::wheelEvent(QWheelEvent* event)
 {
-  QWidget::wheelEvent(event);
 }
 void Window::keyPressEvent(QKeyEvent* event)
 {
-  QWidget::keyPressEvent(event);
 }
 void Window::keyReleaseEvent(QKeyEvent* event)
 {
-  QWidget::keyReleaseEvent(event);
 }
