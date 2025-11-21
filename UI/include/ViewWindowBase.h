@@ -26,6 +26,11 @@ public:
    */
   virtual void drawWindow() = 0;
 
+  /**
+   * @brief 根据父窗口的尺寸更新view视图的尺寸
+   */
+  void updateViewSize(const ViewWindowConfig::WindowSize& parentWindowSize);
+
 protected:
   QOpenGLFunctions_4_4_Core* m_Function;
   ViewWindowConfig m_Config;

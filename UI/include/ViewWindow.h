@@ -9,7 +9,7 @@ class ViewWindow final : public ViewWindowBase
   Q_OBJECT
 
 public:
-  explicit ViewWindow(QOpenGLFunctions_4_4_Core* context, const ViewWindowConfig& config, QObject* parent = nullptr);
+  explicit ViewWindow(QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent = nullptr);
   void drawWindow() override;
 };
 #endif

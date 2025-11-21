@@ -17,8 +17,11 @@ inline Window::~Window() {}
 void Window::addViewWindow(const ViewWindowConfig& config)
 {
   auto* viewWindow = new ViewWindow(this, config, this);
+  viewWindow->updateViewSize(ViewWindowConfig::WindowSize{width(), height()});
+
   m_Impl->m_ViewWindows.push_back(viewWindow);
 }
+
 void Window::initializeGL()
 {
   this->initializeOpenGLFunctions();
@@ -29,18 +32,26 @@ void Window::initializeGL()
       viewWindow->setFunction(this);
     }
   }
-
-  glClearColor(Style::WindowBackground[0], Style::WindowBackground[1], Style::WindowBackground[2],
-    Style::WindowBackground[3]);
 }
 void Window::resizeGL(int w, int h)
 {
   glViewport(0, 0, w, h);
+  for (auto* viewWindow : m_Impl->m_ViewWindows)
+  {
+    viewWindow->updateViewSize(ViewWindowConfig::WindowSize{width(), height()});
+  }
+
 }
 void Window::paintGL()
 {
+  glClearColor(Style::WindowBackground[0], Style::WindowBackground[1], Style::WindowBackground[2],
+    Style::WindowBackground[3]);
   glClear(GL_COLOR_BUFFER_BIT);
-  
+
+  for (auto* viewWindow : m_Impl->m_ViewWindows)
+  {
+    viewWindow->update();
+  }
 }
 
 void Window::mousePressEvent(QMouseEvent* event)
