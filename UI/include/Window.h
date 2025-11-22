@@ -12,7 +12,7 @@ struct ViewWindowConfig;
 
 class UI_API Window final
   : public QOpenGLWindow
-  , protected QOpenGLFunctions_4_4_Core
+  , public QOpenGLFunctions_4_4_Core
 {
   Q_OBJECT
 public:

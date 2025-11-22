@@ -2,10 +2,14 @@
 #include "Style.h"
 #include "ViewWindow.h"
 #include "ViewWindowConfig.h"
+#include "SplitLine.h"
+#include "LineConfig.h"
 
 struct Window::Impl
 {
   ViewWindowVector m_ViewWindows;
+  std::unique_ptr<SplitLine> m_HorizontalLine;
+  std::unique_ptr<SplitLine> m_VerticalLine;
 };
 
 inline Window::Window(QWindow* parent)
@@ -36,6 +40,20 @@ void Window::initializeGL()
       viewWindow->setFunction(this);
     }
   }
+
+  LineConfig horizontalLineConfig, verticalLineConfig;
+  horizontalLineConfig.m_Color = LineConfig::Color(1.0, 1.0, 1.0, 1.0);
+  horizontalLineConfig.m_StartPoint = LineConfig::Point(0.0, 0.5);
+  horizontalLineConfig.m_EndPoint = LineConfig::Point(1.0, 0.5);
+  horizontalLineConfig.m_LineWidth = 2.0 / width();
+
+  verticalLineConfig.m_Color = LineConfig::Color(1.0, 1.0, 1.0, 1.0);
+  verticalLineConfig.m_StartPoint = LineConfig::Point(0.5, 0.0);
+  verticalLineConfig.m_EndPoint = LineConfig::Point(0.5, 1.0);
+  verticalLineConfig.m_LineWidth = 2.0 / width();
+
+  m_Impl->m_HorizontalLine = std::make_unique<SplitLine>(this, horizontalLineConfig);
+  m_Impl->m_VerticalLine = std::make_unique<SplitLine>(this, verticalLineConfig);
 }
 void Window::resizeGL(int w, int h)
 {
@@ -56,6 +74,9 @@ void Window::paintGL()
   {
     viewWindow->update();
   }
+
+  m_Impl->m_HorizontalLine->draw();
+  m_Impl->m_VerticalLine->draw();
 }
 
 void Window::mousePressEvent(QMouseEvent* event)
