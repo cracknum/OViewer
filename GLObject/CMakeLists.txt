@@ -11,7 +11,7 @@ endif()
 
 if(NOT "${Source_files}")
     add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
-    target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::OpenGL Common)
+    target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core Qt5::Gui Qt5::OpenGL Common spdlog::spdlog)
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     export_model(${export_config_file_path} ${PROJECT_NAME})
 endif()

@@ -13,6 +13,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5 COMPONENTS Widgets Core Gui OpenGL)
 find_package(CUDAToolkit REQUIRED) # image process
 find_package(ITK CONFIG REQUIRED) # read dicom files
+find_package(spdlog CONFIG REQUIRED) # for log info
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

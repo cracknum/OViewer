@@ -6,4 +6,5 @@ file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.h")
 file(GLOB_RECURSE Source_files "src/*.cpp" "src/*.cxx")
 
 add_library(${PROJECT_NAME} INTERFACE)
+target_link_libraries(${PROJECT_NAME} INTERFACE Qt5::Widgets spdlog::spdlog)
 target_include_directories(${PROJECT_NAME} INTERFACE include)
