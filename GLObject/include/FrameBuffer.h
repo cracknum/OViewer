@@ -1,9 +1,10 @@
 #ifndef FRAMR_BUFFER_OPENGL_H
 #define FRAMR_BUFFER_OPENGL_H
 #include <memory>
+#include "GLObjectExport.h"
 
 class QOpenGLFunctions_4_4_Core;
-class FrameBuffer final
+class GLOBJECT_API FrameBuffer final
 {
 public:
   using Functions = QOpenGLFunctions_4_4_Core;

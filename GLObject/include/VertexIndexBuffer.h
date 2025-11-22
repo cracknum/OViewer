@@ -2,20 +2,21 @@
 #define VERTEX_INDEX_BUFFER_OPENGL_H
 
 #include <memory>
+#include "GLObjectExport.h"
 
 struct Vertices;
 class QOpenGLFunctions_4_4_Core;
-class VertexIndexBuffer
+class GLOBJECT_API VertexIndexBuffer
 {
 public:
   explicit VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
   ~VertexIndexBuffer();
   void createBuffer(const Vertices& vertices) const;
-  void draw() const;
+  void draw();
 
 private:
-  void bind() const;
-  void unbind() const;
+  void bind();
+  void unbind();
   void deleteBuffer();
 
 private:

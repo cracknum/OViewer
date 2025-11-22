@@ -3,7 +3,8 @@
 #include <QOpenGLContext>
 #include <array>
 #include <utility>
-struct Vertices
+#include "GLObjectExport.h"
+struct GLOBJECT_API Vertices
 {
   GLfloat* m_Data;
   GLsizeiptr m_DataSize;
@@ -13,7 +14,7 @@ struct Vertices
   using Attribute = std::pair<GLboolean, GLsizei>;
   Attribute m_NormalAttribute;
   Attribute m_TextureAttribute;
-  Attribute m_DataAttribute;
+  Attribute m_PointAttribute;
 
   Vertices()
     : m_Data(nullptr)
@@ -23,7 +24,21 @@ struct Vertices
   {
     m_NormalAttribute.first = false;
     m_TextureAttribute.first = false;
-    m_DataAttribute.first = false;
+    m_PointAttribute.first = true;
+  }
+  
+  ~Vertices()
+  {
+    if (m_Data)
+    {
+      delete []m_Data;
+      m_DataSize = 0;
+    }
+    if (m_Indices)
+    {
+      delete []m_Indices;
+      m_IndicesSize = 0;
+    }
   }
 };
 #endif // VERTICES_OPENGL_H

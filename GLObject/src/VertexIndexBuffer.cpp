@@ -30,7 +30,7 @@ VertexIndexBuffer::~VertexIndexBuffer()
   deleteBuffer();
 }
 
-void VertexIndexBuffer::bind() const
+void VertexIndexBuffer::bind()
 {
   if (!m_Impl->m_VAO)
   {
@@ -39,7 +39,7 @@ void VertexIndexBuffer::bind() const
   m_Impl->m_Function->glBindVertexArray(m_Impl->m_VAO);
 }
 
-void VertexIndexBuffer::draw() const
+void VertexIndexBuffer::draw()
 {
   if (m_Impl->m_Vertices.m_Indices == nullptr || m_Impl->m_Vertices.m_IndicesSize == 0)
   {
@@ -52,7 +52,7 @@ void VertexIndexBuffer::draw() const
   unbind();
 }
 
-void VertexIndexBuffer::unbind() const
+void VertexIndexBuffer::unbind()
 {
   m_Impl->m_Function->glBindVertexArray(0);
 }
@@ -91,7 +91,7 @@ void VertexIndexBuffer::createBuffer(const Vertices& vertices) const
 
   GLsizei offset = 0;
   GLuint index = 0;
-  GLsizei stride = m_Impl->m_Vertices.m_DataAttribute.second * sizeof(GLfloat);
+  GLsizei stride = m_Impl->m_Vertices.m_PointAttribute.second * sizeof(GLfloat);
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {
     stride += m_Impl->m_Vertices.m_NormalAttribute.second * sizeof(GLfloat);
@@ -101,8 +101,8 @@ void VertexIndexBuffer::createBuffer(const Vertices& vertices) const
     stride += m_Impl->m_Vertices.m_TextureAttribute.second * sizeof(GLfloat); // NOLINT(*-narrowing-conversions)
   }
   m_Impl->m_Function->glVertexAttribPointer(
-    index, m_Impl->m_Vertices.m_DataAttribute.second, GL_FLOAT, false, stride, nullptr);
-  offset += m_Impl->m_Vertices.m_DataAttribute.second;
+    index, m_Impl->m_Vertices.m_PointAttribute.second, GL_FLOAT, false, stride, nullptr);
+  offset += m_Impl->m_Vertices.m_PointAttribute.second;
   index += 1;
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {
