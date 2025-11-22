@@ -2,3 +2,7 @@
 /.idea
 /.idea
 /.vscode
+/.vs
+CMakeSettings.json
+/out
+CMakePresets.json
