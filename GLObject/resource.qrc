@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/shader">
+        <file>shader/Line.frag</file>
+        <file>shader/Line.geom</file>
+        <file>shader/Line.vert</file>
+    </qresource>
+</RCC>
