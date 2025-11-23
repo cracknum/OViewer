@@ -14,7 +14,6 @@ struct GLOBJECT_API Vertices
   using Attribute = std::pair<GLboolean, GLsizei>;
   Attribute m_NormalAttribute;
   Attribute m_TextureAttribute;
-  Attribute m_PointAttribute;
 
   Vertices& operator=(Vertices&& vertices)
   { m_Data = vertices.m_Data;
@@ -23,7 +22,6 @@ struct GLOBJECT_API Vertices
     m_IndicesSize = vertices.m_IndicesSize;
     m_NormalAttribute = vertices.m_NormalAttribute;
     m_TextureAttribute = vertices.m_TextureAttribute;
-    m_PointAttribute = vertices.m_PointAttribute;
     vertices.m_Data = nullptr;
     vertices.m_DataSize = 0;
     vertices.m_Indices = nullptr;
@@ -39,7 +37,6 @@ struct GLOBJECT_API Vertices
   {
     m_NormalAttribute.first = false;
     m_TextureAttribute.first = false;
-    m_PointAttribute.first = true;
   }
   
   ~Vertices()

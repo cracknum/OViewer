@@ -4,12 +4,14 @@
 #include "ViewWindowConfig.h"
 #include "SplitLine.h"
 #include "LineConfig.h"
+#include <qtimer.h>
 
 struct Window::Impl
 {
   ViewWindowVector m_ViewWindows;
   std::unique_ptr<SplitLine> m_HorizontalLine;
   std::unique_ptr<SplitLine> m_VerticalLine;
+  QTimer timer;
 };
 
 inline Window::Window(QWindow* parent)
@@ -17,6 +19,8 @@ inline Window::Window(QWindow* parent)
 {
   m_Impl = std::make_unique<Impl>();
 
+  m_Impl->timer.connect(&m_Impl->timer, &QTimer::timeout, [this]() { this->update(); });
+  m_Impl->timer.start(100);
   QSurfaceFormat format(this->format());
   format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
   this->setFormat(format);
@@ -45,12 +49,12 @@ void Window::initializeGL()
   horizontalLineConfig.m_Color = LineConfig::Color(1.0, 1.0, 1.0, 1.0);
   horizontalLineConfig.m_StartPoint = LineConfig::Point(0.0, 0.5);
   horizontalLineConfig.m_EndPoint = LineConfig::Point(1.0, 0.5);
-  horizontalLineConfig.m_LineWidth = 2.0 / width();
+  horizontalLineConfig.m_LineWidth = 0.1f;
 
   verticalLineConfig.m_Color = LineConfig::Color(1.0, 1.0, 1.0, 1.0);
   verticalLineConfig.m_StartPoint = LineConfig::Point(0.5, 0.0);
   verticalLineConfig.m_EndPoint = LineConfig::Point(0.5, 1.0);
-  verticalLineConfig.m_LineWidth = 2.0 / width();
+  verticalLineConfig.m_LineWidth = 0.1f;
 
   m_Impl->m_HorizontalLine = std::make_unique<SplitLine>(this, horizontalLineConfig);
   m_Impl->m_VerticalLine = std::make_unique<SplitLine>(this, verticalLineConfig);
@@ -70,10 +74,10 @@ void Window::paintGL()
     Style::WindowBackground[3]);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  for (auto* viewWindow : m_Impl->m_ViewWindows)
-  {
-    viewWindow->update();
-  }
+  //for (auto* viewWindow : m_Impl->m_ViewWindows)
+  //{
+  //  viewWindow->update();
+  //}
 
   m_Impl->m_HorizontalLine->draw();
   m_Impl->m_VerticalLine->draw();

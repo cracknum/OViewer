@@ -1,8 +1,8 @@
 #ifndef SPLIT_LINE_H
 #define SPLIT_LINE_H
+#include "GLObjectExport.h"
 #include "InteractiveObject.h"
 #include <memory>
-#include "GLObjectExport.h"
 
 struct LineConfig;
 class QOpenGLFunctions_4_4_Core;
@@ -22,11 +22,13 @@ public:
 
   void draw() override;
 
+protected:
+  void setColor(const LineConfig& config);
+  void setWidth(const LineConfig& config);
+
 private:
   struct Impl;
   std::unique_ptr<Impl> m_Impl;
 };
 
-
-
-#endif //SPLIT_LINE_H
+#endif // SPLIT_LINE_H

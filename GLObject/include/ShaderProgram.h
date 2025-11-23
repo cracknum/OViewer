@@ -21,8 +21,8 @@ public:
   explicit ShaderProgram(Function* function, const ShaderPathMap& shaderSource);
   ~ShaderProgram();
 
-  void bind() const;
-  void unbind() const;
+  void use() const;
+  void unuse() const;
 
   // helper function for set variables
   bool setMat4(const QMatrix4x4& mat4, const char* name) const;

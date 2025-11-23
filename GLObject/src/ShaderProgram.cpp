@@ -109,11 +109,11 @@ ShaderProgram::ShaderProgram(Function* function, const ShaderPathMap& shaderSour
     deleteShaders(function);
 }
 ShaderProgram::~ShaderProgram() {}
-void ShaderProgram::bind() const
+void ShaderProgram::use() const
 {
   m_Impl->m_Function->glUseProgram(m_Impl->m_Program);
 }
-void ShaderProgram::unbind() const
+void ShaderProgram::unuse() const
 {
   m_Impl->m_Function->glUseProgram(0);
 }

@@ -47,8 +47,10 @@ void VertexIndexBuffer::draw()
   }
 
   bind();
+  // TODO: 绘制命令的参数还不一定，需要外部传递
   m_Impl->m_Function->glDrawElements(
-    GL_TRIANGLES, m_Impl->m_Vertices.m_IndicesSize, GL_UNSIGNED_INT, nullptr);
+    GL_LINES, m_Impl->m_Vertices.m_IndicesSize, GL_UNSIGNED_INT, nullptr);
+
   unbind();
 }
 
@@ -92,18 +94,19 @@ void VertexIndexBuffer::createBuffer(Vertices& vertices) const
 
   GLsizei offset = 0;
   GLuint index = 0;
-  GLsizei stride = m_Impl->m_Vertices.m_PointAttribute.second * sizeof(GLfloat);
+  GLsizei stride = m_Impl->m_Vertices.m_DataSize * sizeof(GLfloat);
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {
     stride += m_Impl->m_Vertices.m_NormalAttribute.second * sizeof(GLfloat);
   }
   if (m_Impl->m_Vertices.m_TextureAttribute.first)
   {
-    stride += m_Impl->m_Vertices.m_TextureAttribute.second * sizeof(GLfloat); // NOLINT(*-narrowing-conversions)
+    stride += m_Impl->m_Vertices.m_TextureAttribute.second * sizeof(GLfloat);
   }
+
   m_Impl->m_Function->glVertexAttribPointer(
-    index, m_Impl->m_Vertices.m_PointAttribute.second, GL_FLOAT, false, stride, nullptr);
-  offset += m_Impl->m_Vertices.m_PointAttribute.second;
+    index, m_Impl->m_Vertices.m_DataSize, GL_FLOAT, false, stride, nullptr);
+  offset += m_Impl->m_Vertices.m_DataSize;
   index += 1;
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {

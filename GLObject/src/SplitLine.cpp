@@ -17,20 +17,11 @@ struct SplitLine::Impl final
     : m_Functions(functions)
     , m_LineConfig(lineConfig)
   {
-    ShaderProgram::ShaderPathMap shaderPathMap = { { GL_VERTEX_SHADER, ":/shader/shader/Line.vert" },
+    ShaderProgram::ShaderPathMap shaderPathMap = { { GL_VERTEX_SHADER,
+                                                     ":/shader/shader/Line.vert" },
       { GL_GEOMETRY_SHADER, ":/shader/shader/Line.geom" },
       { GL_FRAGMENT_SHADER, ":/shader/shader/Line.frag" } };
     m_Shader = std::make_unique<ShaderProgram>(functions, shaderPathMap);
-    bool setResult = m_Shader->setFloat1(lineConfig.m_LineWidth, "lineWidth");
-    if (!setResult)
-    {
-      spdlog::error("lineWidth set error");
-    }
-    setResult = m_Shader->setVec4(lineConfig.m_Color, "lineColor");
-    if (!setResult)
-    {
-      spdlog::error("lineColor set error");
-    }
 
     m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>(functions);
     Vertices vertices;
@@ -49,6 +40,8 @@ struct SplitLine::Impl final
 SplitLine::SplitLine(Functions* functions, const LineConfig& lineConfig)
 {
   m_Impl = std::make_unique<Impl>(functions, lineConfig);
+  setColor(m_Impl->m_LineConfig);
+  setWidth(m_Impl->m_LineConfig);
 }
 SplitLine::~SplitLine() = default;
 
@@ -82,7 +75,40 @@ void SplitLine::keyReleaseEvent(QKeyEvent* event)
 }
 void SplitLine::draw()
 {
-  m_Impl->m_Shader->bind();
+  m_Impl->m_Shader->use();
   m_Impl->m_VertexIndexBuffer->draw();
-  m_Impl->m_Shader->unbind();
+  m_Impl->m_Shader->unuse();
+}
+
+void SplitLine::setColor(const LineConfig& config)
+{
+  if (!m_Impl->m_Shader)
+  {
+    spdlog::error("shader program is not exists");
+    return;
+  }
+  m_Impl->m_Shader->use();
+  bool setResult = m_Impl->m_Shader->setVec4(config.m_Color, "lineColor");
+  if (!setResult)
+  {
+    spdlog::error("lineColor set error");
+  }
+  m_Impl->m_Shader->unuse();
+}
+
+void SplitLine::setWidth(const LineConfig& config)
+{
+  if (!m_Impl->m_Shader)
+  {
+    spdlog::error("shader program is not exists");
+    return;
+  }
+
+  m_Impl->m_Shader->use();
+  bool setResult = m_Impl->m_Shader->setFloat1(config.m_LineWidth, "lineWidth");
+  if (!setResult)
+  {
+    spdlog::error("lineWidth set error");
+  }
+  m_Impl->m_Shader->unuse();
 }
