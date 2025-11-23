@@ -4,11 +4,12 @@
 #include <qdebug.h>
 #include "Log.h"
 #include <QIcon>
+#include "MainWindow.h"
 
 int main(int argc, char** argv)
 {
   QApplication app(argc, argv);
-  Window window;
+  Window* window = new Window();
   Log::initLog(app, spdlog::level::debug);
   int windowWidth = 1920;
   int windowHeight = 1080;
@@ -31,12 +32,16 @@ int main(int argc, char** argv)
     0.5, 0.5, 0.5, 0.5);
   config4.m_BackgroundColor = ViewWindowConfig::Color(1.0f, 0.0f, .0f, 1.0f);
 
-  window.addViewWindow(config1);
-  window.addViewWindow(config2);
-  window.addViewWindow(config3);
-  window.addViewWindow(config4);
-  window.resize(windowWidth, windowHeight);
-  window.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
-  window.show();
+  window->addViewWindow(config1);
+  window->addViewWindow(config2);
+  window->addViewWindow(config3);
+  window->addViewWindow(config4);
+
+  MainWindow mainWindow;
+  mainWindow.resize(1920, 1080);
+  mainWindow.show();
+  mainWindow.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
+  mainWindow.setWindowTitle("OViewer");
+  mainWindow.setCentralWidget(window);
   return app.exec();
 }
