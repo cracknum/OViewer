@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <qdebug.h>
 #include "Log.h"
+#include <QIcon>
 
 int main(int argc, char** argv)
 {
@@ -35,6 +36,7 @@ int main(int argc, char** argv)
   window.addViewWindow(config3);
   window.addViewWindow(config4);
   window.resize(windowWidth, windowHeight);
+  window.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
   window.show();
   return app.exec();
 }

@@ -14,8 +14,8 @@ struct Window::Impl
   QTimer timer;
 };
 
-inline Window::Window(QWindow* parent)
-  : QOpenGLWindow(QOpenGLWindow::PartialUpdateBlit, parent)
+inline Window::Window(QWidget* parent)
+  : QOpenGLWidget(parent)
 {
   m_Impl = std::make_unique<Impl>();
 

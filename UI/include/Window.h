@@ -2,7 +2,7 @@
 #define WINDOW_H
 #include "UIExport.h"
 #include <QOpenGLFunctions_4_4_Core>
-#include <QOpenGLWindow>
+#include <QOpenGLWidget>
 #include <QWidget>
 #include <memory>
 #include "Macros.h"
@@ -11,12 +11,12 @@ class ViewWindowBase;
 struct ViewWindowConfig;
 
 class UI_API Window final
-  : public QOpenGLWindow
+  : public QOpenGLWidget
   , public QOpenGLFunctions_4_4_Core
 {
   Q_OBJECT
 public:
-  explicit Window(QWindow* parent = nullptr);
+  explicit Window(QWidget* parent = nullptr);
   ~Window() override;
   DISALLOW_COPY_AND_MOVE(Window);
 
