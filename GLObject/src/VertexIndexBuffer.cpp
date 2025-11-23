@@ -39,7 +39,7 @@ void VertexIndexBuffer::bind()
   m_Impl->m_Function->glBindVertexArray(m_Impl->m_VAO);
 }
 
-void VertexIndexBuffer::draw()
+void VertexIndexBuffer::draw(GLenum drawMode)
 {
   if (m_Impl->m_Vertices.m_Indices == nullptr || m_Impl->m_Vertices.m_IndicesSize == 0)
   {
@@ -49,7 +49,7 @@ void VertexIndexBuffer::draw()
   bind();
   // TODO: 绘制命令的参数还不一定，需要外部传递
   m_Impl->m_Function->glDrawElements(
-    GL_LINES, m_Impl->m_Vertices.m_IndicesSize, GL_UNSIGNED_INT, nullptr);
+    drawMode, m_Impl->m_Vertices.m_IndicesSize, GL_UNSIGNED_INT, nullptr);
 
   unbind();
 }
@@ -75,7 +75,6 @@ void VertexIndexBuffer::createBuffer(Vertices& vertices) const
   }
   m_Impl->m_Vertices = std::move(vertices);
 
-
   m_Impl->m_Function->glGenVertexArrays(1, &m_Impl->m_VAO);
   m_Impl->m_Function->glBindVertexArray(m_Impl->m_VAO);
 
@@ -94,7 +93,7 @@ void VertexIndexBuffer::createBuffer(Vertices& vertices) const
 
   GLsizei offset = 0;
   GLuint index = 0;
-  GLsizei stride = m_Impl->m_Vertices.m_DataSize * sizeof(GLfloat);
+  GLsizei stride = m_Impl->m_Vertices.m_PointAttribute.second * sizeof(GLfloat);
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {
     stride += m_Impl->m_Vertices.m_NormalAttribute.second * sizeof(GLfloat);
@@ -105,8 +104,8 @@ void VertexIndexBuffer::createBuffer(Vertices& vertices) const
   }
 
   m_Impl->m_Function->glVertexAttribPointer(
-    index, m_Impl->m_Vertices.m_DataSize, GL_FLOAT, false, stride, nullptr);
-  offset += m_Impl->m_Vertices.m_DataSize;
+    index, m_Impl->m_Vertices.m_PointAttribute.second, GL_FLOAT, false, stride, nullptr);
+  offset += m_Impl->m_Vertices.m_PointAttribute.second;
   index += 1;
   if (m_Impl->m_Vertices.m_NormalAttribute.first)
   {

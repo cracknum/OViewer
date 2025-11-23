@@ -10,6 +10,7 @@ enum class ShaderType;
 class QMatrix4x4;
 class QVector3D;
 class QVector4D;
+class QVector2D;
 
 class GLOBJECT_API ShaderProgram final
 {
@@ -31,6 +32,7 @@ public:
   bool setFloat1(float v, const char* name) const;
   bool setFloat3(float a, float b, float c, const char* name) const;
 
+  bool setVec2(const QVector2D& vec2, const char* name) const;
   bool setVec3(const QVector3D& vec3, const char* name) const;
   bool setVec4(const QVector4D& vec4, const char* name) const;
 

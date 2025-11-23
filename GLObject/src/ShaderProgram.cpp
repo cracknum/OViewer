@@ -5,6 +5,7 @@
 #include <sstream>
 #include <QMatrix4x4>
 #include <spdlog/spdlog.h>
+#include <qvector2d.h>
 
 struct ShaderProgram::Impl
 {
@@ -167,6 +168,18 @@ bool ShaderProgram::setVec3(const QVector3D& vec3, const char* name) const
   }
   m_Impl->m_Function->glUniform3f(location, vec3.x(), vec3.y(), vec3.z());
   
+  return true;
+}
+
+bool ShaderProgram::setVec2(const QVector2D& vec2, const char* name) const
+{
+  const GLint location = m_Impl->m_Function->glGetUniformLocation(m_Impl->m_Program, name);
+  if (location == -1)
+  {
+    return false;
+  }
+  m_Impl->m_Function->glUniform2f(location, vec2.x(), vec2.y());
+
   return true;
 }
 bool ShaderProgram::setVec4(const QVector4D& vec4, const char* name) const

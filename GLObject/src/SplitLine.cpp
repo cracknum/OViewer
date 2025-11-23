@@ -33,6 +33,7 @@ struct SplitLine::Impl final
     vertices.m_DataSize = 4;
     vertices.m_Indices = new GLuint[2]{ 0, 1 };
     vertices.m_IndicesSize = 2;
+    vertices.m_PointAttribute = Vertices::Attribute(GL_TRUE, 2);
     m_VertexIndexBuffer->createBuffer(vertices);
   }
 };
@@ -76,7 +77,7 @@ void SplitLine::keyReleaseEvent(QKeyEvent* event)
 void SplitLine::draw()
 {
   m_Impl->m_Shader->use();
-  m_Impl->m_VertexIndexBuffer->draw();
+  m_Impl->m_VertexIndexBuffer->draw(GL_LINES);
   m_Impl->m_Shader->unuse();
 }
 
@@ -105,10 +106,35 @@ void SplitLine::setWidth(const LineConfig& config)
   }
 
   m_Impl->m_Shader->use();
-  bool setResult = m_Impl->m_Shader->setFloat1(config.m_LineWidth, "lineWidth");
+  bool setResult = m_Impl->m_Shader->setInt1(config.m_LineWidth, "lineWidth");
   if (!setResult)
   {
     spdlog::error("lineWidth set error");
+  }
+  m_Impl->m_Shader->unuse();
+}
+
+LineConfig& SplitLine::getLineConfig() {
+  return m_Impl->m_LineConfig;
+}
+void SplitLine::setLineConfig(const LineConfig& config)
+{
+  m_Impl->m_LineConfig = config;
+}
+void SplitLine::setViewSize(const LineConfig::Size& size)
+{
+  m_Impl->m_LineConfig.m_ViewPortSize = size;
+
+  if (!m_Impl->m_Shader)
+  {
+    spdlog::error("shader program is not exists");
+    return;
+  }
+  m_Impl->m_Shader->use();
+  bool setResult = m_Impl->m_Shader->setVec2(m_Impl->m_LineConfig.m_ViewPortSize, "viewPortSize");
+  if (!setResult)
+  {
+    spdlog::error("viewPortSize set error");
   }
   m_Impl->m_Shader->unuse();
 }

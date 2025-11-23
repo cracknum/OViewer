@@ -2,9 +2,9 @@
 #define SPLIT_LINE_H
 #include "GLObjectExport.h"
 #include "InteractiveObject.h"
+#include "LineConfig.h"
 #include <memory>
 
-struct LineConfig;
 class QOpenGLFunctions_4_4_Core;
 class GLOBJECT_API SplitLine final : public InteractiveObject
 {
@@ -21,6 +21,10 @@ public:
   void keyReleaseEvent(QKeyEvent* event) override;
 
   void draw() override;
+
+  LineConfig& getLineConfig();
+  void setLineConfig(const LineConfig& config);
+  void setViewSize(const LineConfig::Size& size);
 
 protected:
   void setColor(const LineConfig& config);

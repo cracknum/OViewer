@@ -3,16 +3,16 @@
 
 #include <memory>
 #include "GLObjectExport.h"
+#include <qopenglfunctions_4_4_core.h>
 
 struct Vertices;
-class QOpenGLFunctions_4_4_Core;
 class GLOBJECT_API VertexIndexBuffer
 {
 public:
   explicit VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
   ~VertexIndexBuffer();
   void createBuffer(Vertices& vertices) const;
-  void draw();
+  void draw(GLenum drawMode);
 
 private:
   void bind();
