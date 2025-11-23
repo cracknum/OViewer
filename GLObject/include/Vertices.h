@@ -16,6 +16,21 @@ struct GLOBJECT_API Vertices
   Attribute m_TextureAttribute;
   Attribute m_PointAttribute;
 
+  Vertices& operator=(Vertices&& vertices)
+  { m_Data = vertices.m_Data;
+    m_DataSize = vertices.m_DataSize;
+    m_Indices = vertices.m_Indices;
+    m_IndicesSize = vertices.m_IndicesSize;
+    m_NormalAttribute = vertices.m_NormalAttribute;
+    m_TextureAttribute = vertices.m_TextureAttribute;
+    m_PointAttribute = vertices.m_PointAttribute;
+    vertices.m_Data = nullptr;
+    vertices.m_DataSize = 0;
+    vertices.m_Indices = nullptr;
+    vertices.m_IndicesSize = 0;
+
+    return *this;
+  }
   Vertices()
     : m_Data(nullptr)
     , m_DataSize(0)
@@ -33,11 +48,13 @@ struct GLOBJECT_API Vertices
     {
       delete []m_Data;
       m_DataSize = 0;
+      m_Data = nullptr;
     }
     if (m_Indices)
     {
       delete []m_Indices;
       m_IndicesSize = 0;
+      m_Indices = nullptr;
     }
   }
 };

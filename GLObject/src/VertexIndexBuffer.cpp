@@ -57,9 +57,8 @@ void VertexIndexBuffer::unbind()
   m_Impl->m_Function->glBindVertexArray(0);
 }
 
-void VertexIndexBuffer::createBuffer(const Vertices& vertices) const
+void VertexIndexBuffer::createBuffer(Vertices& vertices) const
 {
-  m_Impl->m_Vertices = vertices;
   const bool isDataInvalid = vertices.m_Data == nullptr;
   const bool isDataSizeInvalid = vertices.m_DataSize == 0;
   const bool isIndicesInvalid = vertices.m_Indices == nullptr;
@@ -72,6 +71,8 @@ void VertexIndexBuffer::createBuffer(const Vertices& vertices) const
         << " indicesSizeValid: " << !isIndicesSizeInvalid << "}";
     throw std::runtime_error(oss.str());
   }
+  m_Impl->m_Vertices = std::move(vertices);
+
 
   m_Impl->m_Function->glGenVertexArrays(1, &m_Impl->m_VAO);
   m_Impl->m_Function->glBindVertexArray(m_Impl->m_VAO);

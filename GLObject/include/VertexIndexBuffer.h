@@ -11,7 +11,7 @@ class GLOBJECT_API VertexIndexBuffer
 public:
   explicit VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
   ~VertexIndexBuffer();
-  void createBuffer(const Vertices& vertices) const;
+  void createBuffer(Vertices& vertices) const;
   void draw();
 
 private:
