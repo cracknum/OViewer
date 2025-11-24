@@ -2,10 +2,11 @@
 #define DICOM_READ_FILTER_H
 #include "Macros.h"
 #include <itkImageSource.h>
+#include "DicomExport.h"
 
 class DicomSeries;
 template <typename OutputImageType>
-class DicomReadReader final : public itk::Object
+class DICOM_API DicomReadReader final : public itk::Object
 {
 public:
   itkTypeMacro(DicomReadReader, itk::Object);

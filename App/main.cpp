@@ -5,6 +5,8 @@
 #include "Log.h"
 #include <QIcon>
 #include "MainWindow.h"
+#include "ImageInformation.hpp"
+#include <itkImage.h>
 
 int main(int argc, char** argv)
 {
@@ -43,5 +45,10 @@ int main(int argc, char** argv)
   mainWindow.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
   mainWindow.setWindowTitle("OViewer");
   mainWindow.setCentralWidget(window);
+
+  mainWindow.connect(&mainWindow, &MainWindow::signalOpenFoloderFinish, [](const QString& dirPath){
+	// dicom库的导出有问题，这里显示的是dllimport
+	ImageInformation information;
+  });
   return app.exec();
 }

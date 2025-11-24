@@ -10,17 +10,25 @@ if (NOT TARGET Qt5::Core)
 endif ()
 
 if(NOT TARGET SARibbonBar::SARibbonBar)
-    find_package(SARibbonBar)
+    set(CMAKE_PREFIX_PATH $ENV{SARibbonBar_DIR};${CMAKE_PREFIX_PATH})
+    find_package(SARibbonBar REQUIRED)
+endif()
+
+if(NOT TARGET spdlog::spdlog)
+    find_package(spdlog CONFIG REQUIRED)
 endif()
 
 if (NOT "${Source_files}")
-    add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
+    add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files} resource.qrc)
     target_link_libraries(${PROJECT_NAME} PUBLIC
         Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
         Common GLObject
         SARibbonBar::SARibbonBar
+        spdlog::spdlog
     )
-    target_include_directories(${PROJECT_NAME} PUBLIC include)
+    target_include_directories(${PROJECT_NAME} 
+        PUBLIC include 
+        PRIVATE ${SARibbonBar_INCLUDE_DIR})
     export_model(${export_config_file_path} ${PROJECT_NAME})
 endif ()
 

@@ -7,8 +7,14 @@
 
 class UI_API MainWindow : public SARibbonMainWindow
 {
-  Q_OBJECT
+	Q_OBJECT
 public:
-  MainWindow(QWidget* parent = nullptr);
+	MainWindow(QWidget* parent = nullptr);
+
+private slots:
+	void openFolder();
+
+signals:
+	void signalOpenFoloderFinish(const QString& dirPath);
 };
 #endif 
