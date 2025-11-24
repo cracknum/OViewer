@@ -3,10 +3,42 @@
 #include <SARibbonBar.h>
 #include <QFileDialog>
 #include <spdlog/spdlog.h>
+#include "DicomReader.hpp"
+#include "Window.h"
+#include "ImageInformation.hpp"
+#include <itkImage.h>
+#include <QGridLayout>
+#include "ProjectManagePanel.h"
+#include "ViewWindowConfig.h"
+
+struct MainWindow::Impl
+{
+	DicomReadReader::SeriesVector m_SeriesVector;
+	ProjectManagePanel* m_Panel;
+	Window* m_Window;
+	Impl() : m_Panel(nullptr), m_Window(nullptr)
+	{
+	}
+};
 
 MainWindow::MainWindow(QWidget* parent/* = nullptr*/)
 	: SARibbonMainWindow(parent,
 		SARibbonMainWindowStyleFlag::UseRibbonMenuBar | SARibbonMainWindowStyleFlag::UseNativeFrame)
+{
+	m_Impl = std::make_unique<Impl>();
+	initHeader();
+	initCentral();
+}
+
+MainWindow::~MainWindow() = default;
+
+void MainWindow::initUI()
+{
+	initHeader();
+	initCentral();
+}
+
+void MainWindow::initHeader()
 {
 	SARibbonBar* ribbon = ribbonBar();
 	SARibbonCategory* fileCategory = ribbon->addCategoryPage("File");
@@ -21,9 +53,68 @@ MainWindow::MainWindow(QWidget* parent/* = nullptr*/)
 	connect(openFolderAction, &QAction::triggered, this, &MainWindow::openFolder);
 }
 
+void MainWindow::initCentral()
+{
+	Window* window = new Window();
+	int windowWidth = 1920;
+	int windowHeight = 1080;
+	ViewWindowConfig config1;
+	config1.m_ViewPort = ViewWindowConfig::ViewPort(0, 0, 0.5, 0.5);
+	config1.m_BackgroundColor = ViewWindowConfig::Color(0.0f, .0f, .0f, 1.0f);
+
+	ViewWindowConfig config2;
+	config2.m_ViewPort =
+		ViewWindowConfig::ViewPort(0.5, 0, 0.5, 0.5);
+	config2.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+
+	ViewWindowConfig config3;
+	config3.m_ViewPort =
+		ViewWindowConfig::ViewPort(0, 0.5, 0.5, 0.5);
+	config3.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+
+	ViewWindowConfig config4;
+	config4.m_ViewPort = ViewWindowConfig::ViewPort(
+		0.5, 0.5, 0.5, 0.5);
+	config4.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+
+	window->addViewWindow(config1);
+	window->addViewWindow(config2);
+	window->addViewWindow(config3);
+	window->addViewWindow(config4);
+	m_Impl->m_Window = window;
+
+	QWidget* centerWidget = new QWidget;
+	QGridLayout* layout = new QGridLayout;
+	m_Impl->m_Panel = new ProjectManagePanel;
+	layout->addWidget(window, 0, 0, 1, 2);
+	layout->addWidget(m_Impl->m_Panel, 0, 2, 1, 1);
+
+	layout->setColumnStretch(0, 1);
+	layout->setColumnStretch(2, 0);
+	centerWidget->setLayout(layout);
+	setCentralWidget(centerWidget);
+}
+
 void MainWindow::openFolder()
 {
+	if (!m_Impl->m_SeriesVector.empty())
+	{
+		m_Impl->m_SeriesVector.clear();
+	}
+
 	QString folderPath = QFileDialog::getExistingDirectory();
 	spdlog::info("get folder path: {0}", folderPath.toStdString());
-	emit signalOpenFoloderFinish(folderPath);
+
+	DicomReadReader::Pointer reader = DicomReadReader::New();
+	reader->SetDicomDirectory(folderPath.toStdString());
+	reader->GenerateData();
+
+	for (auto it = reader->begin(); it != reader->end(); ++it)
+	{
+		(*it)->GetImageInfo()->Print(std::cout);
+		m_Impl->m_SeriesVector.push_back(*it);
+	}
+
+	m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
+	spdlog::info("read finished");
 }

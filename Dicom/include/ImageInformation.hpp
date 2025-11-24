@@ -8,6 +8,8 @@
 #include "DicomExport.h"
 #include <any>
 #include <itkImageRegion.h>
+#include <itkImageIOBase.h>
+#include <itkImageBase.h>
 
 class DICOM_API ImageInformation final : public InformationParser
 {
@@ -54,6 +56,7 @@ public:
     m_Volume = image;
     m_Dimensions = image->GetLargestPossibleRegion().GetSize();
   }
+
 
 protected:
   ImageInformation();
@@ -113,7 +116,7 @@ private:
   /**
    * @brief 实际存储数据
    */
-  itk::Object::Pointer m_Volume;
+  itk::ImageBase<3>::Pointer m_Volume;
 
   /**
    * @brief 体数据的spacing
@@ -128,6 +131,10 @@ private:
    */
   itk::Matrix<double> m_Direction;
   itk::Size<3> m_Dimensions;
+  /**
+   * @brief 像素的每个分量的数据类型
+   */
+  itk::ImageIOBase::IOComponentType m_ComponentType;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H
