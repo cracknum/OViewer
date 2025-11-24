@@ -5,15 +5,15 @@ project(Testing)
 enable_testing()
 
 if (NOT TARGET gtest_main)
-find_package(Gtest CONFIG REQUIRED)
-endif()
+    find_package(Gtest CONFIG REQUIRED)
+endif ()
 
 set(Dicom_model_test_files
-    DicomTest/dicomTest.cpp
+        DicomTest/dicomTest.cpp
 )
 
 set(Testing_files
-    ${Dicom_model_test_files}
+        ${Dicom_model_test_files}
 )
 
 add_executable(${PROJECT_NAME} ${Testing_files})

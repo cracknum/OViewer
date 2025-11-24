@@ -13,7 +13,8 @@ struct ViewWindowConfig
   using WindowSize = std::array<int, 4>;
   using Color = QVector4D;
   /**
-   * @brief <x, y, z, w> <x, y>: start point, <z, w> 相比于父窗口的宽高比例 x, y, z, w都是归一化后的数据
+   * @brief <x, y, z, w> <x, y>: start point, <z, w> 相比于父窗口的宽高比例 x, y, z,
+   * w都是归一化后的数据
    */
   ViewPort m_ViewPort;
   /**

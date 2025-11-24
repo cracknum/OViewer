@@ -81,10 +81,10 @@ void Window::paintGL()
     Style::WindowBackground[3]);
   glClear(GL_COLOR_BUFFER_BIT);
 
-   for (auto* viewWindow : m_Impl->m_ViewWindows)
+  for (auto* viewWindow : m_Impl->m_ViewWindows)
   {
-     viewWindow->update();
-   }
+    viewWindow->update();
+  }
 
   glViewport(0, 0, width(), height());
   m_Impl->m_HorizontalLine->draw();

@@ -1,11 +1,12 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-#include <memory>
 #include <glm/glm.hpp>
+#include <memory>
 
 struct CameraConfig;
 
-class Camera {
+class Camera
+{
 public:
   explicit Camera(const CameraConfig& cameraConfig);
   void setPosition(const glm::vec3& position);
@@ -20,11 +21,10 @@ public:
 
 private:
   void updateRight();
+
 private:
   struct Impl;
   std::unique_ptr<Impl> m_Impl;
 };
 
-
-
-#endif //CAMERA_H
+#endif // CAMERA_H

@@ -1,11 +1,11 @@
 #ifndef WINDOW_H
 #define WINDOW_H
+#include "Macros.h"
 #include "UIExport.h"
 #include <QOpenGLFunctions_4_4_Core>
 #include <QOpenGLWidget>
 #include <QWidget>
 #include <memory>
-#include "Macros.h"
 
 class ViewWindowBase;
 struct ViewWindowConfig;
@@ -23,6 +23,7 @@ public:
   using ViewWindowVector = std::vector<ViewWindowBase*>;
 
   void addViewWindow(const ViewWindowConfig& config);
+
 protected:
   void initializeGL() override;
   void resizeGL(int w, int h) override;

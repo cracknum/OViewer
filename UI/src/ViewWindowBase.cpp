@@ -1,6 +1,7 @@
 #include "ViewWindowBase.h"
 
-ViewWindowBase::ViewWindowBase(QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent)
+ViewWindowBase::ViewWindowBase(
+  QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent)
   : m_Function(function)
   , m_Config(config)
   , QObject(parent)
@@ -12,7 +13,8 @@ void ViewWindowBase::update()
   drawWindow();
 }
 
-void ViewWindowBase::updateViewSize(const ViewWindowConfig::WindowSize& parentWindowSize) {
+void ViewWindowBase::updateViewSize(const ViewWindowConfig::WindowSize& parentWindowSize)
+{
   m_Config.m_ViewPortSize[0] = (static_cast<int>(m_Config.m_ViewPort.x() * parentWindowSize[0]));
   m_Config.m_ViewPortSize[1] = (static_cast<int>(m_Config.m_ViewPort.y() * parentWindowSize[1]));
   m_Config.m_ViewPortSize[2] = static_cast<int>(m_Config.m_ViewPort.width() * parentWindowSize[0]);

@@ -32,7 +32,7 @@ option(enable_testing OFF)
 
 if (enable_testing)
     add_subdirectory(Testing)
-endif()
+endif ()
 
 
 

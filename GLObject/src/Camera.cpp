@@ -31,11 +31,12 @@ void Camera::rotate(const glm::vec3& axis, float angle)
   m_Impl->m_Config.m_Rotate = glm::angleAxis(radian, axis) * m_Impl->m_Config.m_Rotate;
 
   constexpr auto localFront = glm::vec3(0.0f, 0.0f, -1.0f);
-  constexpr auto localUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+  constexpr auto localUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
   m_Impl->m_Config.m_Front = glm::normalize(m_Impl->m_Config.m_Rotate * localFront);
-  m_Impl->m_Config.m_Up    = glm::normalize(m_Impl->m_Config.m_Rotate * localUp);
-  m_Impl->m_Config.m_Right = glm::normalize(glm::cross(m_Impl->m_Config.m_Front, m_Impl->m_Config.m_Up));
+  m_Impl->m_Config.m_Up = glm::normalize(m_Impl->m_Config.m_Rotate * localUp);
+  m_Impl->m_Config.m_Right =
+    glm::normalize(glm::cross(m_Impl->m_Config.m_Front, m_Impl->m_Config.m_Up));
 }
 void Camera::moveTo(const glm::vec3& targetPoint)
 {

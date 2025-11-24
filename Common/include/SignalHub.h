@@ -6,10 +6,10 @@ class SignalHub final : public QObject
 {
 public:
   explicit SignalHub(QObject* parent = nullptr)
-    :QObject(parent)
-  {}
-  signals:
-
+    : QObject(parent)
+  {
+  }
+signals:
 };
 
-#endif //SIGNAL_HUB_H
+#endif // SIGNAL_HUB_H
