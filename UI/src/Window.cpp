@@ -4,14 +4,12 @@
 #include "Style.h"
 #include "ViewWindow.h"
 #include "ViewWindowConfig.h"
-#include <qtimer.h>
 
 struct Window::Impl
 {
   ViewWindowVector m_ViewWindows;
   std::unique_ptr<SplitLine> m_HorizontalLine;
   std::unique_ptr<SplitLine> m_VerticalLine;
-  QTimer timer;
 };
 
 inline Window::Window(QWidget* parent)
@@ -19,8 +17,6 @@ inline Window::Window(QWidget* parent)
 {
   m_Impl = std::make_unique<Impl>();
 
-  m_Impl->timer.connect(&m_Impl->timer, &QTimer::timeout, [this]() { this->update(); });
-  m_Impl->timer.start(100);
   QSurfaceFormat format(this->format());
   format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
   this->setFormat(format);

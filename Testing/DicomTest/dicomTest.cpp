@@ -3,9 +3,7 @@
 
 TEST(DicomTest, testDicomReader)
 {
-  using Image = itk::Image<unsigned char, 3>;
-
-  using ucharDicomReadReader = DicomReadReader<Image>;
+  using ucharDicomReadReader = DicomReadReader;
   ucharDicomReadReader::Pointer reader = ucharDicomReadReader::New();
   // reader->SetDicomDirectory("D:/Workspace/Data/case2");
   reader->SetDicomDirectory("F:/Workspace/Data/Covid Scans");

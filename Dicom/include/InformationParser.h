@@ -21,6 +21,7 @@ public:
 protected:
   InformationParser() = default;
   ~InformationParser() override = default;
+  void PrintSelf(std::ostream & os, itk::Indent indent) const override{Superclass::PrintSelf(os, indent);};
 
   template<typename T = std::string>
   static T parseTag(const itk::MetaDataDictionary& metaData, const std::string& key)

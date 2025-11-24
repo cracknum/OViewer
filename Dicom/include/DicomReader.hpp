@@ -2,38 +2,41 @@
 #define DICOM_READ_FILTER_H
 #include "Macros.h"
 #include <itkImageSource.h>
-#include "DicomExport.h"
+#include <itkImageIOBase.h>
+#include <itkGDCMSeriesFileNames.h>
 
 class DicomSeries;
-template <typename OutputImageType>
-class DICOM_API DicomReadReader final : public itk::Object
+class DicomReadReader final : public itk::Object
 {
 public:
-  itkTypeMacro(DicomReadReader, itk::Object);
-  itkSetPointerDeclare(DicomReadReader);
-  itkFactorylessNewMacro(Self);
-  using SeriesVector = std::vector<itk::SmartPointer<DicomSeries>>;
-  using PixelType = typename OutputImageType::PixelType;
-  static constexpr unsigned int ImageDimension = OutputImageType::ImageDimension;
+	itkTypeMacro(DicomReadReader, itk::Object);
+	itkSetPointerDeclare(DicomReadReader);
+	itkFactorylessNewMacro(Self);
+	using SeriesVector = std::vector<itk::SmartPointer<DicomSeries>>;
 
-  static_assert(ImageDimension == 3, "DicomSeriesReader only supports 3D output image.");
+	itkSetMacro(DicomDirectory, std::string);
 
-  itkSetMacro(DicomDirectory, std::string);
+	void GenerateData();
 
-  void GenerateData();
-
-  SeriesVector::iterator begin() { return m_Series.begin(); }
-  SeriesVector::iterator end() { return m_Series.end(); }
-  SeriesVector::const_iterator const_begin() const { return m_Series.cbegin(); }
-  SeriesVector::const_iterator const_end() const { return m_Series.cend(); }
+	SeriesVector::iterator begin() { return m_Series.begin(); }
+	SeriesVector::iterator end() { return m_Series.end(); }
+	SeriesVector::const_iterator const_begin() const { return m_Series.cbegin(); }
+	SeriesVector::const_iterator const_end() const { return m_Series.cend(); }
 
 protected:
-  DicomReadReader();
-  ~DicomReadReader() override = default;
-private:
-  std::string m_DicomDirectory;
+	DicomReadReader();
+	~DicomReadReader() override = default;
 
-  SeriesVector m_Series;
+	template <typename TPixel>
+	std::string doReadData(const itk::GDCMSeriesFileNames::FileNamesContainerType& fileNames, DicomSeries* dicomSeries);
+	std::string dispatchRead(
+		itk::ImageIOBase::IOComponentType VComponent, 
+		const itk::GDCMSeriesFileNames::FileNamesContainerType& fileNames,
+		DicomSeries* dicomSeries);
+private:
+	std::string m_DicomDirectory;
+
+	SeriesVector m_Series;
 };
 
 #include "DicomReader.ipp"

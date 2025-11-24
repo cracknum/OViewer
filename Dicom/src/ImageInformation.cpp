@@ -7,6 +7,26 @@ ImageInformation::ImageInformation()
   : m_Volume(nullptr)
 {
 }
+
+void ImageInformation::PrintSelf(std::ostream& os, itk::Indent indent) const
+{
+	Superclass::PrintSelf(os, indent);
+	os << indent 
+	   << "InstanceUID" << m_InstanceUID << std::endl
+	   << "rows: " << m_Rows << std::endl
+	   << "columns: " << m_Columns << std::endl
+	   << "rowPixelSpacing: " << m_RowPixelSpacing << std::endl
+	   << "columnPixelSpacing: " << m_ColumnPixelSpacing << std::endl
+	   << "bitsAllocated: " << m_BitsAllocated << std::endl
+	   << "pixelRepresentation: " << m_PixelRepresentation << std::endl
+	   << "imageType: " << m_ImageType << std::endl
+	   << "windowCenter: " << m_WindowCenter << std::endl
+	   << "windowWidth: " << m_WindowWidth << std::endl
+	   << "samplesPerPixel: " << m_SamplesPerPixel << std::endl
+	   << "photoMetricInterpretation: " << m_PhotoMetricInterpretation << std::endl
+	   << "rows: " << m_Rows << std::endl;
+}
+
 inline void ImageInformation::parseInfo(const itk::MetaDataDictionary& metaData)
 {
   m_InstanceUID = parseTag(metaData, DicomTags::SeriesInstanceUID);

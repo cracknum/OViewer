@@ -58,7 +58,7 @@ public:
 protected:
   ImageInformation();
   ~ImageInformation() override = default;
-
+  void PrintSelf(std::ostream & os, itk::Indent indent) const override;
 private:
   /**
    * @brief 全球唯一标识

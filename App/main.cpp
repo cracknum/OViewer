@@ -6,6 +6,7 @@
 #include <QIcon>
 #include "MainWindow.h"
 #include "ImageInformation.hpp"
+#include "DicomReader.hpp"
 #include <itkImage.h>
 
 int main(int argc, char** argv)
@@ -47,8 +48,15 @@ int main(int argc, char** argv)
   mainWindow.setCentralWidget(window);
 
   mainWindow.connect(&mainWindow, &MainWindow::signalOpenFoloderFinish, [](const QString& dirPath){
-	// dicom库的导出有问题，这里显示的是dllimport
-	ImageInformation information;
+	DicomReadReader::Pointer reader = DicomReadReader::New();
+	reader->SetDicomDirectory(dirPath.toStdString());
+	reader->GenerateData();
+	
+	for	(auto it = reader->begin(); it != reader->end(); ++it)
+	{
+		(*it)->GetImageInfo()->Print(std::cout);
+	}
+	spdlog::info("read finished");
   });
   return app.exec();
 }
