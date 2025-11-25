@@ -1,6 +1,7 @@
 #ifndef INTERACTIVE_OBJECT_H
 #define INTERACTIVE_OBJECT_H
 #include "PrimitiveExport.h"
+#include <glm/glm.hpp>
 class QMouseEvent;
 class QWheelEvent;
 class QKeyEvent;
@@ -16,7 +17,7 @@ public:
   virtual void wheelEvent(QWheelEvent* event) = 0;
   virtual void keyPressEvent(QKeyEvent* event) = 0;
   virtual void keyReleaseEvent(QKeyEvent* event) = 0;
-  virtual void draw() = 0;
+  virtual void draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix) = 0;
 };
 
-#endif //INTERACTIVE_OBJECT_H
+#endif // INTERACTIVE_OBJECT_H

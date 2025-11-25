@@ -14,14 +14,14 @@
 #include <QTimer>
 #endif
 
-struct Window::Impl
+struct Window::Impl final
 {
   ViewWindowVector m_ViewWindows;
   std::unique_ptr<Line> m_HorizontalLine;
   std::unique_ptr<Line> m_VerticalLine;
   std::shared_ptr<ShaderManager> m_ShaderManager;
 #if defined(NSIGHT_DEBUG)
-  QTimer* timer;
+  QTimer* timer = nullptr;
 #endif
 };
 
@@ -40,7 +40,7 @@ inline Window::Window(QWidget* parent)
   format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
   this->setFormat(format);
 }
-inline Window::~Window() {}
+Window::~Window() = default;
 void Window::addViewWindow(const ViewWindowConfig& config)
 {
   auto* viewWindow = new ViewWindow(this, config, this);
@@ -77,7 +77,7 @@ void Window::initializeGL()
     }
   }
 
-  LineConfig horizontalLineConfig, verticalLineConfig;
+  LineConfig horizontalLineConfig{}, verticalLineConfig{};
   horizontalLineConfig.m_Color = LineConfig::Color(1.0, 1.0, 1.0, 1.0);
   horizontalLineConfig.m_StartPoint = LineConfig::Point(-1.0f, 0.0);
   horizontalLineConfig.m_EndPoint = LineConfig::Point(1.0f, 0.0);
@@ -99,13 +99,13 @@ void Window::initializeGL()
 
   auto* window = getViewWindow(ViewWindowConfig::IdType(0));
 
-    QuadConfig quadConfig;
-    quadConfig.m_Origin = glm::vec3(0.0f, 0.0f, 0.0f);
-    quadConfig.m_U = glm::vec3(1.0f, 0.0f, 0.0f);
-    quadConfig.m_V = glm::vec3(0.0f, 1.0f, 0.0f);
+  QuadConfig quadConfig{};
+  quadConfig.m_Origin = glm::vec3(-300.0f, -300.0f, -200.0f);
+  quadConfig.m_U = glm::vec3(500.0f, 0.0f, 0.0f);
+  quadConfig.m_V = glm::vec3(0.0f, 500.0f, 0.0f);
 
-    std::shared_ptr<Quad> quad = std::make_shared<Quad>(this, m_Impl->m_ShaderManager, quadConfig);
-    window->addPrimitive(quad);
+  std::shared_ptr<Quad> quad = std::make_shared<Quad>(this, m_Impl->m_ShaderManager, quadConfig);
+  window->addPrimitive(quad);
 }
 void Window::resizeGL(int w, int h)
 {
@@ -137,8 +137,8 @@ void Window::paintGL()
   }
 
   glViewport(0, 0, width(), height());
-  m_Impl->m_HorizontalLine->draw();
-  m_Impl->m_VerticalLine->draw();
+  m_Impl->m_HorizontalLine->draw(glm::mat4(1.0f), glm::mat4(1.0f));
+  m_Impl->m_VerticalLine->draw(glm::mat4(1.0f), glm::mat4(1.0f));
 }
 
 void Window::mousePressEvent(QMouseEvent* event) {}

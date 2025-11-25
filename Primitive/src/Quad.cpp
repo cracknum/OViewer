@@ -4,6 +4,7 @@
 #include "ShaderManager.h"
 #include "VertexIndexBuffer.h"
 #include "Vertices.h"
+#include <spdlog/spdlog.h>
 
 struct Quad::Impl
 {
@@ -12,6 +13,7 @@ struct Quad::Impl
   std::unique_ptr<VertexIndexBuffer> m_Data;
   ShaderManager::ShaderPointer m_Shader;
   Functions* m_Functions;
+  glm::mat4 m_ModelMatrix;
 
   Impl(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config)
     : m_ShaderManager(shaderManager)
@@ -29,14 +31,30 @@ struct Quad::Impl
       m_Shader = shaderManager->registerShader(PrimitiveType::QUAD, shaderPathMap);
     }
 
-	m_Data = std::make_unique<VertexIndexBuffer>(functions);
-	Vertices vertices;
-	vertices.m_Data = new GLfloat[8]{-1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
-	vertices.m_DataSize = 8;
-	vertices.m_Indices = new GLuint[6]{0, 1, 3, 1, 2, 3};
-	vertices.m_IndicesSize = 6;
-	vertices.m_PointAttribute = Vertices::Attribute(GL_TRUE, 2);
-	m_Data->createBuffer(vertices);
+    m_Data = std::make_unique<VertexIndexBuffer>(functions);
+
+    Vertices vertices;
+    // clang-format off
+    vertices.m_Data = new GLfloat[12]
+    {
+      0, 0, 0,
+      1, 0, 0,
+      1, 1, 0,
+      0, 1, 0
+    };
+
+    m_ModelMatrix = glm::mat4(
+      glm::vec4(m_Config.m_U, 0.0f),
+      glm::vec4(m_Config.m_V, 0.0f),
+      glm::vec4(m_Config.m_Normal, 0.0f),
+      glm::vec4(m_Config.m_Origin, 1.0f)
+    );
+    // clang-format on
+    vertices.m_DataSize = 12;
+    vertices.m_Indices = new GLuint[6]{ 0, 1, 3, 1, 2, 3 };
+    vertices.m_IndicesSize = 6;
+    vertices.m_PointAttribute = Vertices::Attribute(GL_TRUE, 3);
+    m_Data->createBuffer(vertices);
   }
 };
 
@@ -46,7 +64,7 @@ Quad::Quad(
   m_Impl = std::make_unique<Impl>(functions, shaderManager, config);
 }
 
-Quad::~Quad() {}
+Quad::~Quad() = default;
 
 void Quad::mousePressEvent(QMouseEvent* event) {}
 
@@ -62,11 +80,27 @@ void Quad::keyPressEvent(QKeyEvent* event) {}
 
 void Quad::keyReleaseEvent(QKeyEvent* event) {}
 
-void Quad::draw() {
-	m_Impl->m_Shader->use();
-	m_Impl->m_Shader->setMat4(glm::mat4(1.0f), "modelMatrix");
-	m_Impl->m_Shader->setMat4(glm::mat4(1.0f), "viewMatrix");
-	m_Impl->m_Shader->setMat4(glm::mat4(1.0f), "projectMatrix");
-	m_Impl->m_Data->draw(GL_TRIANGLES);
-	m_Impl->m_Shader->unuse();
+void Quad::draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix)
+{
+  m_Impl->m_Shader->use();
+  bool setResult = false;
+  setResult = m_Impl->m_Shader->setMat4(m_Impl->m_ModelMatrix, "modelMatrix");
+  if (!setResult)
+  {
+    SPDLOG_ERROR("modelMatrix set error");
+  }
+
+  setResult = m_Impl->m_Shader->setMat4(viewMatrix, "viewMatrix");
+  if (!setResult)
+  {
+    SPDLOG_ERROR("viewMatrix set error");
+  }
+
+  setResult = m_Impl->m_Shader->setMat4(projectMatrix, "projectMatrix");
+  if (!setResult)
+  {
+    SPDLOG_ERROR("projectMatrix set error");
+  }
+  m_Impl->m_Data->draw(GL_TRIANGLES);
+  m_Impl->m_Shader->unuse();
 }

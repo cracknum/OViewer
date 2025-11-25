@@ -35,8 +35,7 @@ struct Line::Impl final
     m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>(functions);
     Vertices vertices;
     vertices.m_Data = new float[4]{ static_cast<float>(lineConfig.m_StartPoint.x),
-      static_cast<float>(lineConfig.m_StartPoint.y),
-      static_cast<float>(lineConfig.m_EndPoint.x),
+      static_cast<float>(lineConfig.m_StartPoint.y), static_cast<float>(lineConfig.m_EndPoint.x),
       static_cast<float>(lineConfig.m_EndPoint.y) };
 
     vertices.m_DataSize = 4;
@@ -84,7 +83,7 @@ void Line::keyReleaseEvent(QKeyEvent* event)
 {
   (void)event;
 }
-void Line::draw()
+void Line::draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix)
 {
   m_Impl->m_Shader->use();
   bool setResult = false;

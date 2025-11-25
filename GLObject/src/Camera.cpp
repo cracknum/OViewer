@@ -26,6 +26,8 @@ Camera::Camera(
   updateViewMatrix();
   updateProjectMatrix();
 }
+
+Camera::~Camera() = default;
 void Camera::setPosition(const glm::vec3& position)
 {
   m_Impl->m_CameraConfig.m_Position = position;
@@ -109,16 +111,13 @@ void Camera::updateProjectMatrix()
   auto& projectConfig = m_Impl->m_ProjectConfig;
   if (projectConfig.m_ProjectType == CameraParams::ProjectType::PERSPECTIVE)
   {
-	m_Impl->m_ProjectMatrix = glm::perspective(
-    projectConfig.m_FovY, projectConfig.m_Aspect, projectConfig.m_Near, projectConfig.m_Far);
+    m_Impl->m_ProjectMatrix = glm::perspective(
+      projectConfig.m_FovY, projectConfig.m_Aspect, projectConfig.m_Near, projectConfig.m_Far);
   }
   else
   {
-	m_Impl->m_ProjectMatrix = glm::ortho(
-		-projectConfig.m_Width * 0.5, projectConfig.m_Width * 0.5,
-		-projectConfig.m_Height * 0.5, projectConfig.m_Height * 0.5
-	);
+    m_Impl->m_ProjectMatrix = glm::ortho(-projectConfig.m_Width * 0.5f,
+      projectConfig.m_Width * 0.5f, -projectConfig.m_Height * 0.5f, projectConfig.m_Height * 0.5f,
+      projectConfig.m_Near, projectConfig.m_Far);
   }
-  
-  
 }

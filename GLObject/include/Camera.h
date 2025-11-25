@@ -1,5 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
+#include "GLObjectExport.h"
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -9,10 +10,12 @@ struct CameraConfig;
 struct ProjectConfig;
 }
 
-class Camera
+class GLOBJECT_API Camera
 {
 public:
-  explicit Camera(const CameraParams::CameraConfig& cameraConfig, const CameraParams::ProjectConfig& projectConfig);
+  explicit Camera(const CameraParams::CameraConfig& cameraConfig,
+    const CameraParams::ProjectConfig& projectConfig);
+  ~Camera();
   void setPosition(const glm::vec3& position);
   void setUp(const glm::vec3& up);
   void setFront(const glm::vec3& front);

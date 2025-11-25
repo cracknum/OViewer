@@ -27,8 +27,8 @@ struct ProjectConfig
     , m_Near(0.1f)
     , m_Far(1000.0f)
     , m_Aspect(16.0f / 9.0f)
-    , m_Width(0.0f)
-    , m_Height(0.0f)
+    , m_Width(1000.0f)
+    , m_Height(1000.0f)
     , m_ProjectType(ProjectType::ORTHOGONAL)
   {
   }

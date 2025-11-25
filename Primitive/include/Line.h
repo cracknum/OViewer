@@ -1,8 +1,8 @@
 #ifndef SPLIT_LINE_H
 #define SPLIT_LINE_H
-#include "PrimitiveExport.h"
 #include "InteractiveObject.h"
 #include "LineConfig.h"
+#include "PrimitiveExport.h"
 #include <memory>
 
 class QOpenGLFunctions_4_4_Core;
@@ -11,7 +11,8 @@ class PRIMITIVE_API Line final : public InteractiveObject
 {
 public:
   using Functions = QOpenGLFunctions_4_4_Core;
-  Line(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const LineConfig& lineConfig);
+  Line(Functions* functions, std::shared_ptr<ShaderManager> shaderManager,
+    const LineConfig& lineConfig);
   ~Line();
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
@@ -21,7 +22,7 @@ public:
   void keyPressEvent(QKeyEvent* event) override;
   void keyReleaseEvent(QKeyEvent* event) override;
 
-  void draw() override;
+  void draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix) override;
 
   LineConfig& getLineConfig();
   void setLineConfig(const LineConfig& config);

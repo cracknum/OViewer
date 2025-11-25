@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-
 class ShaderManager;
 struct QuadConfig;
 class QOpenGLFunctions_4_4_Core;
@@ -13,13 +12,14 @@ class QOpenGLFunctions_4_4_Core;
 class PRIMITIVE_API Quad : public InteractiveObject
 {
 public:
-	using Functions = QOpenGLFunctions_4_4_Core;
+  using Functions = QOpenGLFunctions_4_4_Core;
   /**
    * @param origin Quad的角点
    * @param u Quad的一条边的向量
    * @param v Quad的一条边的向量
    */
-  Quad(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config);
+  Quad(
+    Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config);
   ~Quad();
 
   virtual void mousePressEvent(QMouseEvent* event) override;
@@ -29,7 +29,7 @@ public:
   virtual void wheelEvent(QWheelEvent* event) override;
   virtual void keyPressEvent(QKeyEvent* event) override;
   virtual void keyReleaseEvent(QKeyEvent* event) override;
-  virtual void draw() override;
+  virtual void draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix) override;
 
 private:
   struct Impl;
