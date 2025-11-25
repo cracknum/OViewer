@@ -58,6 +58,7 @@ void Camera::rotate(const glm::vec3& axis, float angle)
   constexpr auto localFront = glm::vec3(0.0f, 0.0f, -1.0f);
   constexpr auto localUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+  // TODO: 检查相机的旋转是否有问题
   m_Impl->m_CameraConfig.m_Front = glm::normalize(m_Impl->m_CameraConfig.m_Rotate * localFront);
   m_Impl->m_CameraConfig.m_Up = glm::normalize(m_Impl->m_CameraConfig.m_Rotate * localUp);
   m_Impl->m_CameraConfig.m_Right =
