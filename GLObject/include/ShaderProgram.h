@@ -5,12 +5,9 @@
 #include <string>
 #include <QOpenGLFunctions_4_4_Core>
 #include "GLObjectExport.h"
+#include <glm/glm.hpp>
 
 enum class ShaderType;
-class QMatrix4x4;
-class QVector3D;
-class QVector4D;
-class QVector2D;
 
 class GLOBJECT_API ShaderProgram final
 {
@@ -26,15 +23,15 @@ public:
   void unuse() const;
 
   // helper function for set variables
-  bool setMat4(const QMatrix4x4& mat4, const char* name) const;
+  bool setMat4(const glm::mat4& mat4, const char* name) const;
 
   bool setInt1(int v, const char* name) const;
   bool setFloat1(float v, const char* name) const;
   bool setFloat3(float a, float b, float c, const char* name) const;
 
-  bool setVec2(const QVector2D& vec2, const char* name) const;
-  bool setVec3(const QVector3D& vec3, const char* name) const;
-  bool setVec4(const QVector4D& vec4, const char* name) const;
+  bool setVec2(const glm::vec2& vec2, const char* name) const;
+  bool setVec3(const glm::vec3& vec3, const char* name) const;
+  bool setVec4(const glm::vec4& vec4, const char* name) const;
 
 private:
   [[nodiscard]] static std::string loadShaderSource(const char* path);

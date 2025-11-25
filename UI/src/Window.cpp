@@ -1,10 +1,18 @@
 #include "Window.h"
-#include "LineConfig.h"
 #include "Line.h"
+#include "LineConfig.h"
+#include "Quad.h"
+#include "QuadConfig.h"
+#include "ShaderManager.h"
 #include "Style.h"
 #include "ViewWindow.h"
 #include "ViewWindowConfig.h"
-#include "ShaderManager.h"
+
+#define NSIGHT_DEBUG
+
+#if defined(NSIGHT_DEBUG)
+#include <QTimer>
+#endif
 
 struct Window::Impl
 {
@@ -12,12 +20,21 @@ struct Window::Impl
   std::unique_ptr<Line> m_HorizontalLine;
   std::unique_ptr<Line> m_VerticalLine;
   std::shared_ptr<ShaderManager> m_ShaderManager;
+#if defined(NSIGHT_DEBUG)
+  QTimer* timer;
+#endif
 };
 
 inline Window::Window(QWidget* parent)
   : QOpenGLWidget(parent)
 {
   m_Impl = std::make_unique<Impl>();
+
+#if defined(NSIGHT_DEBUG)
+  m_Impl->timer = new QTimer(this);
+  connect(m_Impl->timer, &QTimer::timeout, this, [this]() { this->update(); });
+  m_Impl->timer->start(100);
+#endif
 
   QSurfaceFormat format(this->format());
   format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
@@ -30,6 +47,23 @@ void Window::addViewWindow(const ViewWindowConfig& config)
   viewWindow->updateViewSize(ViewWindowConfig::WindowSize{ width(), height() });
 
   m_Impl->m_ViewWindows.push_back(viewWindow);
+}
+
+ViewWindowBase* Window::getViewWindow(ViewWindowConfig::IdType id) const
+{
+  auto it = std::find_if(m_Impl->m_ViewWindows.begin(), m_Impl->m_ViewWindows.end(),
+    [id](ViewWindowBase* viewWindow) { return viewWindow->getWindowId() == id; });
+  if (it != m_Impl->m_ViewWindows.end())
+  {
+    return *it;
+  }
+
+  return nullptr;
+}
+
+Window::ShaderManagerPointer Window::getShaderManager() const
+{
+  return m_Impl->m_ShaderManager;
 }
 
 void Window::initializeGL()
@@ -58,8 +92,20 @@ void Window::initializeGL()
 
   m_Impl->m_ShaderManager = std::make_shared<ShaderManager>(this);
 
-  m_Impl->m_HorizontalLine = std::make_unique<Line>(this, m_Impl->m_ShaderManager, horizontalLineConfig);
-  m_Impl->m_VerticalLine = std::make_unique<Line>(this, m_Impl->m_ShaderManager, verticalLineConfig);
+  m_Impl->m_HorizontalLine =
+    std::make_unique<Line>(this, m_Impl->m_ShaderManager, horizontalLineConfig);
+  m_Impl->m_VerticalLine =
+    std::make_unique<Line>(this, m_Impl->m_ShaderManager, verticalLineConfig);
+
+  auto* window = getViewWindow(ViewWindowConfig::IdType(0));
+
+    QuadConfig quadConfig;
+    quadConfig.m_Origin = glm::vec3(0.0f, 0.0f, 0.0f);
+    quadConfig.m_U = glm::vec3(1.0f, 0.0f, 0.0f);
+    quadConfig.m_V = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    std::shared_ptr<Quad> quad = std::make_shared<Quad>(this, m_Impl->m_ShaderManager, quadConfig);
+    window->addPrimitive(quad);
 }
 void Window::resizeGL(int w, int h)
 {

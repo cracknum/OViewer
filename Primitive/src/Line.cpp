@@ -34,10 +34,10 @@ struct Line::Impl final
 
     m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>(functions);
     Vertices vertices;
-    vertices.m_Data = new float[4]{ static_cast<float>(lineConfig.m_StartPoint.x()),
-      static_cast<float>(lineConfig.m_StartPoint.y()),
-      static_cast<float>(lineConfig.m_EndPoint.x()),
-      static_cast<float>(lineConfig.m_EndPoint.y()) };
+    vertices.m_Data = new float[4]{ static_cast<float>(lineConfig.m_StartPoint.x),
+      static_cast<float>(lineConfig.m_StartPoint.y),
+      static_cast<float>(lineConfig.m_EndPoint.x),
+      static_cast<float>(lineConfig.m_EndPoint.y) };
 
     vertices.m_DataSize = 4;
     vertices.m_Indices = new GLuint[2]{ 0, 1 };

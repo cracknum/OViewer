@@ -1,17 +1,25 @@
 #ifndef PLANE_H
 #define PLANE_H
-#include <glm/glm.hpp>
 #include "InteractiveObject.h"
 #include "PrimitiveExport.h"
-class PRIMITIVE_API Quad: public InteractiveObject
+#include <glm/glm.hpp>
+#include <memory>
+
+
+class ShaderManager;
+struct QuadConfig;
+class QOpenGLFunctions_4_4_Core;
+
+class PRIMITIVE_API Quad : public InteractiveObject
 {
 public:
+	using Functions = QOpenGLFunctions_4_4_Core;
   /**
    * @param origin Quad的角点
    * @param u Quad的一条边的向量
    * @param v Quad的一条边的向量
    */
-  Quad(const glm::vec3& origin, const glm::vec3& u, const glm::vec3& v);
+  Quad(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config);
   ~Quad();
 
   virtual void mousePressEvent(QMouseEvent* event) override;
@@ -24,11 +32,8 @@ public:
   virtual void draw() override;
 
 private:
-  glm::vec3 m_Origin;
-  glm::vec3 m_U;
-  glm::vec3 m_V;
-  glm::vec3 m_D;
-  glm::vec3 m_Normal;
+  struct Impl;
+  std::unique_ptr<Impl> m_Impl;
 };
 
 #endif // PLANE_H

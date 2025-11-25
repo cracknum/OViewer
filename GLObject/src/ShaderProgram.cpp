@@ -6,6 +6,7 @@
 #include <QMatrix4x4>
 #include <spdlog/spdlog.h>
 #include <qvector2d.h>
+#include <glm/gtc/type_ptr.hpp>
 
 struct ShaderProgram::Impl
 {
@@ -118,14 +119,14 @@ void ShaderProgram::unuse() const
 {
   m_Impl->m_Function->glUseProgram(0);
 }
-bool ShaderProgram::setMat4(const QMatrix4x4& mat4, const char* name) const
+bool ShaderProgram::setMat4(const glm::mat4& mat4, const char* name) const
 {
   const GLint location =  m_Impl->m_Function->glGetUniformLocation(m_Impl->m_Program, name);
   if (location == -1)
   {
     return false;
   }
-  m_Impl->m_Function->glUniformMatrix4fv(location, 1, false, mat4.data());
+  m_Impl->m_Function->glUniformMatrix4fv(location, 1, false, glm::value_ptr(mat4));
   return true;
 }
 bool ShaderProgram::setInt1(int v, const char* name) const
@@ -159,37 +160,37 @@ bool ShaderProgram::setFloat3(float a, float b, float c, const char* name) const
   
   return true;
 }
-bool ShaderProgram::setVec3(const QVector3D& vec3, const char* name) const
+bool ShaderProgram::setVec3(const glm::vec3& vec3, const char* name) const
 {
   const GLint location = m_Impl->m_Function->glGetUniformLocation(m_Impl->m_Program, name);
   if (location == -1)
   {
     return false;
   }
-  m_Impl->m_Function->glUniform3f(location, vec3.x(), vec3.y(), vec3.z());
+  m_Impl->m_Function->glUniform3f(location, vec3.x, vec3.y, vec3.z);
   
   return true;
 }
 
-bool ShaderProgram::setVec2(const QVector2D& vec2, const char* name) const
+bool ShaderProgram::setVec2(const glm::vec2& vec2, const char* name) const
 {
   const GLint location = m_Impl->m_Function->glGetUniformLocation(m_Impl->m_Program, name);
   if (location == -1)
   {
     return false;
   }
-  m_Impl->m_Function->glUniform2f(location, vec2.x(), vec2.y());
+  m_Impl->m_Function->glUniform2f(location, vec2.x, vec2.y);
 
   return true;
 }
-bool ShaderProgram::setVec4(const QVector4D& vec4, const char* name) const
+bool ShaderProgram::setVec4(const glm::vec4& vec4, const char* name) const
 {
   const GLint location = m_Impl->m_Function->glGetUniformLocation(m_Impl->m_Program, name);
   if (location == -1)
   {
     return false;
   }
-  m_Impl->m_Function->glUniform4f(location, vec4.x(), vec4.y(), vec4.z(), vec4.w());
+  m_Impl->m_Function->glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 
   return true;
 }

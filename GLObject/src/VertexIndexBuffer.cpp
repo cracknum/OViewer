@@ -47,7 +47,7 @@ void VertexIndexBuffer::draw(GLenum drawMode)
   }
 
   bind();
-  // TODO: 绘制命令的参数还不一定，需要外部传递
+
   m_Impl->m_Function->glDrawElements(
     drawMode, m_Impl->m_Vertices.m_IndicesSize, GL_UNSIGNED_INT, nullptr);
 

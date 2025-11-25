@@ -6,9 +6,11 @@
 #include <QOpenGLWidget>
 #include <QWidget>
 #include <memory>
+#include "ViewWindowConfig.h"
 
 class ViewWindowBase;
-struct ViewWindowConfig;
+class ViewWindow;
+class ShaderManager;
 
 class UI_API Window final
   : public QOpenGLWidget
@@ -21,8 +23,11 @@ public:
   DISALLOW_COPY_AND_MOVE(Window);
 
   using ViewWindowVector = std::vector<ViewWindowBase*>;
+  using ShaderManagerPointer = std::shared_ptr<ShaderManager>;
 
   void addViewWindow(const ViewWindowConfig& config);
+  [[nodiscard]] ViewWindowBase* getViewWindow(ViewWindowConfig::IdType id) const;
+  [[nodiscard]] ShaderManagerPointer getShaderManager() const;
 
 protected:
   void initializeGL() override;

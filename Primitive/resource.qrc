@@ -3,5 +3,7 @@
         <file>shader/Line.frag</file>
         <file>shader/Line.geom</file>
         <file>shader/Line.vert</file>
+        <file>shader/quad.vert</file>
+        <file>shader/quad.frag</file>
     </qresource>
 </RCC>

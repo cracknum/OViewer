@@ -2,6 +2,9 @@
 #include "DicomReader.hpp"
 #include "ImageInformation.hpp"
 #include "ProjectManagePanel.h"
+#include "Quad.h"
+#include "QuadConfig.h"
+#include "ViewWindowBase.h"
 #include "ViewWindowConfig.h"
 #include "Window.h"
 #include <QFileDialog>
@@ -10,6 +13,7 @@
 #include <SARibbonCategory.h>
 #include <itkImage.h>
 #include <spdlog/spdlog.h>
+
 
 namespace
 {
@@ -64,19 +68,23 @@ void MainWindow::initCentral()
   auto* window = new Window();
   ViewWindowConfig config1;
   config1.m_ViewPort = ViewWindowConfig::ViewPort(0, 0, 0.5, 0.5);
-  config1.m_BackgroundColor = ViewWindowConfig::Color(0.0f, .0f, .0f, 1.0f);
+  config1.m_BackgroundColor = ViewWindowConfig::Color(1.0f, .0f, .0f, 1.0f);
+  config1.m_Id = 0;
 
   ViewWindowConfig config2;
   config2.m_ViewPort = ViewWindowConfig::ViewPort(0.5, 0, 0.5, 0.5);
-  config2.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+  config2.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, 1.0f, 1.0f);
+  config2.m_Id = 1;
 
   ViewWindowConfig config3;
   config3.m_ViewPort = ViewWindowConfig::ViewPort(0, 0.5, 0.5, 0.5);
-  config3.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+  config3.m_BackgroundColor = ViewWindowConfig::Color(1.0f, 0.0f, .0f, 1.0f);
+  config3.m_Id = 2;
 
   ViewWindowConfig config4;
   config4.m_ViewPort = ViewWindowConfig::ViewPort(0.5, 0.5, 0.5, 0.5);
-  config4.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, .0f, 1.0f);
+  config4.m_BackgroundColor = ViewWindowConfig::Color(0.0f, 0.0f, 1.0f, 1.0f);
+  config4.m_Id = 4;
 
   window->addViewWindow(config1);
   window->addViewWindow(config2);
@@ -105,6 +113,11 @@ void MainWindow::openFolder()
 
   const QString folderPath = QFileDialog::getExistingDirectory();
   SPDLOG_INFO("get folder path: {0}", folderPath.toStdString());
+
+  if (folderPath.isEmpty())
+  {
+    return;
+  }
 
   const FloatDicomReader::Pointer reader = FloatDicomReader::New();
   reader->SetDicomDirectory(folderPath.toStdString());
