@@ -24,7 +24,7 @@ void initLog(const QApplication& app, const spdlog::level::level_enum& level)
   logger->set_pattern("%^[%Y-%m-%d %H:%M:%S.%e] [%l] [%s:%# %!] %v%$");
   spdlog::set_default_logger(logger);
 
-  spdlog::info("Application started");
+  SPDLOG_INFO("Application started");
 
   app.connect(&app, &QCoreApplication::aboutToQuit, []() { spdlog::shutdown(); });
 }

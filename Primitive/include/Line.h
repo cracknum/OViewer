@@ -1,17 +1,18 @@
 #ifndef SPLIT_LINE_H
 #define SPLIT_LINE_H
-#include "GLObjectExport.h"
+#include "PrimitiveExport.h"
 #include "InteractiveObject.h"
 #include "LineConfig.h"
 #include <memory>
 
 class QOpenGLFunctions_4_4_Core;
-class GLOBJECT_API SplitLine final : public InteractiveObject
+class ShaderManager;
+class PRIMITIVE_API Line final : public InteractiveObject
 {
 public:
   using Functions = QOpenGLFunctions_4_4_Core;
-  SplitLine(Functions* functions, const LineConfig& lineConfig);
-  ~SplitLine();
+  Line(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const LineConfig& lineConfig);
+  ~Line();
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
   void mouseDoubleClickEvent(QMouseEvent* event) override;

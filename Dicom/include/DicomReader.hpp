@@ -2,41 +2,37 @@
 #define DICOM_READ_FILTER_H
 #include "Macros.h"
 #include <itkImageSource.h>
-#include <itkImageIOBase.h>
-#include <itkGDCMSeriesFileNames.h>
 
 class DicomSeries;
+template <typename OutputImageType>
 class DicomReadReader final : public itk::Object
 {
 public:
-	itkTypeMacro(DicomReadReader, itk::Object);
-	itkSetPointerDeclare(DicomReadReader);
-	itkFactorylessNewMacro(Self);
-	using SeriesVector = std::vector<itk::SmartPointer<DicomSeries>>;
+  itkTypeMacro(DicomReadReader, itk::Object);
+  itkSetPointerDeclare(DicomReadReader);
+  itkFactorylessNewMacro(Self);
+  using SeriesVector = std::vector<itk::SmartPointer<DicomSeries>>;
+  using PixelType = typename OutputImageType::PixelType;
+  static constexpr unsigned int ImageDimension = OutputImageType::ImageDimension;
 
-	itkSetMacro(DicomDirectory, std::string);
+  static_assert(ImageDimension == 3, "DicomSeriesReader only supports 3D output image.");
 
-	void GenerateData();
+  itkSetMacro(DicomDirectory, std::string);
 
-	SeriesVector::iterator begin() { return m_Series.begin(); }
-	SeriesVector::iterator end() { return m_Series.end(); }
-	SeriesVector::const_iterator const_begin() const { return m_Series.cbegin(); }
-	SeriesVector::const_iterator const_end() const { return m_Series.cend(); }
+  void GenerateData();
+
+  SeriesVector::iterator begin() { return m_Series.begin(); }
+  SeriesVector::iterator end() { return m_Series.end(); }
+  SeriesVector::const_iterator const_begin() const { return m_Series.cbegin(); }
+  SeriesVector::const_iterator const_end() const { return m_Series.cend(); }
 
 protected:
-	DicomReadReader();
-	~DicomReadReader() override = default;
-
-	template <typename TPixel>
-	std::string doReadData(const itk::GDCMSeriesFileNames::FileNamesContainerType& fileNames, DicomSeries* dicomSeries);
-	std::string dispatchRead(
-		itk::ImageIOBase::IOComponentType VComponent, 
-		const itk::GDCMSeriesFileNames::FileNamesContainerType& fileNames,
-		DicomSeries* dicomSeries);
+  DicomReadReader();
+  ~DicomReadReader() override = default;
 private:
-	std::string m_DicomDirectory;
+  std::string m_DicomDirectory;
 
-	SeriesVector m_Series;
+  SeriesVector m_Series;
 };
 
 #include "DicomReader.ipp"

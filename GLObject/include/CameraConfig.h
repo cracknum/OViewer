@@ -2,6 +2,37 @@
 #define CAMERA_CONFIG_H
 #include <glm/detail/type_quat.hpp>
 #include <glm/glm.hpp>
+
+namespace CameraParams
+{
+enum class ProjectType : unsigned int
+{
+  PERSPECTIVE,
+  ORTHOGONAL
+};
+
+struct ProjectConfig
+{
+  // project 相关参数
+  float m_FovY;
+  float m_Near;
+  float m_Far;
+  float m_Aspect;
+  float m_Width;
+  float m_Height;
+  ProjectType m_ProjectType;
+
+  ProjectConfig()
+    : m_FovY(60.0f)
+    , m_Near(0.1f)
+    , m_Far(1000.0f)
+    , m_Aspect(16.0f / 9.0f)
+    , m_Width(0.0f)
+    , m_Height(0.0f)
+    , m_ProjectType(ProjectType::ORTHOGONAL)
+  {
+  }
+};
 struct CameraConfig
 {
   glm::vec3 m_Position;
@@ -19,5 +50,6 @@ struct CameraConfig
   {
   }
 };
+}
 
 #endif // CAMERA_CONFIG_H

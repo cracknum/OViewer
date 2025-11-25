@@ -3,12 +3,16 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+namespace CameraParams
+{
 struct CameraConfig;
+struct ProjectConfig;
+}
 
 class Camera
 {
 public:
-  explicit Camera(const CameraConfig& cameraConfig);
+  explicit Camera(const CameraParams::CameraConfig& cameraConfig, const CameraParams::ProjectConfig& projectConfig);
   void setPosition(const glm::vec3& position);
   void setUp(const glm::vec3& up);
   void setFront(const glm::vec3& front);
@@ -18,9 +22,12 @@ public:
 
   [[nodiscard]] glm::mat4 getWorldMatrix() const;
   [[nodiscard]] glm::mat4 getViewMatrix() const;
+  [[nodiscard]] glm::mat4 getProjectMatrix() const;
 
 private:
-  void updateRight();
+  void updateViewMatrix();
+  void updateWorldMatrix();
+  void updateProjectMatrix();
 
 private:
   struct Impl;

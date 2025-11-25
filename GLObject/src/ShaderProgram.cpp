@@ -68,7 +68,7 @@ ShaderProgram::ShaderProgram(Function* function, const ShaderPathMap& shaderSour
         {
           oss << "unknown shader compile error" << pair.second;
         }
-        spdlog::error(oss.str());
+        SPDLOG_ERROR(oss.str());
         throw std::runtime_error(oss.str());
       }
 
@@ -82,7 +82,7 @@ ShaderProgram::ShaderProgram(Function* function, const ShaderPathMap& shaderSour
       deleteProgram(function);
     }
 
-    spdlog::info(oss.str());
+    SPDLOG_INFO(oss.str());
 
   }
 

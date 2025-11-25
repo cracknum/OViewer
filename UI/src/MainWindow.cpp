@@ -11,9 +11,13 @@
 #include <itkImage.h>
 #include <spdlog/spdlog.h>
 
+namespace
+{
+using FloatDicomReader = DicomReadReader<itk::Image<float, 3>>;
+}
 struct MainWindow::Impl
 {
-  DicomReadReader::SeriesVector m_SeriesVector;
+  FloatDicomReader::SeriesVector m_SeriesVector;
   ProjectManagePanel* m_Panel;
   Window* m_Window;
   Impl()
@@ -100,9 +104,9 @@ void MainWindow::openFolder()
   }
 
   const QString folderPath = QFileDialog::getExistingDirectory();
-  spdlog::info("get folder path: {0}", folderPath.toStdString());
+  SPDLOG_INFO("get folder path: {0}", folderPath.toStdString());
 
-  const DicomReadReader::Pointer reader = DicomReadReader::New();
+  const FloatDicomReader::Pointer reader = FloatDicomReader::New();
   reader->SetDicomDirectory(folderPath.toStdString());
   reader->GenerateData();
 
@@ -113,5 +117,5 @@ void MainWindow::openFolder()
   }
 
   m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
-  spdlog::info("read finished");
+  SPDLOG_INFO("read finished");
 }

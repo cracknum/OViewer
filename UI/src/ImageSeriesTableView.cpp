@@ -42,6 +42,6 @@ void ImageSeriesTable::addRow(const ImageInformation* imageInfo)
   insertRow(newRow);
   setItem(newRow, 0, new QTableWidgetItem(QString::fromStdString(imageUID)));
   setItem(newRow, 1, new QTableWidgetItem(dimsStr));
-  spdlog::debug(
+  SPDLOG_DEBUG(
     "imageUID:{0}, dims:{1}, rowCount:{2}", imageUID, dimsStr.toStdString(), rowCount());
 }

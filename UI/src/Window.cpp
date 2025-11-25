@@ -1,15 +1,17 @@
 #include "Window.h"
 #include "LineConfig.h"
-#include "SplitLine.h"
+#include "Line.h"
 #include "Style.h"
 #include "ViewWindow.h"
 #include "ViewWindowConfig.h"
+#include "ShaderManager.h"
 
 struct Window::Impl
 {
   ViewWindowVector m_ViewWindows;
-  std::unique_ptr<SplitLine> m_HorizontalLine;
-  std::unique_ptr<SplitLine> m_VerticalLine;
+  std::unique_ptr<Line> m_HorizontalLine;
+  std::unique_ptr<Line> m_VerticalLine;
+  std::shared_ptr<ShaderManager> m_ShaderManager;
 };
 
 inline Window::Window(QWidget* parent)
@@ -54,8 +56,10 @@ void Window::initializeGL()
   verticalLineConfig.m_LineWidth = 5;
   verticalLineConfig.m_ViewPortSize = LineConfig::Size(width(), height());
 
-  m_Impl->m_HorizontalLine = std::make_unique<SplitLine>(this, horizontalLineConfig);
-  m_Impl->m_VerticalLine = std::make_unique<SplitLine>(this, verticalLineConfig);
+  m_Impl->m_ShaderManager = std::make_shared<ShaderManager>(this);
+
+  m_Impl->m_HorizontalLine = std::make_unique<Line>(this, m_Impl->m_ShaderManager, horizontalLineConfig);
+  m_Impl->m_VerticalLine = std::make_unique<Line>(this, m_Impl->m_ShaderManager, verticalLineConfig);
 }
 void Window::resizeGL(int w, int h)
 {

@@ -1,10 +1,10 @@
 #ifndef LINE_CONFIG_H
 #define LINE_CONFIG_H
-#include "GLObjectExport.h"
+#include "PrimitiveExport.h"
 #include <QPoint>
 #include <QVector4D>
 #include <QVector2D>
-struct GLOBJECT_API LineConfig
+struct PRIMITIVE_API LineConfig
 {
   using Point = QPointF;
   using Color = QVector4D;

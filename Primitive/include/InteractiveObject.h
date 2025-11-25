@@ -1,11 +1,11 @@
 #ifndef INTERACTIVE_OBJECT_H
 #define INTERACTIVE_OBJECT_H
-#include "GLObjectExport.h"
+#include "PrimitiveExport.h"
 class QMouseEvent;
 class QWheelEvent;
 class QKeyEvent;
 
-class GLOBJECT_API InteractiveObject
+class PRIMITIVE_API InteractiveObject
 {
 public:
   virtual ~InteractiveObject() = default;

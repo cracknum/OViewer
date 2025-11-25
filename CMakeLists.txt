@@ -27,6 +27,7 @@ add_subdirectory(App)
 add_subdirectory(Common)
 add_subdirectory(UI)
 add_subdirectory(GLObject)
+add_subdirectory(Primitive)
 
 option(enable_testing OFF)
 
