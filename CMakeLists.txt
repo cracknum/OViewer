@@ -22,6 +22,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(export_config_file_path ${CMAKE_CURRENT_SOURCE_DIR}/Cmake/Export.h.in)
 include(cmake/ExportFunction.cmake)
 
+# for spdlog print debug info
+set(ENABLE_DEBUG ON)
+
 add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)

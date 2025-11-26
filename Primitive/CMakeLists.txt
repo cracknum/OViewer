@@ -23,4 +23,8 @@ if (NOT "${Source_files}")
     )
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     export_model(${export_config_file_path} ${PROJECT_NAME})
+
+    if (ENABLE_DEBUG)
+     target_compile_definitions(${PROJECT_NAME} PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+    endif()
 endif ()

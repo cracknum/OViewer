@@ -13,7 +13,6 @@ public:
 
 protected:
   void updateCameraPose(CameraConfigPointer cameraConfig) override;
-  void rotateInternal(CameraConfigPointer cameraConfig) override;
 };
 
 #endif // CAMERA_H

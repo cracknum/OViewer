@@ -7,9 +7,6 @@ FPSCamera::FPSCamera(CameraConfigPointer cameraConfig, ProjectConfigPointer proj
   : AbstractCamera(cameraConfig, projectConfig)
 {
   init();
-  auto fpsCameraConfig = std::static_pointer_cast<CameraParams::FPSCameraConfig>(cameraConfig);
-  m_CameraPose->m_Rotate = cameraConfig->m_Rotate;
-  m_CameraPose->m_Position = cameraConfig->m_Position;
 }
 
 FPSCamera::~FPSCamera() = default;
@@ -28,9 +25,6 @@ void FPSCamera::updateCameraPose(CameraConfigPointer cameraConfig)
   m_CameraPose->m_Front = glm::normalize(m_CameraPose->m_Rotate * localFront);
   m_CameraPose->m_Up = glm::normalize(m_CameraPose->m_Rotate * localUp);
   m_CameraPose->m_Right = glm::normalize(glm::cross(m_CameraPose->m_Front, m_CameraPose->m_Up));
-}
 
-void FPSCamera::rotateInternal(CameraConfigPointer cameraConfig)
-{
-  updateCameraPose(cameraConfig);
+  SPDLOG_INFO("front: {} {} {}", m_CameraPose->m_Rotate.x, m_CameraPose->m_Rotate.y, m_CameraPose->m_Rotate.z, m_CameraPose->m_Rotate.w);
 }

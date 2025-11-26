@@ -36,7 +36,6 @@ protected:
    * @brief 更新相机位姿
    */
   virtual void updateCameraPose(CameraConfigPointer cameraConfig) = 0;
-  virtual void rotateInternal(CameraConfigPointer cameraConfig) = 0;
   void updateViewMatrix();
   void updateWorldMatrix();
   void updateProjectMatrix();

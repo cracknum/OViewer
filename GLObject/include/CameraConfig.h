@@ -58,14 +58,9 @@ struct CameraConfig
    * @brief 相机的位置
    */
   glm::vec3 m_Position;
-  /**
-   * @brief 旋转四元数
-   */
-  glm::quat m_Rotate;
 
   CameraConfig()
     : m_Position(0.0f, 0.0f, 0.0f)
-    , m_Rotate(0.0f, 0.0f, 0.0f, 1.0f)
   {
   }
 
@@ -82,6 +77,10 @@ struct FPSCameraConfig : public CameraConfig
    * @brief 旋转角
    */
   float m_Angle;
+    /**
+   * @brief 旋转四元数
+   */
+  glm::quat m_Rotate;
 
   FPSCameraConfig()
     : m_Axis(0.0f, 1.0f, 0.0f)
@@ -140,6 +139,10 @@ struct CameraPose
    * @brief 旋转四元数
    */
   glm::quat m_Rotate;
+
+  CameraPose()
+  : m_Rotate(0.0f, 0.0f, 0.0f, 1.0f)
+  {}
 };
 }
 

@@ -11,11 +11,12 @@ AbstractCamera::AbstractCamera(CameraConfigPointer cameraConfig, ProjectConfigPo
   m_CameraConfig = cameraConfig;
   m_ProjectConfig = projectConfig;
   m_CameraPose = std::make_unique<CameraPose>();
+  m_CameraPose->m_Position = cameraConfig->m_Position;
 }
 
 void AbstractCamera::rotate(CameraConfigPointer cameraConfig)
 {
-  rotateInternal(cameraConfig);
+  updateCameraPose(cameraConfig);
   updateWorldMatrix();
   updateViewMatrix();
 }
