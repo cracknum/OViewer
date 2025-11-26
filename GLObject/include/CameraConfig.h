@@ -77,7 +77,7 @@ struct FPSCameraConfig : public CameraConfig
    * @brief 旋转角
    */
   float m_Angle;
-    /**
+  /**
    * @brief 旋转四元数
    */
   glm::quat m_Rotate;
@@ -117,6 +117,28 @@ struct OrbitCameraConfig : public CameraConfig
   }
 };
 
+struct TrackballCameraConfig : public CameraConfig
+{
+  TrackballCameraConfig()
+    : m_PreviouseMousePos(0.0f, 0.0f)
+    , m_CurrentMousePos(0.0f, 0.0f)
+    , m_Target(0.0f, 0.0f, 0.0f)
+  {
+  }
+  /**
+   * @brief 归一化后的前一个鼠标位置[-1, 1]x[-1, 1]，
+   *        归一化方法为 point.x / width * 2.0f - 1.0f, point.y / height * 2.0f - 1.0f
+   * @warning 不需要修改这个字段
+   */
+  glm::vec2 m_CurrentMousePos;
+  glm::vec3 m_Target;
+  float m_Distance;
+
+private:
+  friend class TrackBallCamera;
+  glm::vec2 m_PreviouseMousePos;
+};
+
 struct CameraPose
 {
   /**
@@ -141,8 +163,9 @@ struct CameraPose
   glm::quat m_Rotate;
 
   CameraPose()
-  : m_Rotate(0.0f, 0.0f, 0.0f, 1.0f)
-  {}
+    : m_Rotate(0.0f, 0.0f, 0.0f, 1.0f)
+  {
+  }
 };
 }
 
