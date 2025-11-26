@@ -120,7 +120,7 @@ struct OrbitCameraConfig : public CameraConfig
 struct TrackballCameraConfig : public CameraConfig
 {
   TrackballCameraConfig()
-    : m_PreviouseMousePos(0.0f, 0.0f)
+    : m_PreviousMousePos(0.0f, 0.0f, 0.0f)
     , m_CurrentMousePos(0.0f, 0.0f)
     , m_Target(0.0f, 0.0f, 0.0f)
   {
@@ -133,10 +133,11 @@ struct TrackballCameraConfig : public CameraConfig
   glm::vec2 m_CurrentMousePos;
   glm::vec3 m_Target;
   float m_Distance;
+  glm::vec3 m_PreviousMousePos;
 
 private:
   friend class TrackBallCamera;
-  glm::vec2 m_PreviouseMousePos;
+  // glm::vec3 m_PreviousMousePos;
 };
 
 struct CameraPose

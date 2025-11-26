@@ -16,25 +16,20 @@ void TrackBallCamera::updateCameraPose(CameraConfigPointer cameraConfig)
 {
   auto config = std::static_pointer_cast<CameraParams::TrackballCameraConfig>(cameraConfig);
 
-  // 计算位移（假设 m_LastInputPos 和 m_CurrentMousePos 是同一坐标系，如像素）
-  glm::vec2 delta = config->m_CurrentMousePos - config->m_PreviouseMousePos;
+  glm::vec3 spherePoint = projectToSphere(config->m_CurrentMousePos);
+  if (config->m_PreviousMousePos != glm::vec3(0.0f, 0.0f, 0.0f))
+  {
+    float radian =
+      glm::acos(glm::clamp(glm::dot(spherePoint, config->m_PreviousMousePos), -1.0f, 1.0f));
+    glm::vec3 axis = glm::cross(config->m_PreviousMousePos, spherePoint);
 
-  // 应用灵敏度（可调整）
-  delta *= 0.01;
-
-  // 获取当前相机局部轴
-  glm::vec3 right = m_CameraPose->m_Rotate * glm::vec3(1, 0, 0);
-  glm::vec3 worldUp = glm::vec3(0, 1, 0); // 保持地平线稳定
-
-  // 构造增量旋转：注意负号使方向符合直觉（右滑 → 模型左转）
-  glm::quat rotY = glm::angleAxis(-delta.x, worldUp); // 水平：绕世界 Y
-  glm::quat rotX = glm::angleAxis(-delta.y, right);   // 垂直：绕相机 Right
-
-  // 累积旋转
-  m_CameraPose->m_Rotate = glm::normalize(rotX * rotY * m_CameraPose->m_Rotate);
-
-  // 更新 last pos 为当前，用于下一帧
-  config->m_PreviouseMousePos = config->m_CurrentMousePos;
+    if (glm::length(axis) > 1e-6)
+    {
+      glm::quat delta = glm::angleAxis(radian, axis);
+      m_CameraPose->m_Rotate = glm::normalize(delta * m_CameraPose->m_Rotate);
+    }
+  }
+  config->m_PreviousMousePos = spherePoint;
 
   glm::vec3 defaultEye = glm::vec3(0.0f, 0.0f, -config->m_Distance);
   glm::vec3 rotatedEye = m_CameraPose->m_Rotate * defaultEye;
@@ -43,9 +38,9 @@ void TrackBallCamera::updateCameraPose(CameraConfigPointer cameraConfig)
   m_CameraPose->m_Front = glm::normalize(config->m_Target - m_CameraPose->m_Position);
 
   // 动态选择 up 参考轴，避免极点问题
-  glm::vec3 worldUp1 =
+  glm::vec3 worldUp =
     glm::abs(m_CameraPose->m_Front.y) > 0.999f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
-  m_CameraPose->m_Right = glm::normalize(glm::cross(m_CameraPose->m_Front, worldUp1));
+  m_CameraPose->m_Right = glm::normalize(glm::cross(m_CameraPose->m_Front, worldUp));
   m_CameraPose->m_Up = glm::normalize(glm::cross(m_CameraPose->m_Right, m_CameraPose->m_Front));
 }
 

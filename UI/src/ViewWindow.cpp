@@ -49,7 +49,7 @@ struct ViewWindow::Impl
     cameraConfig->m_Axis = glm::vec3(0.0f, 1.0f, 0.0f);
 #elif defined(TRACK_BALL_CAMERA_DEBUG)
     cameraConfig->m_Distance = 1.0f;
-	cameraConfig->m_Target = glm::vec3(0.0f, 0.0f, -200.0f);
+    cameraConfig->m_Target = glm::vec3(0.0f, 0.0f, -200.0f);
 #endif
     m_Camera = std::make_unique<CameraClass>(cameraConfig, projectConfig);
 
@@ -91,13 +91,15 @@ void ViewWindow::rotateCamera()
 #elif defined(FPS_CAMERA_DEBUG)
   m_Impl->cameraConfig->m_Angle = 1;
 #elif defined(TRACK_BALL_CAMERA_DEBUG)
-  if ( std::abs(m_Impl->cameraConfig->m_CurrentMousePos.x - 1920.0f) < 1e-6)
+  if (std::abs(m_Impl->cameraConfig->m_CurrentMousePos.y - 0.5f) < 1e-6)
   {
-	m_Impl->cameraConfig->m_CurrentMousePos.x = 0.0f;
+    m_Impl->cameraConfig->m_PreviousMousePos = glm::vec3(0.0f, 0.0f, 0.0f);
+    m_Impl->cameraConfig->m_CurrentMousePos.y = -.5f;
   }
-  
-  m_Impl->cameraConfig->m_CurrentMousePos.x += 1;
-  glm::clamp(m_Impl->cameraConfig->m_CurrentMousePos.x, 0.0f,1920.0f);
+
+  m_Impl->cameraConfig->m_CurrentMousePos.y += 0.1;
+  m_Impl->cameraConfig->m_CurrentMousePos.y =
+    glm::clamp(m_Impl->cameraConfig->m_CurrentMousePos.y, -0.5f, 0.5f);
 #endif
   m_Impl->m_Camera->rotate(m_Impl->cameraConfig);
 }
