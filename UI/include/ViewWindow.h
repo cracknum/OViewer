@@ -15,6 +15,8 @@ public:
     QOpenGLFunctions_4_4_Core* function, const ViewWindowConfig& config, QObject* parent = nullptr);
   void drawWindow() override;
 
+  private slots:
+  void rotateCamera();
 private:
   struct Impl;
   std::unique_ptr<Impl> m_Impl;
