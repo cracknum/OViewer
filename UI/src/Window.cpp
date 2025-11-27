@@ -1,6 +1,6 @@
+#include "Window.h"
 #include "Style.h"
 #include "ViewWindow.h"
-#include "Window.h"
 #include <spdlog/spdlog.h>
 #include <vtkActor2D.h>
 #include <vtkCoordinate.h>
@@ -12,8 +12,8 @@
 #include <vtkPolyDataMapper2D.h>
 #include <vtkProgrammableFilter.h>
 #include <vtkProperty2D.h>
-#include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
+#include <vtkRenderer.h>
 #include <vtkShaderProperty.h>
 #include <vtkUnsignedCharArray.h>
 
@@ -41,9 +41,9 @@ struct Window::Impl
 inline Window::Window(QWidget* parent)
   : QVTKOpenGLNativeWidget(parent)
 {
-  GetRenderWindow()->SetNumberOfLayers(2);
+  renderWindow()->SetNumberOfLayers(2);
   m_Impl = std::make_unique<Impl>();
-  GetRenderWindow()->AddRenderer(m_Impl->m_OverlayRenderer);
+  renderWindow()->AddRenderer(m_Impl->m_OverlayRenderer);
 
   initViewWindows();
   initSplitLine();
@@ -94,7 +94,7 @@ void Window::addViewWindow(int viewId, vtkFloatArray* windowRange, vtkFloatArray
   viewWindow->setViewSize(windowRange);
   viewWindow->setBackground(background);
 
-  viewWindow->addToWindow(GetRenderWindow());
+  viewWindow->addToWindow(renderWindow());
 
   m_Impl->m_ViewWindows.push_back(viewWindow);
 }
