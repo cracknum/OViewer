@@ -9,6 +9,7 @@
 #include <SARibbonCategory.h>
 #include <itkImage.h>
 #include <spdlog/spdlog.h>
+#include "Window.h"
 
 namespace
 {
@@ -18,7 +19,7 @@ struct MainWindow::Impl
 {
   FloatDicomReader::SeriesVector m_SeriesVector;
   ProjectManagePanel* m_Panel;
-  QVTKOpenGLNativeWidget* m_Window;
+  Window* m_Window;
   Impl()
     : m_Panel(nullptr)
     , m_Window(nullptr)
@@ -60,7 +61,7 @@ void MainWindow::initHeader()
 
 void MainWindow::initCentral()
 {
-  m_Impl->m_Window = new QVTKOpenGLNativeWidget();
+  m_Impl->m_Window = new Window();
   auto* centerWidget = new QWidget;
   auto* layout = new QGridLayout;
   m_Impl->m_Panel = new ProjectManagePanel;
