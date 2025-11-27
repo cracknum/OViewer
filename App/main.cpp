@@ -1,3 +1,4 @@
+#include "ViewWindow.h"
 #include "Window.h"
 #include <QApplication>
 #include <qdebug.h>
