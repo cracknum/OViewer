@@ -335,4 +335,174 @@ vtk的NDC是对用户而言的并不是最终底层OpenGL使用的NDC范围，�
 
 ## vtk中的picking实现
 
+vtk中的picking的实现是通过单次pass来实现的。基本原理如下
+- 基于颜色编码的 Picking
+这种方法涉及给每个可选对象分配一个唯一颜色，并在执行 picking 操作时，通过读取点击位置的颜色值来识别被点击的对象。
+
+1. 配唯一颜色：为场景中的每个对象分配一个唯一的颜色ID。这个颜色ID应该保证在整个场景中是独一无二的。
+
+2. 渲染Picking Buffer：创建一个离屏缓冲区（off-screen buffer），然后用这些唯一颜色渲染场景到该缓冲区。注意，在此过程中不要应用任何材质或光照计算，只需渲染对象的固有颜色。
+
+3. 读取颜色值：当用户点击时，根据鼠标坐标从picking buffer中读取对应像素的颜色值。
+
+4. 映射到对象：将读取的颜色值映射回原始对象，以确定用户选择了哪个对象。
+这种方法的优点在于简单直接，但缺点是颜色精度限制了可以区分的对象数量。
+
+具体的实现为
+
+1. 根据是否在renderer中创建了selector决定是否开启 picking pass
+```c++
+void vtkOpenGLPolyDataMapper2D::BuildShaders(std::string& VSSource, std::string& FSSource,
+  std::string& GSSource, vtkViewport* viewport, vtkActor2D* actor)
+{
+	...
+  vtkRenderer* ren = vtkRenderer::SafeDownCast(viewport);
+  if (ren && ren->GetSelector())
+  {
+    this->ReplaceShaderPicking(FSSource, ren, actor);
+  }
+}
+
+void vtkOpenGLPolyDataMapper2D::ReplaceShaderPicking(
+  std::string& fssource, vtkRenderer*, vtkActor2D*)
+{
+  vtkShaderProgram::Substitute(fssource, "//VTK::Picking::Dec", "uniform vec3 mapperIndex;");
+  vtkShaderProgram::Substitute(
+    fssource, "//VTK::Picking::Impl", "gl_FragData[0] = vec4(mapperIndex,1.0);\n");
+}
+```
+
+可以看到vtk的picking是通过颜色来的，在老版本中`gl_FragData[0]`就是现在使用的`gl_FragColor`，不过最新的OpenGL版本也不再使用`gl_FragColor`这种方式，而是使用自定义的out变量
+
+通过将一个PrimitiveIDOffset进行编码为一个颜色，并将其设置到uniform mapperIndex
+
+```c++
+void vtkCompositeMapperHelper2::RenderPieceDraw(vtkRenderer* ren, vtkActor* actor)
+{
+	...
+  if (this->CurrentSelector &&
+    (this->CurrentSelector->GetCurrentPass() == vtkHardwareSelector::CELL_ID_LOW24 ||
+      this->CurrentSelector->GetCurrentPass() == vtkHardwareSelector::CELL_ID_HIGH24))
+  {
+    this->CurrentSelector->SetPropColorValue(this->PrimitiveIDOffset);
+  }
+}
+
+void vtkHardwareSelector::SetPropColorValue(vtkIdType val)
+{
+  float color[3];
+  vtkHardwareSelector::Convert(val, color);
+  this->SetPropColorValue(color);
+}
+ static void Convert(vtkIdType id, float tcoord[3])
+ {
+   tcoord[0] = static_cast<float>((id & 0xff) / 255.0);
+   tcoord[1] = static_cast<float>(((id & 0xff00) >> 8) / 255.0);
+   tcoord[2] = static_cast<float>(((id & 0xff0000) >> 16) / 255.0);
+ }
+
+   if (selector && cellBO.Program->IsUniformUsed("mapperIndex"))
+  {
+    cellBO.Program->SetUniform3f("mapperIndex", selector->GetPropColorValue());
+  }
+```
+
+这个mapperIndex在picking pass中是作为颜色填充每个图元的位置的
+
+```glsl
+uniform vec3 mapperIndex;  // ← 来自 Substitute(...Dec)
+
+void main() {
+    gl_FragData[0] = vec4(mapperIndex, 1.0);  // ← 来自 Substitute(...Impl)
+}
+```
+这是替换完成后的fragment shader，在vtk中每次绘制并不是以单个图元（LINES, TRIANGLES等）作为绘制单位，而是以actor中存储的整个物体的所有图元进行一次绘制，这就和OpenGL的实例化很像的，不过还并不是所有数据一次传输，因为这些物体并不是都一致的，这也是PrimitiveIDOffset的意义，每次偏移都是以物体的IBO的总数为单位进行的偏移
+
+```c++
+void vtkOpenGLPolyDataMapper2D::RenderOverlay(vtkViewport* viewport, vtkActor2D* actor)
+{
+  ...
+  // Figure out and build the appropriate shader for the mapped geometry.
+  this->PrimitiveIDOffset = 0;
+  ...
+  if (this->Points.IBO->IndexCount && actor->GetProperty()->GetPointSize() != 0.f)
+  {
+    ...
+    this->PrimitiveIDOffset += (int)this->Points.IBO->IndexCount;
+  }
+
+  if (this->Lines.IBO->IndexCount && actor->GetProperty()->GetLineWidth() != 0.f)
+  {
+    ...
+    this->PrimitiveIDOffset += (int)this->Lines.IBO->IndexCount / 2;
+  }
+
+  // now handle lit primitives
+  if (this->Tris.IBO->IndexCount)
+  {
+    ...
+      this->PrimitiveIDOffset += (int)this->Tris.IBO->IndexCount / 3;
+    }
+  }
+...
+
+}
+```
+
+经过上述步骤后，将所有物体的颜色绘制到一张framebuffer上，然后根据鼠标位置找到对应的颜色，再执行反向的转换即可得到目标的图元偏移，也就是物体的id
+
+```c++
+// Also store the prop zvalues here as we traverse the images
+void vtkHardwareSelector::BuildPropHitList(unsigned char* pixelbuffer)
+{
+ ...
+
+  unsigned int offset = 0;
+  for (int yy = 0; yy <= static_cast<int>(this->Area[3] - this->Area[1]); yy++)
+  {
+    for (int xx = 0; xx <= static_cast<int>(this->Area[2] - this->Area[0]); xx++)
+    {
+      int val = this->Convert(xx, yy, pixelbuffer);
+      if (val > 0)
+      {
+        val -= ID_OFFSET;
+        if (this->Internals->HitProps.find(val) == this->Internals->HitProps.end())
+        {
+          this->Internals->HitProps.insert(val);
+          ...
+        }
+        ...
+      }
+    }
+  }
+}
+
+int Convert(int xx, int yy, unsigned char* pb)
+{
+  if (!pb)
+  {
+    return 0;
+  }
+  int offset = (yy * static_cast<int>(this->Area[2] - this->Area[0] + 1) + xx) * 3;
+  unsigned char rgb[3];
+  rgb[0] = pb[offset];
+  rgb[1] = pb[offset + 1];
+  rgb[2] = pb[offset + 2];
+  int val = 0;
+  val |= rgb[2];
+  val = val << 8;
+  val |= rgb[1];
+  val = val << 8;
+  val |= rgb[0];
+  return val;
+}
+```
+
 ## vtk中的render pass
+
+render pass并不是vtk中的概念，而是现代图形学中使用的概念，通过多次渲染以实现更加复杂的效果，每一次执行的render pass都是一次完整的图形管线，例如上面的picking pass，也是通过顶点着色器->片段着色器->framebuffer。当然在vtk中还有很多已经完成的pass
+
+![vtk render pass](./images/vtkRenderPass.png)
+
+但是这些并不是每一个版本都有的，而且在不断的更新
+
