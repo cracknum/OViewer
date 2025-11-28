@@ -30,9 +30,9 @@ protected:
     if (it != metaData.End())
     {
       const typename itk::MetaDataObject<T>::Pointer var = dynamic_cast<itk::MetaDataObject<T>*>(it->second.get());
-      return var == nullptr ? "N/A" : var->GetMetaDataObjectValue();
+      return var == nullptr ? "" : var->GetMetaDataObjectValue();
     }
-    return "N/A";
+    return "";
   }
 
   static std::string parseTag(const itk::MetaDataDictionary& metaData, const std::string& key)

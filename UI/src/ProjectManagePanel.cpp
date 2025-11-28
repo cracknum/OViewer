@@ -37,7 +37,11 @@ void ProjectManagePanel::initUI()
   m_Impl->m_TabWidget->addTab(m_Impl->m_ImageSeriesTable, "Images");
 }
 
-void ProjectManagePanel::initConnects() {}
+void ProjectManagePanel::initConnects()
+{
+  connect(m_Impl->m_ImageSeriesTable, &ImageSeriesTable::signalSelectedSeries, this,
+    &ProjectManagePanel::signalSelectedSeries);
+}
 
 void ProjectManagePanel::initParams()
 {
@@ -49,6 +53,7 @@ void ProjectManagePanel::slotSetImageTable(const SeriesVector& seriesVector)
   m_Impl->m_ImageSeriesTable->clearContents();
   for (auto it = seriesVector.begin(); it != seriesVector.end(); ++it)
   {
-    m_Impl->m_ImageSeriesTable->addRow((*it)->GetImageInfo());
+    std::string seriesId = (*it)->GetSeriesInfo()->GetNumber();
+    m_Impl->m_ImageSeriesTable->addRow(seriesId, (*it)->GetImageInfo());
   }
 }

@@ -1,18 +1,26 @@
 #include "ViewWindow.h"
 #include <spdlog/spdlog.h>
 #include <vtkFloatArray.h>
-#include <vtkRenderer.h>
+#include <vtkImageData.h>
 #include <vtkRenderWindow.h>
+#include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
+#include <vtkMatrix4x4.h>
+
 
 struct ViewWindow::Impl
 {
   vtkSmartPointer<vtkRenderer> m_Renderer;
+  vtkSmartPointer<vtkImageData> m_ImageData;
+  vtkSmartPointer<vtkMatrix4x4> m_Matrix;
+  
   int m_ViewId;
   Impl(int viewId)
     : m_ViewId(viewId)
   {
     m_Renderer = vtkSmartPointer<vtkRenderer>::New();
+	m_Matrix = vtkSmartPointer<vtkMatrix4x4>::New();
+	m_Matrix->Identity();
     m_Renderer->SetLayer(0);
     m_ViewId = -1;
   }
@@ -69,6 +77,11 @@ void ViewWindow::addToWindow(vtkRenderWindow* window)
   }
 
   window->AddRenderer(m_Impl->m_Renderer);
+}
+
+void ViewWindow::setImageData(vtkImageData* imageData)
+{
+  m_Impl->m_ImageData = imageData;
 }
 
 int ViewWindow::getViewId() const

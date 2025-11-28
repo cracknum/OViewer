@@ -10,6 +10,7 @@
 #include <itkImage.h>
 #include <spdlog/spdlog.h>
 #include "Window.h"
+#include <vtkFloatArray.h>
 
 namespace
 {
@@ -62,6 +63,43 @@ void MainWindow::initHeader()
 void MainWindow::initCentral()
 {
   m_Impl->m_Window = new Window();
+  vtkSmartPointer<vtkFloatArray> window1Setting = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> window2Setting = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> window3Setting = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> window4Setting = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> background = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> verticalSplitLine = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> horizontalSplitLine = vtkSmartPointer<vtkFloatArray>::New();
+  vtkSmartPointer<vtkFloatArray> splitLineColor = vtkSmartPointer<vtkFloatArray>::New();
+
+  background->SetNumberOfComponents(4);
+  background->InsertNextTuple4(0.0f, 0.0f, 0.0f, 1.0f);
+
+  verticalSplitLine->SetNumberOfComponents(3);
+  verticalSplitLine->InsertNextTuple3(0.5f, 0.0f, 0.0f);
+  verticalSplitLine->InsertNextTuple3(0.5f, 1.0f, 0.0f);
+  horizontalSplitLine->SetNumberOfComponents(3);
+  horizontalSplitLine->InsertNextTuple3(0.0f, 0.5f, 0.0f);
+  horizontalSplitLine->InsertNextTuple3(1.0f, 0.5f, 0.0f);
+  splitLineColor->SetNumberOfComponents(4);
+  splitLineColor->InsertNextTuple4(0.0f, 1.0f, 0.0f, 1.0f);
+  splitLineColor->InsertNextTuple4(0.0f, 1.0f, 0.0f, 1.0f);
+  
+  window1Setting->SetNumberOfComponents(4);
+  window2Setting->SetNumberOfComponents(4);
+  window3Setting->SetNumberOfComponents(4);
+  window4Setting->SetNumberOfComponents(4);
+  window1Setting->InsertNextTuple4(0.0f, 0.5f, 0.5f, 1.0f);
+  window2Setting->InsertNextTuple4(0.5f, 0.5f, 1.0f, 1.0f);
+  window3Setting->InsertNextTuple4(0.0f, 0.0f, 0.5f, 0.5f);
+  window4Setting->InsertNextTuple4(0.5f, 0.0f, 1.0f, 0.5f);
+  m_Impl->m_Window->addViewWindow(0, window1Setting, background);
+  m_Impl->m_Window->addViewWindow(1, window2Setting, background);
+  m_Impl->m_Window->addViewWindow(2, window3Setting, background);
+  m_Impl->m_Window->addViewWindow(3, window4Setting, background);
+  m_Impl->m_Window->addSplitLine(splitLineColor, horizontalSplitLine);
+  m_Impl->m_Window->addSplitLine(splitLineColor, verticalSplitLine);
+
   auto* centerWidget = new QWidget;
   auto* layout = new QGridLayout;
   m_Impl->m_Panel = new ProjectManagePanel;
@@ -72,6 +110,8 @@ void MainWindow::initCentral()
   layout->setColumnStretch(2, 0);
   centerWidget->setLayout(layout);
   setCentralWidget(centerWidget);
+
+  connect(m_Impl->m_Panel, &ProjectManagePanel::signalSelectedSeries, this, &MainWindow::slotOpenImage);
 }
 
 void MainWindow::openFolder()
@@ -101,4 +141,18 @@ void MainWindow::openFolder()
 
   m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
   SPDLOG_INFO("read finished");
+}
+
+void MainWindow::slotOpenImage(const QString& seriesId)
+{
+	auto it = std::find_if(m_Impl->m_SeriesVector.begin(), m_Impl->m_SeriesVector.end(), [&seriesId](const DicomSeries* info){
+		return seriesId == QString::fromStdString(info->GetSeriesInfo()->GetNumber());
+	});
+
+	if (it == m_Impl->m_SeriesVector.end())
+	{
+		return;
+	}
+
+	m_Impl->m_Window->openImage(*it);
 }

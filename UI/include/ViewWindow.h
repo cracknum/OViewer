@@ -5,6 +5,7 @@
 
 class vtkFloatArray;
 class vtkRenderWindow;
+class vtkImageData;
 class ViewWindow : public QObject
 {
   Q_OBJECT;
@@ -16,6 +17,7 @@ public:
   void setViewSize(vtkFloatArray* viewSize);
   void setBackground(vtkFloatArray* background);
   void addToWindow(vtkRenderWindow* window);
+  void setImageData(vtkImageData* imageData); 
   [[nodiscard]] int getViewId() const;
 
 private:

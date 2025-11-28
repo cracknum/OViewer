@@ -7,6 +7,7 @@
 class vtkFloatArray;
 class vtkActor2D;
 class ViewWindow;
+class DicomSeries;
 
 class UI_API Window final : public QVTKOpenGLNativeWidget
 {
@@ -20,10 +21,11 @@ public:
   void addSplitLine(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
   [[nodiscard]] ViewWindow* getViewWindow(int viewId) const;
 
+  public slots:
+  void openImage(DicomSeries* dicom);
+
 protected:
   vtkSmartPointer<vtkActor2D> createLineActor(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
-  void initSplitLine();
-  void initViewWindows();
 
 private:
   struct Impl;

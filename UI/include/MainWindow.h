@@ -12,6 +12,9 @@ public:
   explicit MainWindow(QWidget* parent = nullptr);
   ~MainWindow() override;
 
+protected slots:
+  void slotOpenImage(const QString& seriesId);
+
 private:
   void initUI();
   void initHeader();
