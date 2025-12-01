@@ -35,6 +35,8 @@ add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)
 add_subdirectory(UI)
+add_subdirectory(Data)
+add_subdirectory(Filters)
 
 option(enable_testing OFF)
 
