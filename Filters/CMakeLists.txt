@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19...4.0)
 
-project(Filters LANGUAGES CXX)
+project(Filters LANGUAGES CXX CUDA)
 
 file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp" "include/*.h" "include/*.cuh")
 file(GLOB_RECURSE Source_files "src/*.cpp" "src/*.cu")
@@ -13,13 +13,13 @@ if (NOT TARGET spdlog::spdlog)
     find_package(spdlog CONFIG REQUIRED)
 endif ()
 
-if(NOT TARGET glm::glm)
+if (NOT TARGET glm::glm)
     find_package(glm CONFIG REQUIRED)
-endif()
+endif ()
 
-if(NOT TARGET CUDA::cudart)
+if (NOT TARGET CUDA::cudart)
     find_package(CUDAToolkit REQUIRED)
-endif()
+endif ()
 
 if (NOT "${Source_files}")
     set(vtk_libs VTK::CommonDataModel)
@@ -34,10 +34,10 @@ if (NOT "${Source_files}")
     target_include_directories(${PROJECT_NAME}
             PUBLIC include
             PRIVATE ${SARibbonBar_INCLUDE_DIR})
-            
+
     export_model(${export_config_file_path} ${PROJECT_NAME})
     group_sources_by_directory(${PROJECT_NAME})
 
-    vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES  ${vtk_libs})
+    vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${vtk_libs})
 endif ()
 
