@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#define BENCHMARK
+// #define BENCHMARK
 
 namespace FilterKernel
 {
