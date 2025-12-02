@@ -2,14 +2,18 @@
 #define IMAGE_INFORMATION_CXX_H
 #include "Macros.h"
 
-#include "InformationParser.h"
-#include <itkImage.h>
-#include <string>
 #include "DicomExport.h"
+#include "InformationParser.h"
 #include <any>
-#include <itkImageRegion.h>
-#include <itkImageIOBase.h>
+#include <itkImage.h>
 #include <itkImageBase.h>
+#include <itkImageIOBase.h>
+#include <itkImageRegion.h>
+#include <itkVTKImageExport.h>
+#include <string>
+#include <vtkImageData.h>
+#include <vtkSmartPointer.h>
+#include "itkImageToVTKImageFilter.h"
 
 class DICOM_API ImageInformation final : public InformationParser
 {
@@ -55,13 +59,22 @@ public:
     m_Spacing = image->GetSpacing();
     m_Volume = image;
     m_Dimensions = image->GetLargestPossibleRegion().GetSize();
+    m_VtkImage = vtkSmartPointer<vtkImageData>::New();
+    auto imageExportFilter = itk::ImageToVTKImageFilter<itk::Image<TPixel, 3>>::New();
+    imageExportFilter->SetInput(image);
+    imageExportFilter->Update();
+    m_VtkImage = imageExportFilter->GetOutput();
   }
 
+  vtkSmartPointer<vtkImageData> GetVtkVolume();
+
+  bool isInstanceUidEmpty() const;
 
 protected:
   ImageInformation();
   ~ImageInformation() override = default;
-  void PrintSelf(std::ostream & os, itk::Indent indent) const override;
+  void PrintSelf(std::ostream& os, itk::Indent indent) const override;
+
 private:
   /**
    * @brief 全球唯一标识
@@ -135,6 +148,7 @@ private:
    * @brief 像素的每个分量的数据类型
    */
   itk::ImageIOBase::IOComponentType m_ComponentType;
+  vtkSmartPointer<vtkImageData> m_VtkImage;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H

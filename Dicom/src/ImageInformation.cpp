@@ -2,6 +2,17 @@
 #include "DicomTags.h"
 #include <QString>
 #include <qstringlist.h>
+#include <itkVTKImageExport.h>
+
+vtkSmartPointer<vtkImageData> ImageInformation::GetVtkVolume()
+{
+	return m_VtkImage;
+}
+
+bool ImageInformation::isInstanceUidEmpty() const
+{ 
+  return m_InstanceUID.empty();
+}
 
 ImageInformation::ImageInformation()
   : m_Volume(nullptr)

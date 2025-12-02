@@ -13,6 +13,8 @@
 #include <SARibbonCategory.h>
 #include <itkImage.h>
 #include <spdlog/spdlog.h>
+#include "Window.h"
+#include <vtkFloatArray.h>
 
 
 namespace
@@ -102,6 +104,8 @@ void MainWindow::initCentral()
   layout->setColumnStretch(2, 0);
   centerWidget->setLayout(layout);
   setCentralWidget(centerWidget);
+
+  connect(m_Impl->m_Panel, &ProjectManagePanel::signalSelectedSeries, this, &MainWindow::slotOpenImage);
 }
 
 void MainWindow::openFolder()
@@ -131,4 +135,18 @@ void MainWindow::openFolder()
 
   m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
   SPDLOG_INFO("read finished");
+}
+
+void MainWindow::slotOpenImage(const QString& seriesId)
+{
+	auto it = std::find_if(m_Impl->m_SeriesVector.begin(), m_Impl->m_SeriesVector.end(), [&seriesId](const DicomSeries* info){
+		return seriesId == QString::fromStdString(info->GetSeriesInfo()->GetNumber());
+	});
+
+	if (it == m_Impl->m_SeriesVector.end())
+	{
+		return;
+	}
+
+	m_Impl->m_Window->openImage(*it);
 }

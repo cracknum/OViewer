@@ -15,15 +15,21 @@ find_package(CUDAToolkit REQUIRED) # image process
 find_package(ITK CONFIG REQUIRED) # read dicom files
 find_package(spdlog CONFIG REQUIRED) # for log info
 
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 set(export_config_file_path ${CMAKE_CURRENT_SOURCE_DIR}/Cmake/Export.h.in)
 include(cmake/ExportFunction.cmake)
+include(cmake/files_group.cmake)
 
 # for spdlog print debug info
 set(ENABLE_DEBUG ON)
+
+if (ENABLE_DEBUG)
+add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
+endif()
 
 add_subdirectory(Dicom)
 add_subdirectory(App)
@@ -31,6 +37,8 @@ add_subdirectory(Common)
 add_subdirectory(UI)
 add_subdirectory(GLObject)
 add_subdirectory(Primitive)
+add_subdirectory(Data)
+add_subdirectory(Filters)
 
 option(enable_testing OFF)
 

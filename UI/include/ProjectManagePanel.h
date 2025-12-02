@@ -17,6 +17,9 @@ public:
 public slots:
   void slotSetImageTable(const SeriesVector& seriesVector);
 
+signals:
+  void signalSelectedSeries(const QString& seriesId);
+
 protected:
   void initUI();
   void initConnects();

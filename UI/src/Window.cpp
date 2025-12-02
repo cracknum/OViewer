@@ -40,6 +40,7 @@ inline Window::Window(QWidget* parent)
   format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
   this->setFormat(format);
 }
+
 Window::~Window() = default;
 void Window::addViewWindow(const ViewWindowConfig& config)
 {

@@ -19,6 +19,7 @@ class UI_API Window final
   Q_OBJECT
 public:
   explicit Window(QWidget* parent = nullptr);
+
   ~Window() override;
   DISALLOW_COPY_AND_MOVE(Window);
 
@@ -40,6 +41,16 @@ protected:
   void wheelEvent(QWheelEvent* event) override;
   void keyPressEvent(QKeyEvent* event) override;
   void keyReleaseEvent(QKeyEvent* event) override;
+
+  void addViewWindow(int viewId, vtkFloatArray* windowRange, vtkFloatArray* background);
+  void addSplitLine(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
+  [[nodiscard]] ViewWindow* getViewWindow(int viewId) const;
+
+  public slots:
+  void openImage(DicomSeries* dicom);
+
+protected:
+  vtkSmartPointer<vtkActor2D> createLineActor(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
 
 private:
   struct Impl;

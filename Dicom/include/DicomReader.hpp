@@ -17,7 +17,7 @@ public:
 
   static_assert(ImageDimension == 3, "DicomSeriesReader only supports 3D output image.");
 
-  itkSetMacro(DicomDirectory, std::string);
+  itkSetStringMacro(DicomDirectory);
 
   void GenerateData();
 
