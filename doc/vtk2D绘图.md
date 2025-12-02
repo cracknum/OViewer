@@ -506,3 +506,85 @@ render pass并不是vtk中的概念，而是现代图形学中使用的概念，
 
 但是这些并不是每一个版本都有的，而且在不断的更新
 
+## vtk中的piece概念
+在 VTK（Visualization Toolkit）中，`vtkPolyDataMapper` 的 **`Piece`** 是一个用于**数据分块（partitioning）和并行渲染**的概念，它与 `NumberOfPieces` 和 `GhostLevel` 一起控制 mapper 如何处理输入的 `vtkPolyData` 数据。
+
+---
+
+### 📌 核心概念
+
+#### 1. **`Piece`（当前分块索引）**
+- 类型：`int`
+- 默认值：`0`
+- 含义：指定当前 mapper 应该渲染输入数据的**第几块（piece）**。
+- 范围：`0 ≤ Piece < NumberOfPieces`
+
+#### 2. **`NumberOfPieces`（总分块数）**
+- 默认值：`1`
+- 含义：将整个数据集划分为多少个逻辑块。
+
+#### 3. **`GhostLevel`（幽灵层深度）**
+- 用于在分块边界添加额外单元，避免渲染裂缝（尤其在分布式/并行渲染中）。
+
+---
+
+### 🔍 为什么需要 `Piece`？
+
+VTK 支持 **并行处理和分布式渲染**（例如使用 MPI 或多 GPU）。在这种场景下：
+
+- 一个大型 `vtkPolyData` 被**分割成多个 pieces**（分块）
+- 每个进程/线程只处理 **一个 piece**
+- 每个进程创建自己的 `vtkPolyDataMapper`，并设置：
+  ```cpp
+  mapper->SetPiece(my_rank);           // 当前进程负责第 my_rank 块
+  mapper->SetNumberOfPieces(num_procs); // 总共 num_procs 块
+  ```
+- 最终合成完整图像
+
+> 💡 即使在单机单线程程序中，VTK 内部某些 filter（如 `vtkExtractPolyDataPiece`）也会利用 `Piece` 机制进行数据子集提取。
+
+---
+
+### ✅ 典型使用场景
+
+#### 场景 1：并行渲染（MPI）
+```cpp
+// 假设有 4 个 MPI 进程
+int my_rank = ...; // 0, 1, 2, or 3
+int num_procs = 4;
+
+vtkNew<vtkPolyDataMapper> mapper;
+mapper->SetInputData(polydata);
+mapper->SetPiece(my_rank);
+mapper->SetNumberOfPieces(num_procs);
+mapper->SetGhostLevel(1); // 避免边界裂缝
+
+vtkNew<vtkActor> actor;
+actor->SetMapper(mapper);
+```
+→ 每个进程只渲染数据的 1/4。
+
+#### 场景 2：单机上手动分块渲染（较少见）
+```cpp
+// 只渲染数据的前半部分
+mapper->SetNumberOfPieces(2);
+mapper->SetPiece(0); // 取第 0 块（前半）
+```
+
+---
+
+### ⚠️ 重要注意事项
+
+1. **输入数据必须支持分块**  
+   并非所有 `vtkPolyData` 都能自动分块。通常需要上游 filter（如 `vtkDistributedDataFilter`、`vtkExtractPolyDataPiece`）生成带 `vtkOriginalCellIds` 或 `vtkGhostType` 的分块数据。
+
+2. **默认行为（Piece=0, NumberOfPieces=1）**  
+   表示“使用全部数据”，这是绝大多数单机应用的情况。
+
+3. **与 `vtkActor` 的关系**  
+   `Piece` 是 **mapper 级别**的设置，不影响 actor 的变换或属性。
+
+4. **不等于 LOD（Level of Detail）**  
+   `Piece` 是空间/数据分块，不是细节层次。
+
+---

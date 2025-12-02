@@ -18,9 +18,7 @@ if (NOT TARGET spdlog::spdlog)
     find_package(spdlog CONFIG REQUIRED)
 endif ()
 
-
 if (NOT "${Source_files}")
-    set(vtk_libs VTK::FiltersProgrammable VTK::GUISupportQt)
     add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files} ${CMAKE_CURRENT_SOURCE_DIR}/resource.qrc)
     target_link_libraries(${PROJECT_NAME} PUBLIC
             Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL

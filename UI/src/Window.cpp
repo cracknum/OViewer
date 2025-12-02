@@ -149,3 +149,8 @@ void Window::mouseMoveEvent(QMouseEvent* event) {}
 void Window::wheelEvent(QWheelEvent* event) {}
 void Window::keyPressEvent(QKeyEvent* event) {}
 void Window::keyReleaseEvent(QKeyEvent* event) {}
+
+void Window::openImage(DicomSeries* dicom)
+{
+	
+}

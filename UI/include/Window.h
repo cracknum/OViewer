@@ -7,10 +7,13 @@
 #include <QWidget>
 #include <memory>
 #include "ViewWindowConfig.h"
+#include <glm/glm.hpp>
 
 class ViewWindowBase;
 class ViewWindow;
 class ShaderManager;
+class DicomSeries;
+class Line;
 
 class UI_API Window final
   : public QOpenGLWidget
@@ -42,15 +45,15 @@ protected:
   void keyPressEvent(QKeyEvent* event) override;
   void keyReleaseEvent(QKeyEvent* event) override;
 
-  void addViewWindow(int viewId, vtkFloatArray* windowRange, vtkFloatArray* background);
-  void addSplitLine(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
+  void addViewWindow(int viewId, const glm::vec4& windowRange, const glm::vec4& background);
+  void addSplitLine(const glm::vec4& colorArray, const glm::vec4& linePoints);
   [[nodiscard]] ViewWindow* getViewWindow(int viewId) const;
 
   public slots:
   void openImage(DicomSeries* dicom);
 
 protected:
-  vtkSmartPointer<vtkActor2D> createLineActor(vtkFloatArray* colorArray, vtkFloatArray* linePoints);
+  Line createLineActor(const glm::vec4& colorArray, const glm::vec3& lineStart, const glm::vec3& lineEnd);
 
 private:
   struct Impl;
