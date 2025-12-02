@@ -22,6 +22,7 @@ public:
   Plane* getPlane();
 
   void doFilter();
+  const void* getPixels() const;
 
 private:
   friend class ImageResliceTest;
@@ -38,6 +39,7 @@ private:
   Plane* m_dPlane;
   cudaTextureObject_t m_Texture;
   void* m_Pixels;
+  void* m_hPixels;
   std::shared_ptr<Volume> m_hVolume;
   std::shared_ptr<Plane> m_hPlane;
 };

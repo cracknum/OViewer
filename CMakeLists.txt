@@ -16,6 +16,7 @@ find_package(ITK CONFIG REQUIRED) # read dicom files
 find_package(spdlog CONFIG REQUIRED) # for log info
 find_package(VTK REQUIRED)
 
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")

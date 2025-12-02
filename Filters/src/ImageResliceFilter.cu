@@ -1,6 +1,9 @@
 #include "ImageResliceFilter.cuh"
-
+// #include <spdlog/spdlog.h>
+#include <iostream>
 #include <stdexcept>
+
+#define BENCHMARK
 
 namespace FilterKernel
 {
@@ -31,6 +34,7 @@ ImageResliceFilter::ImageResliceFilter()
   : m_Texture(0)
   , m_dVolume(nullptr)
   , m_dPlane(nullptr)
+  , m_hPixels(nullptr)
 {
 }
 
@@ -85,16 +89,28 @@ void ImageResliceFilter::uploadVolume(std::shared_ptr<Volume> volume, std::share
   }
 
   // upload volume
-  cudaMallocHost(&m_dVolume, sizeof(Volume));
-  cudaMemcpy(m_dVolume, volume.get(), sizeof(Volume), cudaMemcpyHostToDevice);
+  auto err = cudaMalloc(&m_dVolume, sizeof(Volume));
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  err = cudaMemcpy(m_dVolume, volume.get(), sizeof(Volume), cudaMemcpyHostToDevice);
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   // upload volume data to texture
-  cudaExtent extent = make_cudaExtent(volume->m_Dimensions.x * getDataTypeSize(volume->m_DataType),
-    volume->m_Dimensions.y, volume->m_Dimensions.z);
+  cudaExtent extent =
+    make_cudaExtent(volume->m_Dimensions.x, volume->m_Dimensions.y, volume->m_Dimensions.z);
 
   cudaArray_t dataArray{};
   cudaChannelFormatDesc channelFormat = createChannelFormat();
   cudaMalloc3DArray(&dataArray, &channelFormat, extent);
+  cudaMemcpy3DParms params{};
+  params.srcPtr = make_cudaPitchedPtr(m_hVolume->m_Data,
+    m_hVolume->m_Dimensions.x * getDataTypeSize(volume->m_DataType), m_hVolume->m_Dimensions.x,
+    m_hVolume->m_Dimensions.y);
+  params.extent = extent;
+  params.kind = cudaMemcpyHostToDevice;
+  params.dstArray = dataArray;
+  err = cudaMemcpy3D(&params);
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+
   cudaResourceDesc desc{};
   desc.resType = cudaResourceTypeArray;
   desc.res.array.array = dataArray;
@@ -108,16 +124,30 @@ void ImageResliceFilter::uploadVolume(std::shared_ptr<Volume> volume, std::share
   textureDesc.borderColor[3] = 0.0f;
   textureDesc.filterMode = cudaTextureFilterMode::cudaFilterModeLinear;
   textureDesc.readMode = cudaTextureReadMode::cudaReadModeElementType;
+  textureDesc.normalizedCoords = 0;
 
-  cudaCreateTextureObject(&m_Texture, &desc, &textureDesc, nullptr);
+  err = cudaCreateTextureObject(&m_Texture, &desc, &textureDesc, nullptr);
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   // upload plane
-  cudaMallocHost(&m_dPlane, sizeof(Plane));
-  cudaMemcpy(m_dPlane, plane.get(), sizeof(Plane), cudaMemcpyHostToDevice);
+  err = cudaMalloc(&m_dPlane, sizeof(Plane));
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+
+  err = cudaMemcpy(m_dPlane, plane.get(), sizeof(Plane), cudaMemcpyHostToDevice);
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   // create cache for plane pixels;
-  cudaMallocHost(&m_Pixels, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
-  cudaMemset(m_Pixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  err =
+    cudaMalloc(&m_Pixels, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  err = cudaMallocHost(
+    &m_hPixels, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  memset(m_hPixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+
+  err =
+    cudaMemset(m_Pixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   m_hPlane = plane;
   m_hVolume = volume;
@@ -127,9 +157,13 @@ void ImageResliceFilter::destroyResources()
 {
   if (m_dVolume || m_dPlane)
   {
-    cudaFreeHost(m_dVolume);
-    cudaFreeHost(m_dPlane);
-    cudaDestroyTextureObject(m_Texture);
+    auto err = cudaFree(m_dVolume);
+    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    err = cudaFree(m_dPlane);
+    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    err = cudaDestroyTextureObject(m_Texture);
+    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    cudaFreeHost(m_hPixels);
   }
 }
 cudaChannelFormatDesc ImageResliceFilter::createChannelFormat()
@@ -169,15 +203,60 @@ void ImageResliceFilter::launchResliceKernel()
   }
 }
 
+const void* ImageResliceFilter::getPixels() const
+{
+  return m_hPixels;
+}
+
 template <DataType dt>
 void ImageResliceFilter::launchResliceKernelImpl()
 {
+#if defined(BENCHMARK)
+  cudaEvent_t startEvent, stopEvent;
+  cudaEventCreate(&startEvent);
+  cudaEventCreate(&stopEvent);
+  cudaEventRecord(startEvent);
+#endif
   using type = data_type<dt>;
-  dim3 blockSize(128, 128, 1);
+  dim3 blockSize(32, 32, 1);
   dim3 gridSize((m_hPlane->m_Width + blockSize.x - 1) / blockSize.x,
     (m_hPlane->m_Height + blockSize.y - 1) / blockSize.y, 1);
-
-  FilterKernel::resliceVolume<type>
-    <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, static_cast<type*>(m_Pixels));
+#if defined(BENCHMARK)
+  const int count = 100;
+  for (int i = 0; i < count; ++i)
+  {
+#endif
+    FilterKernel::resliceVolume<type>
+      <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, static_cast<type*>(m_Pixels));
+#if defined(BENCHMARK)
+  }
+#endif
+#if defined(BENCHMARK)
+  cudaEventRecord(stopEvent);
+#endif 
   cudaDeviceSynchronize();
+#if defined(BENCHMARK)
+  float elapsedTime = 0.0f;
+  cudaEventElapsedTime(&elapsedTime, startEvent, stopEvent);
+  std::cout << "slice time: " << elapsedTime / count << "ms" << std::endl;
+#endif
+  cudaError_t err = cudaGetLastError();
+  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  if (err != cudaSuccess)
+  {
+    std::cout << "params: " << std::endl
+              << "grid size: " << gridSize.x << " " << gridSize.y << " " << gridSize.z << std::endl
+              << "type: " << typeid(type).name() << std::endl
+              << "m_dVolume address: " << m_dVolume << std::endl
+              << "m_Texture id: " << m_Texture << std::endl
+              << "m_dPlane address: " << m_dPlane << std::endl
+              << "m_Pixels address: " << m_Pixels << ": " << static_cast<type*>(m_Pixels)
+              << std::endl;
+  }
+  else
+  {
+    cudaMemcpy(m_hPixels, m_Pixels,
+      m_hPlane->m_Width * m_hPlane->m_Height * getDataTypeSize(m_hVolume->m_DataType),
+      cudaMemcpyDeviceToHost);
+  }
 }

@@ -34,6 +34,7 @@ if (NOT "${Source_files}")
     target_include_directories(${PROJECT_NAME}
             PUBLIC include
             PRIVATE ${SARibbonBar_INCLUDE_DIR})
+    set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES native)
 
     export_model(${export_config_file_path} ${PROJECT_NAME})
     group_sources_by_directory(${PROJECT_NAME})

@@ -18,6 +18,7 @@ if (ENABLE_DICOM_TEST)
             ${Dicom_model_test_files}
     )
     set(TEST_LIB Dicom)
+    find_package(Stb REQUIRED)
 endif ()
 
 if (ENABLE_IMAGE_FILTER_TEST)
@@ -30,7 +31,7 @@ endif ()
 if (NOT "${Testing_files}")
     add_executable(${PROJECT_NAME} ${Testing_files})
     target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main ${TEST_LIB})
-
+    target_include_directories(${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
     include(GoogleTest)
 
     gtest_discover_tests(${PROJECT_NAME})
