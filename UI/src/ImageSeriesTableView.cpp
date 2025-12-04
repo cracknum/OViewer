@@ -41,9 +41,9 @@ ImageSeriesTable::~ImageSeriesTable() {}
 
 void ImageSeriesTable::addRow(const std::string& seriesId, const ImageInformation* imageInfo)
 {
-  auto dimensions = imageInfo->GetDimensions();
-  auto dimsStr = QString::number(dimensions.at(0)) + "x" + QString::number(dimensions.at(1)) + "x" +
-    QString::number(dimensions.at(2));
+  auto* dimensions = imageInfo->GetDimensions();
+  auto dimsStr = QString::number(dimensions[0]) + "x" + QString::number(dimensions[1]) + "x" +
+    QString::number(dimensions[2]);
 
   int newRow = rowCount();
   insertRow(newRow);

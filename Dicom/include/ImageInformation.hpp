@@ -14,6 +14,8 @@
 #include <vtkImageData.h>
 #include <vtkSmartPointer.h>
 #include "itkImageToVTKImageFilter.h"
+#include <vtkImageChangeInformation.h>
+#include <vtkTransform.h>
 
 class DICOM_API ImageInformation final : public InformationParser
 {
@@ -48,22 +50,32 @@ public:
   itkGetConstMacro(PhotoMetricInterpretation, std::string);
 
   itkGetConstMacro(Volume, itk::Object::Pointer);
-  itkGetConstMacro(Dimensions, itk::Size<3>);
+  const int * GetDimensions() const { return this->m_Dimensions; }
   void parseInfo(const itk::MetaDataDictionary& metaData) override;
 
   template <typename TPixel, typename ImageType = itk::Image<TPixel, 3>>
   void SetVolume(typename ImageType::Pointer image)
   {
-    m_Origin = image->GetOrigin();
-    m_Direction = image->GetDirection();
-    m_Spacing = image->GetSpacing();
     m_Volume = image;
-    m_Dimensions = image->GetLargestPossibleRegion().GetSize();
-    m_VtkImage = vtkSmartPointer<vtkImageData>::New();
+	m_Direction = image->GetDirection();
+
     auto imageExportFilter = itk::ImageToVTKImageFilter<itk::Image<TPixel, 3>>::New();
     imageExportFilter->SetInput(image);
     imageExportFilter->Update();
-    m_VtkImage = imageExportFilter->GetOutput();
+	m_VtkImage = imageExportFilter->GetOutput();
+
+	m_VtkImage->GetOrigin(m_Origin.data());
+    m_VtkImage->GetSpacing(m_Spacing.data());
+	m_VtkImage->GetDimensions(m_Dimensions);
+
+	vtkSmartPointer<vtkImageChangeInformation> changeOriginFilter = vtkSmartPointer<vtkImageChangeInformation>::New();
+	changeOriginFilter->SetInputData(imageExportFilter->GetOutput());
+
+	double newOrigin[3] = {m_Origin[0] - 0.5 * m_Spacing[0], m_Origin[1] - 0.5 * m_Spacing[1], m_Origin[2] - 0.5 * m_Spacing[2]};
+	changeOriginFilter->SetInputData(m_VtkImage);
+	changeOriginFilter->SetOutputOrigin(newOrigin);
+	changeOriginFilter->Update();
+	m_VtkImage = changeOriginFilter->GetOutput();
   }
 
   vtkSmartPointer<vtkImageData> GetVtkVolume();
@@ -143,7 +155,7 @@ private:
    * @brief 体数据的方向矩阵，注意，这是方向矩阵，并不包含缩放，缩放由对角线的spacing提供
    */
   itk::Matrix<double> m_Direction;
-  itk::Size<3> m_Dimensions;
+  int m_Dimensions[3];
   /**
    * @brief 像素的每个分量的数据类型
    */

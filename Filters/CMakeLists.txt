@@ -22,7 +22,7 @@ if (NOT TARGET CUDA::cudart)
 endif ()
 
 if (NOT "${Source_files}")
-    set(vtk_libs VTK::CommonDataModel)
+    set(vtk_libs VTK::CommonDataModel VTK::CommonExecutionModel)
     add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
     target_link_libraries(${PROJECT_NAME} PUBLIC
             Common Dicom Data

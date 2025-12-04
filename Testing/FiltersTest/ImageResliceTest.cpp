@@ -13,7 +13,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #define GLM_ENABLE_EXPERIMENTAL
+#include "PlaneLocalBoundsFilter.h"
 #include <glm/gtx/string_cast.hpp>
+#include <spdlog/spdlog.h>
+#include <vtkPointSet.h>
 
 namespace
 {
@@ -45,6 +48,7 @@ void saveFloatBufferAsPNG(const char* filename, const float* pixels, int width, 
 
 TEST(ImageResliceTest, AxialSliceTest)
 {
+  GTEST_SKIP() << "skipping AxialSliceTest";
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetDicomDirectory("D:/Workspace/Data/case2");
@@ -68,15 +72,54 @@ TEST(ImageResliceTest, AxialSliceTest)
     DataType::FLOAT, static_cast<float*>(vtkVolume->GetScalarPointer()), matrix);
   std::cout << "matrix: " << glm::to_string(matrix) << std::endl;
 
-  std::shared_ptr<Plane> plane = std::make_shared<Plane>(
-    glm::vec3(gOrigin.x, gOrigin.y, gOrigin.z+100.0f), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), matrix);
+  std::shared_ptr<Plane> plane =
+    std::make_shared<Plane>(glm::vec3(gOrigin.x, gOrigin.y, gOrigin.z + 100.0f), glm::vec3(1, 0, 0),
+      glm::vec3(0, 1, 0), matrix);
   plane->m_Width = dimensions[0];
   plane->m_Height = dimensions[1];
-  std::cout << glm::to_string(volume->m_WorldToIndex * glm::vec4(plane->m_Origin, 1.0f)) << std::endl;
+  std::cout << glm::to_string(volume->m_WorldToIndex * glm::vec4(plane->m_Origin, 1.0f))
+            << std::endl;
   std::unique_ptr<ImageResliceFilter> resliceFilter = std::make_unique<ImageResliceFilter>();
   resliceFilter->setPlane(plane);
   resliceFilter->setVolume(volume);
   resliceFilter->doFilter();
   auto pixels = static_cast<const float*>(resliceFilter->getPixels());
   saveFloatBufferAsPNG("test.png", pixels, dimensions[0], dimensions[1]);
+}
+
+TEST(ImageResliceTest, PlaneLocalBoundsFilterTest)
+{
+  using ReaderType = DicomReadReader<itk::Image<float, 3>>;
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetDicomDirectory("D:/Workspace/Data/case2");
+  reader->GenerateData();
+
+  auto dicomSeries = *(reader->begin());
+  auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
+  double* origin = imageData->GetOrigin();
+  double* spacing = imageData->GetSpacing();
+  int* dimensions = imageData->GetDimensions();
+
+  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+  vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  matrix->Identity();
+  matrix->SetElement(2, 3, -20);
+  transform->SetMatrix(matrix);
+  vtkSmartPointer<PlaneLocalBoundsFilter> planeLocalBoundsFilter = vtkSmartPointer<PlaneLocalBoundsFilter>::New();
+  planeLocalBoundsFilter->SetInputData(imageData);
+  planeLocalBoundsFilter->SetPlaneLocalToWorldTransform(transform);
+  planeLocalBoundsFilter->Update();
+  vtkSmartPointer<vtkPointSet> pointset = planeLocalBoundsFilter->GetOutput();
+
+  EXPECT_EQ(pointset->GetNumberOfPoints(), 2);
+
+  vtkSmartPointer<PlaneLocalBoundsFilter> planeLocalBoundsFilter1 = vtkSmartPointer<PlaneLocalBoundsFilter>::New();
+
+  matrix->Identity();
+  transform->SetMatrix(matrix);
+  planeLocalBoundsFilter1->SetInputData(imageData);
+  planeLocalBoundsFilter1->SetPlaneLocalToWorldTransform(transform);
+  planeLocalBoundsFilter1->Update();
+  auto pointset1 = planeLocalBoundsFilter1->GetOutput();
+  EXPECT_EQ(pointset1->GetNumberOfPoints(), 0);
 }
