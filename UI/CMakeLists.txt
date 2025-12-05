@@ -18,13 +18,20 @@ if (NOT TARGET spdlog::spdlog)
     find_package(spdlog CONFIG REQUIRED)
 endif ()
 
+if (NOT TARGET glm::glm)
+    find_package(glm CONFIG REQUIRED)
+endif()
+
+set(vtk_libs VTK::GUISupportQt VTK::FiltersSources VTK::RenderingCore VTK::RenderingOpenGL2)
 if (NOT "${Source_files}")
     add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files} ${CMAKE_CURRENT_SOURCE_DIR}/resource.qrc)
     target_link_libraries(${PROJECT_NAME} PUBLIC
             Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
-            Common Primitive Dicom
+            Common Primitive Dicom Filters Data
             SARibbonBar::SARibbonBar
             spdlog::spdlog
+            glm::glm
+            ${vtk_libs}
     )
     target_include_directories(${PROJECT_NAME}
             PUBLIC include
@@ -32,6 +39,8 @@ if (NOT "${Source_files}")
             
     export_model(${export_config_file_path} ${PROJECT_NAME})
     group_sources_by_directory(${PROJECT_NAME})
+
+    vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${vtk_libs})
 
 endif ()
 

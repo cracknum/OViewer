@@ -2,7 +2,7 @@
 #include "DicomReader.hpp"
 #include "DicomSeries.h"
 #include "ImageInformation.hpp"
-#include "ImageResliceFilter.cuh"
+#include "ImageResliceFilterCuda.cuh"
 #include "Plane.h"
 #include "Volume.h"
 #include <glm/glm.hpp>
@@ -15,7 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define GLM_ENABLE_EXPERIMENTAL
-#include "PlaneLocalBoundsFilter.h"
+#include "ImageResliceFilter.h"
 #include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
 #include <vtkPointSet.h>
@@ -105,7 +105,7 @@ TEST(ImageResliceTest, AxialSliceTest)
   plane->m_Height = dimensions[1];
   std::cout << glm::to_string(volume->m_WorldToIndex * glm::vec4(plane->m_Origin, 1.0f))
             << std::endl;
-  std::unique_ptr<ImageResliceFilter> resliceFilter = std::make_unique<ImageResliceFilter>();
+  std::unique_ptr<ImageResliceFilterCuda> resliceFilter = std::make_unique<ImageResliceFilterCuda>();
   resliceFilter->setPlane(plane);
   resliceFilter->setVolume(volume);
   resliceFilter->doFilter();
@@ -128,70 +128,26 @@ TEST(ImageResliceTest, PlaneLocalBoundsFilterTest)
   int* dimensions = imageData->GetDimensions();
 
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-  vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  matrix->Identity();
-  matrix->SetElement(0, 0, spacing[0]);
-  matrix->SetElement(1, 1, spacing[1]);
-  matrix->SetElement(2, 2, spacing[2]);
-  matrix->SetElement(0, 3, origin[0]);
-  matrix->SetElement(1, 3, origin[1]);
-  matrix->SetElement(2, 3, origin[2] + 20.0);
+  vtkSmartPointer<vtkMatrix4x4> planeIndexToWorldMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  planeIndexToWorldMatrix->Identity();
+  planeIndexToWorldMatrix->SetElement(0, 0, spacing[0]);
+  planeIndexToWorldMatrix->SetElement(1, 1, spacing[1]);
+  planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
+  planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
+  planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 20.0);
 
-  transform->SetMatrix(matrix);
-  vtkSmartPointer<PlaneLocalBoundsFilter> planeLocalBoundsFilter =
-    vtkSmartPointer<PlaneLocalBoundsFilter>::New();
+  transform->SetMatrix(planeIndexToWorldMatrix);
+  transform->RotateX(30);
+  vtkSmartPointer<ImageResliceFilter> planeLocalBoundsFilter =
+    vtkSmartPointer<ImageResliceFilter>::New();
   planeLocalBoundsFilter->SetInputData(imageData);
   planeLocalBoundsFilter->SetPlaneLocalToWorldTransform(transform);
   planeLocalBoundsFilter->Update();
-  vtkSmartPointer<vtkPointSet> pointset = planeLocalBoundsFilter->GetOutput();
+  auto outputImageData = planeLocalBoundsFilter->GetOutput();
 
-  EXPECT_EQ(pointset->GetNumberOfPoints(), 3);
-  double* textureMaxSize = pointset->GetPoint(0);
-  SPDLOG_INFO("textureMaxSize: {} {} {}", textureMaxSize[0], textureMaxSize[1], textureMaxSize[2]);
-  double minBound[3];
-  pointset->GetPoint(1, minBound);
-
-  SPDLOG_INFO("minBound: {} {} {}", minBound[0], minBound[1], minBound[2]);
-  double maxBound[3];
-  pointset->GetPoint(2, maxBound);
-  SPDLOG_INFO("maxBound: {} {} {}", maxBound[0], maxBound[1], maxBound[2]);
-
-  vtkSmartPointer<PlaneLocalBoundsFilter> planeLocalBoundsFilter1 =
-    vtkSmartPointer<PlaneLocalBoundsFilter>::New();
-
-  vtkSmartPointer<vtkMatrix4x4> failPlaneMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  failPlaneMatrix->Identity();
-  transform->SetMatrix(failPlaneMatrix);
-  planeLocalBoundsFilter1->SetInputData(imageData);
-  planeLocalBoundsFilter1->SetPlaneLocalToWorldTransform(transform);
-  planeLocalBoundsFilter1->Update();
-  auto pointset1 = planeLocalBoundsFilter1->GetOutput();
-  EXPECT_EQ(pointset1->GetNumberOfPoints(), 1); // at least has a texture max size
-
-  auto imageIndexToPhysicalMatrix = imageData->GetIndexToPhysicalMatrix();
-
-  glm::vec3 gOrigin(origin[0], origin[1], origin[2]);
-  glm::vec3 gSpacing(spacing[0], spacing[1], spacing[2]);
-  glm::ivec3 gDimensions(dimensions[0], dimensions[1], dimensions[2]);
-  std::shared_ptr<Volume> volume = std::make_shared<Volume>(gOrigin, gSpacing, gDimensions,
-    DataType::FLOAT, static_cast<float*>(imageData->GetScalarPointer()),
-    convertTOMat4(imageIndexToPhysicalMatrix));
-
-  auto mat4 = convertTOMat4(imageIndexToPhysicalMatrix);
-  SPDLOG_INFO("image data index to world matrix: {}", glm::to_string(mat4));
-
-  std::shared_ptr<Plane> plane =
-    std::make_shared<Plane>(glm::vec3(gOrigin.x, gOrigin.y, gOrigin.z + 100.0f), glm::vec3(1, 0, 0),
-      glm::vec3(0, 1, 0), convertTOMat4(matrix));
-  plane->m_Width = maxBound[0] - minBound[0] + 1;
-  plane->m_Height = maxBound[1] - minBound[1] + 1;
-
-  SPDLOG_INFO("plane size: {} x {}", plane->m_Width, plane->m_Height);
-
-  std::unique_ptr<ImageResliceFilter> resliceFilter = std::make_unique<ImageResliceFilter>();
-  resliceFilter->setPlane(plane);
-  resliceFilter->setVolume(volume);
-  resliceFilter->doFilter();
-  auto pixels = static_cast<const float*>(resliceFilter->getPixels());
-  saveFloatBufferAsPNG("test.png", pixels, plane->m_Width, plane->m_Height);
+  int ouputDimensions[3];
+  outputImageData->GetDimensions(ouputDimensions);
+  auto pixels = static_cast<const float*>(outputImageData->GetScalarPointer());
+  saveFloatBufferAsPNG("test.png", pixels, ouputDimensions[0], ouputDimensions[1]);
 }

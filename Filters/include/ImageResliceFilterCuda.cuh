@@ -8,12 +8,12 @@
 // #include <spdlog/spdlog.h>
 #include "FiltersExport.h"
 
-class FILTERS_API ImageResliceFilter
+class FILTERS_API ImageResliceFilterCuda
 {
 public:
-  ImageResliceFilter::ImageResliceFilter();
+  ImageResliceFilterCuda::ImageResliceFilterCuda();
 
-  ImageResliceFilter::~ImageResliceFilter();
+  ImageResliceFilterCuda::~ImageResliceFilterCuda();
 
   void setVolume(std::shared_ptr<Volume> volume);
   Volume* getVolume();

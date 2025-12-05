@@ -1,7 +1,8 @@
-#include "ImageResliceFilter.cuh"
+#include "ImageResliceFilterCuda.cuh"
 // #include <spdlog/spdlog.h>
 #include <iostream>
 #include <stdexcept>
+#include <thrust/extrema.h>
 
 // #define BENCHMARK
 
@@ -29,7 +30,7 @@ __global__ void resliceVolume(
 }
 }
 
-ImageResliceFilter::ImageResliceFilter()
+ImageResliceFilterCuda::ImageResliceFilterCuda()
   : m_Texture(0)
   , m_dVolume(nullptr)
   , m_dPlane(nullptr)
@@ -37,33 +38,33 @@ ImageResliceFilter::ImageResliceFilter()
 {
 }
 
-ImageResliceFilter::~ImageResliceFilter()
+ImageResliceFilterCuda::~ImageResliceFilterCuda()
 {
   destroyResources();
 }
 
-void ImageResliceFilter::setVolume(std::shared_ptr<Volume> volume)
+void ImageResliceFilterCuda::setVolume(std::shared_ptr<Volume> volume)
 {
   destroyResources();
 
   m_hVolume = volume;
 }
-Volume* ImageResliceFilter::getVolume()
+Volume* ImageResliceFilterCuda::getVolume()
 {
   return m_hVolume.get();
 }
 
-void ImageResliceFilter::setPlane(std::shared_ptr<Plane> plane)
+void ImageResliceFilterCuda::setPlane(std::shared_ptr<Plane> plane)
 {
   destroyResources();
   m_hPlane = plane;
 }
-Plane* ImageResliceFilter::getPlane()
+Plane* ImageResliceFilterCuda::getPlane()
 {
   return m_hPlane.get();
 }
 
-void ImageResliceFilter::doFilter()
+void ImageResliceFilterCuda::doFilter()
 {
   if (m_dVolume == nullptr || m_hPlane == nullptr)
   {
@@ -73,7 +74,7 @@ void ImageResliceFilter::doFilter()
   launchResliceKernel();
 }
 
-void ImageResliceFilter::uploadVolume(std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane)
+void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane)
 {
   if (!volume || !plane)
   {
@@ -152,7 +153,7 @@ void ImageResliceFilter::uploadVolume(std::shared_ptr<Volume> volume, std::share
   m_hVolume = volume;
 }
 
-void ImageResliceFilter::destroyResources()
+void ImageResliceFilterCuda::destroyResources()
 {
   if (m_dVolume || m_dPlane)
   {
@@ -165,7 +166,7 @@ void ImageResliceFilter::destroyResources()
     cudaFreeHost(m_hPixels);
   }
 }
-cudaChannelFormatDesc ImageResliceFilter::createChannelFormat()
+cudaChannelFormatDesc ImageResliceFilterCuda::createChannelFormat()
 {
   switch (m_hVolume->m_DataType)
   {
@@ -183,7 +184,7 @@ cudaChannelFormatDesc ImageResliceFilter::createChannelFormat()
       throw std::runtime_error("unsupported type");
   }
 }
-void ImageResliceFilter::launchResliceKernel()
+void ImageResliceFilterCuda::launchResliceKernel()
 {
   switch (m_hVolume->m_DataType)
   {
@@ -202,13 +203,13 @@ void ImageResliceFilter::launchResliceKernel()
   }
 }
 
-const void* ImageResliceFilter::getPixels() const
+const void* ImageResliceFilterCuda::getPixels() const
 {
   return m_hPixels;
 }
 
 template <DataType dt>
-void ImageResliceFilter::launchResliceKernelImpl()
+void ImageResliceFilterCuda::launchResliceKernelImpl()
 {
 #if defined(BENCHMARK)
   cudaEvent_t startEvent, stopEvent;
@@ -227,6 +228,7 @@ void ImageResliceFilter::launchResliceKernelImpl()
 #endif
     FilterKernel::resliceVolume<type>
       <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, static_cast<type*>(m_Pixels));
+    
 #if defined(BENCHMARK)
   }
 #endif
