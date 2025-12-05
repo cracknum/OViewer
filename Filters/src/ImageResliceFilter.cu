@@ -20,10 +20,9 @@ __global__ void resliceVolume(
     return;
   }
 
-  glm::vec3 worldPlanePixel = plane->m_Origin + plane->m_Right * static_cast<float>(x) +
-    plane->m_Bottom * static_cast<float>(y);
+  glm::vec4 worldPlanePixel = plane->m_IndexToWorld * glm::vec4(x, y, 0, 1.0f);
 
-  glm::vec3 volumeIndex = volume->m_WorldToIndex * glm::vec4(worldPlanePixel, 1.0f);
+  glm::vec4 volumeIndex =  volume->m_WorldToIndex * worldPlanePixel;
 
   auto data = tex3D<ComponentType>(texture, volumeIndex.x, volumeIndex.y, volumeIndex.z);
   pixels[y * plane->m_Width + x] = data;

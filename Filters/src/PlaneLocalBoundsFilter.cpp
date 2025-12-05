@@ -45,6 +45,15 @@ int PlaneLocalBoundsFilter::RequestData(vtkInformation* vtkNotUsed(request),
   vtkSmartPointer<vtkPoints> boundPoints = vtkSmartPointer<vtkPoints>::New();
   boundsSet->SetPoints(boundPoints);
 
+  // calculate max texture size
+  int dimensions[3];
+  imageData->GetDimensions(dimensions);
+  int maxDiagonalLength2 = std::max({dimensions[0] * dimensions[0], dimensions[1] * dimensions[1], dimensions[2] * dimensions[2]});
+  int textureMaxSize = std::sqrt(maxDiagonalLength2);
+
+  // index 0: textureMaxSize
+  boundPoints->InsertNextPoint(textureMaxSize, textureMaxSize, 1);
+
   // get image data bounds in world and PhysicalToIndexMatrix
   double imageDataBounds[6]{};
   double bounds[6]{ std::numeric_limits<double>::max(), std::numeric_limits<double>::min(),
@@ -101,6 +110,7 @@ int PlaneLocalBoundsFilter::RequestData(vtkInformation* vtkNotUsed(request),
     return 1;
   }
   
+  // index 1 and 2: bounds
   boundPoints->InsertNextPoint(bounds[0], bounds[2], bounds[4]);
   boundPoints->InsertNextPoint(bounds[1], bounds[3], bounds[5]);
 

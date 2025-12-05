@@ -8,9 +8,10 @@
 graph TD
 vtkImageData["volume data"] --> Filter1 
 %% Filter1: PlaneLocalBoundsFilter
-Plane["Plane's <br> local coordinates <br> and  <br> indexToWorld coordinates"] --> Filter1
+Plane["Plane's <br> indexToWorld coordinates"] --> Filter1
 Filter1 --> boundsArray["setting Plane' local bounds array 2D"]
 vtkImageData --> Filter2["upload vtkImageData to texture and register opengl texture to cuda"]
+%% Filter2: TextureRegisterFilter
 boundsArray--> createOpenGLTexture["create opengl texture according to boundsArray"]
 createOpenGLTexture --> Filter2
 Filter2 --> Filter3
