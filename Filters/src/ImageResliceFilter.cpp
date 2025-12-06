@@ -3,6 +3,7 @@
 #include "Plane.h"
 #include "Volume.h"
 #include <glm/glm.hpp>
+#include <spdlog/spdlog.h>
 #include <vtkDemandDrivenPipeline.h>
 #include <vtkImageData.h>
 #include <vtkInformation.h>
@@ -12,9 +13,9 @@
 #include <vtkInformationVector.h>
 #include <vtkMatrix3x3.h>
 #include <vtkMatrix4x4.h>
+#include <vtkPointData.h>
 #include <vtkPointSet.h>
 #include <vtkTransform.h>
-#include <spdlog/spdlog.h>
 
 vtkStandardNewMacro(ImageResliceFilter);
 vtkInformationKeyMacro(ImageResliceFilter, TEXTURE_SIZE, Integer);
@@ -71,7 +72,7 @@ int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
 
   int textureSize = inputInform->Get(TEXTURE_SIZE());
   auto bounds = vtkPoints::SafeDownCast(outputInform->Get(PLANE_BOUNDS_POINTS()));
-  if (bounds->GetNumberOfPoints() < 2)
+  if (!bounds || bounds->GetNumberOfPoints() < 2)
   {
     vtkErrorMacro("plane and image data is not intersect");
     return 0;
@@ -125,7 +126,7 @@ int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
   const void* pixels = ImageResliceFilterAlgo->getPixels();
   memcpy(outputImage->GetScalarPointer(), pixels,
     plane->m_Width * plane->m_Height * getDataTypeSize(DataType::FLOAT));
-  
+
   SPDLOG_INFO("finished");
   return 1;
 }
@@ -154,6 +155,7 @@ int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
   imageData->GetBounds(imageDataBounds);
   double bbMin[3] = { imageDataBounds[0], imageDataBounds[2], imageDataBounds[4] };
   double bbMax[3] = { imageDataBounds[1], imageDataBounds[3], imageDataBounds[5] };
+
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkPoints> newPoints = vtkSmartPointer<vtkPoints>::New();
   points->InsertPoint(0, bbMin[0], bbMin[1], bbMin[2]);
@@ -178,6 +180,7 @@ int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
   }
   planeWorldToLocalMatrix->DeepCopy(PlaneLocalToWorldTransform->GetMatrix());
   planeWorldToLocalMatrix->Invert();
+
   transform->Concatenate(planeWorldToLocalMatrix);
   transform->TransformPoints(points, newPoints);
   LineIntersectZero(newPoints, 0, 1, bounds);
@@ -192,6 +195,7 @@ int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
   LineIntersectZero(newPoints, 5, 6, bounds);
   LineIntersectZero(newPoints, 6, 7, bounds);
   LineIntersectZero(newPoints, 7, 4, bounds);
+
   if ((bounds[0] > 9999999.0) || (bounds[2] > 9999999.0) || (bounds[1] < -9999999.0) ||
     (bounds[3] < -9999999.0))
   {

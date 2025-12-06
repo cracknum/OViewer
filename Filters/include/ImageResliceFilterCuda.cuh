@@ -26,7 +26,8 @@ public:
 
 private:
   friend class ImageResliceTest;
-  void uploadVolume(std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane);
+  void uploadVolume(std::shared_ptr<Volume> volume);
+  void uploadPlane(std::shared_ptr<Plane> plane);
 
   void destroyResources();
   cudaChannelFormatDesc createChannelFormat();

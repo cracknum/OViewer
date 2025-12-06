@@ -63,6 +63,7 @@ ImageResliceFilterCuda::ImageResliceFilterCuda()
   , m_dVolume(nullptr)
   , m_dPlane(nullptr)
   , m_hPixels(nullptr)
+  , m_hVolume(nullptr)
 {
 }
 
@@ -73,9 +74,10 @@ ImageResliceFilterCuda::~ImageResliceFilterCuda()
 
 void ImageResliceFilterCuda::setVolume(std::shared_ptr<Volume> volume)
 {
-  destroyResources();
-
-  m_hVolume = volume;
+  if (!m_hVolume || m_hVolume->m_Data != volume->m_Data)
+  {
+    m_hVolume = volume;
+  }
 }
 Volume* ImageResliceFilterCuda::getVolume()
 {
@@ -84,8 +86,11 @@ Volume* ImageResliceFilterCuda::getVolume()
 
 void ImageResliceFilterCuda::setPlane(std::shared_ptr<Plane> plane)
 {
-  destroyResources();
   m_hPlane = plane;
+  if (m_hVolume)
+  {
+    uploadPlane(plane);
+  }
 }
 Plane* ImageResliceFilterCuda::getPlane()
 {
@@ -96,16 +101,16 @@ void ImageResliceFilterCuda::doFilter()
 {
   if (m_dVolume == nullptr || m_hPlane == nullptr)
   {
-    uploadVolume(m_hVolume, m_hPlane);
+    uploadVolume(m_hVolume);
+    uploadPlane(m_hPlane);
   }
 
   launchResliceKernel();
 }
 
-void ImageResliceFilterCuda::uploadVolume(
-  std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane)
+void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume)
 {
-  if (!volume || !plane)
+  if (!volume)
   {
     /*SPDLOG_DEBUG(
       "volume is nullptr: {}, plane is nullptr: {}", volume == nullptr, plane == nullptr);*/
@@ -158,28 +163,35 @@ void ImageResliceFilterCuda::uploadVolume(
   err = cudaCreateTextureObject(&m_Texture, &desc, &textureDesc, nullptr);
   std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
+  m_hVolume = volume;
+}
+void ImageResliceFilterCuda::uploadPlane(std::shared_ptr<Plane> plane)
+{
   // upload plane
-  err = cudaMalloc(&m_dPlane, sizeof(Plane));
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  cudaError_t err;
+  if (!m_dPlane)
+  {
+    err = cudaMalloc(&m_dPlane, sizeof(Plane));
+    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  }
 
   err = cudaMemcpy(m_dPlane, plane.get(), sizeof(Plane), cudaMemcpyHostToDevice);
   std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   // create cache for plane pixels;
-  err =
-    cudaMalloc(&m_Pixels, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  err = cudaMalloc(
+    &m_Pixels, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
   std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
   err = cudaMallocHost(
-    &m_hPixels, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+    &m_hPixels, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
   std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-  memset(m_hPixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  memset(m_hPixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
 
-  err =
-    cudaMemset(m_Pixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(volume->m_DataType));
+  err = cudaMemset(
+    m_Pixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
   std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
 
   m_hPlane = plane;
-  m_hVolume = volume;
 }
 
 void ImageResliceFilterCuda::destroyResources()

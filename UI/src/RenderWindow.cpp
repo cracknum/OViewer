@@ -26,9 +26,11 @@ public:
   vtkTypeMacro(RenderCallBack, vtkCommand);
   void Execute(vtkObject* caller, unsigned long eventId, void* callData) override
   {
-    mResliceFilter->SetInputData(mImageData);
+    mPlaneIndexToWorldTransform->Translate(0, 0, 0.1);
     mResliceFilter->SetPlaneLocalToWorldTransform(mPlaneIndexToWorldTransform);
-    auto outputImageData = mResliceFilter->GetOutput();
+    mResliceFilter->Update();
+    mTexture->SetInputData(mResliceFilter->GetOutput());
+    mInteractor->Render();
   }
 
 public:
@@ -37,6 +39,7 @@ public:
   vtkSmartPointer<ImageResliceFilter> mResliceFilter;
   vtkSmartPointer<vtkTransform> mPlaneIndexToWorldTransform;
   vtkSmartPointer<vtkImageData> mImageData;
+  vtkSmartPointer<vtkRenderWindowInteractor> mInteractor;
   int mCount;
 
 protected:
@@ -47,6 +50,8 @@ protected:
   ~RenderCallBack() override {}
 };
 
+vtkStandardNewMacro(RenderCallBack);
+
 RenderWindow::RenderWindow(QWidget* parent)
   : QVTKOpenGLNativeWidget(parent)
 {
@@ -54,11 +59,12 @@ RenderWindow::RenderWindow(QWidget* parent)
 
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
-  reader->SetDicomDirectory("D:/Workspace/Data/case2");
+  reader->SetDicomDirectory("F:/Workspace/Data/Covid Scans");
   reader->GenerateData();
 
-  auto dicomSeries = *(reader->begin());
+  auto dicomSeries = *(reader->begin() + 1);
   auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
+
   double* origin = imageData->GetOrigin();
   double* spacing = imageData->GetSpacing();
   int* dimensions = imageData->GetDimensions();
@@ -71,39 +77,39 @@ RenderWindow::RenderWindow(QWidget* parent)
   planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
   planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
   planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
-  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 20.0);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 1);
 
   mPlaneIndexToWorldTransform->SetMatrix(planeIndexToWorldMatrix);
   mImageResliceFilter->SetPlaneLocalToWorldTransform(mPlaneIndexToWorldTransform);
   mImageResliceFilter->SetInputData(imageData);
   mImageResliceFilter->Update();
 
-
   mPlaneSource = vtkSmartPointer<vtkPlaneSource>::New();
   mPlaneSource->SetOrigin(0, 0, 0);
   mPlaneSource->SetPoint1(1, 0, 0);
-  mPlaneSource->SetPoint2(0, 1, 0);
+  mPlaneSource->SetPoint2(0, -1, 0);
   mPlaneActor = vtkSmartPointer<vtkActor>::New();
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(mPlaneSource->GetOutputPort());
   mPlaneActor->SetMapper(mapper);
   vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
   texture->SetInputData(mImageResliceFilter->GetOutput());
-  texture->SetColorMode(VTK_COLOR_MODE_MAP_SCALARS);
+  texture->SetColorModeToDirectScalars();
   mPlaneActor->SetTexture(texture);
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
 
   renderer->AddActor(mPlaneActor);
-  GetRenderWindow()->AddRenderer(renderer);
+  renderWindow()->AddRenderer(renderer);
 
-//   vtkSmartPointer<RenderCallBack> renderCallBack = vtkSmartPointer<RenderCallBack>::New();
-//   renderCallBack->mTexture = texture;
-//   renderCallBack->mPlaneSource = mPlaneSource;
-//   renderCallBack->mResliceFilter = mImageResliceFilter;
-//   renderCallBack->mPlaneIndexToWorldTransform = mPlaneIndexToWorldTransform;
+  vtkSmartPointer<RenderCallBack> renderCallBack = vtkSmartPointer<RenderCallBack>::New();
+  renderCallBack->mTexture = texture;
+  renderCallBack->mPlaneSource = mPlaneSource;
+  renderCallBack->mResliceFilter = mImageResliceFilter;
+  renderCallBack->mPlaneIndexToWorldTransform = mPlaneIndexToWorldTransform;
+  renderCallBack->mInteractor = interactor();
 
-//   GetInteractor()->CreateRepeatingTimer(100);
-//   GetInteractor()->AddObserver(vtkCommand::TimerEvent, renderCallBack);
+  interactor()->CreateRepeatingTimer(100);
+  interactor()->AddObserver(vtkCommand::TimerEvent, renderCallBack);
 }
 
 RenderWindow::~RenderWindow() {}

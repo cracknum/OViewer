@@ -18,8 +18,8 @@
 #include "ImageResliceFilter.h"
 #include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
+#include <vtkMetaImageWriter.h>
 #include <vtkPointSet.h>
-
 namespace
 {
 void saveFloatBufferAsPNG(const char* filename, const float* pixels, int width, int height)
@@ -105,7 +105,8 @@ TEST(ImageResliceTest, AxialSliceTest)
   plane->m_Height = dimensions[1];
   std::cout << glm::to_string(volume->m_WorldToIndex * glm::vec4(plane->m_Origin, 1.0f))
             << std::endl;
-  std::unique_ptr<ImageResliceFilterCuda> resliceFilter = std::make_unique<ImageResliceFilterCuda>();
+  std::unique_ptr<ImageResliceFilterCuda> resliceFilter =
+    std::make_unique<ImageResliceFilterCuda>();
   resliceFilter->setPlane(plane);
   resliceFilter->setVolume(volume);
   resliceFilter->doFilter();
@@ -118,27 +119,37 @@ TEST(ImageResliceTest, PlaneLocalBoundsFilterTest)
   // GTEST_SKIP() << "skipping PlaneLocalBoundsFilterTest";
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
-  reader->SetDicomDirectory("D:/Workspace/Data/case2");
+  reader->SetDicomDirectory("F:/Workspace/Data/Covid Scans");
   reader->GenerateData();
 
-  auto dicomSeries = *(reader->begin());
+  auto dicomSeries = *(reader->begin() + 1);
   auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
   double* origin = imageData->GetOrigin();
   double* spacing = imageData->GetSpacing();
   int* dimensions = imageData->GetDimensions();
-
+  auto uid = dicomSeries->GetSeriesInfo()->GetDescription();
+  std::cout << "dimensions: " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2]
+            << std::endl;
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
   vtkSmartPointer<vtkMatrix4x4> planeIndexToWorldMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
   planeIndexToWorldMatrix->Identity();
   planeIndexToWorldMatrix->SetElement(0, 0, spacing[0]);
   planeIndexToWorldMatrix->SetElement(1, 1, spacing[1]);
   planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
-  planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
-  planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
-  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 20.0);
+  planeIndexToWorldMatrix->SetElement(0, 3, origin[0] + 100);
+  planeIndexToWorldMatrix->SetElement(1, 3, origin[1] + 90);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 90);
 
+  vtkNew<vtkMatrix4x4> physicalToIndexMatrix;
+  auto* indexToPhySicalMatrix = imageData->GetIndexToPhysicalMatrix();
+  physicalToIndexMatrix->DeepCopy(indexToPhySicalMatrix);
+  physicalToIndexMatrix->Invert();
+  double phyOrigin[4] = { origin[0] + 90, origin[1] + 90.0, origin[2] + 90.0, 1.0 };
+  double* indexOrigin = physicalToIndexMatrix->MultiplyDoublePoint(phyOrigin);
+  SPDLOG_INFO("index origin: {} {} {} ", indexOrigin[0] / indexOrigin[3],
+    indexOrigin[1] / indexOrigin[3], indexOrigin[2] / indexOrigin[3]);
   transform->SetMatrix(planeIndexToWorldMatrix);
-  transform->RotateX(30);
+  // transform->RotateX(90);
   vtkSmartPointer<ImageResliceFilter> planeLocalBoundsFilter =
     vtkSmartPointer<ImageResliceFilter>::New();
   planeLocalBoundsFilter->SetInputData(imageData);
