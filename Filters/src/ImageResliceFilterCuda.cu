@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <thrust/device_ptr.h>
 #include <thrust/extrema.h>
-#define BENCHMARK
+// #define BENCHMARK
 
 namespace FilterKernel
 {
