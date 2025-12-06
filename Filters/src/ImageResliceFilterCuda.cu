@@ -2,12 +2,20 @@
 // #include <spdlog/spdlog.h>
 #include <iostream>
 #include <stdexcept>
+#include <thrust/device_ptr.h>
 #include <thrust/extrema.h>
-
 // #define BENCHMARK
 
 namespace FilterKernel
 {
+__device__ float4 multiply(const glm::mat4& mat, const float4& point)
+{
+  return make_float4(
+    mat[0][0] * point.x + mat[1][0] * point.y + mat[2][0] * point.z + mat[3][0] * point.w,
+    mat[0][1] * point.x + mat[1][1] * point.y + mat[2][1] * point.z + mat[3][1] * point.w,
+    mat[0][2] * point.x + mat[1][2] * point.y + mat[2][2] * point.z + mat[3][2] * point.w,
+    mat[0][3] * point.x + mat[1][3] * point.y + mat[2][3] * point.z + mat[3][3] * point.w);
+}
 template <typename ComponentType>
 __global__ void resliceVolume(
   Volume* volume, cudaTextureObject_t texture, Plane* plane, ComponentType* pixels)
@@ -20,14 +28,34 @@ __global__ void resliceVolume(
   {
     return;
   }
+  float4 worldPlanePixel = multiply(plane->m_IndexToWorld, make_float4(x, y, 0, 1.0f));
 
-  glm::vec4 worldPlanePixel = plane->m_IndexToWorld * glm::vec4(x, y, 0, 1.0f);
-
-  glm::vec4 volumeIndex =  volume->m_WorldToIndex * worldPlanePixel;
+  float4 volumeIndex = multiply(volume->m_WorldToIndex, worldPlanePixel);
 
   auto data = tex3D<ComponentType>(texture, volumeIndex.x, volumeIndex.y, volumeIndex.z);
   pixels[y * plane->m_Width + x] = data;
 }
+
+template <typename pixelType>
+struct NormalizeFunctor
+{
+  pixelType mMinValue;
+  pixelType mRange;
+
+  NormalizeFunctor(pixelType minValue, pixelType maxValue)
+    : mMinValue(minValue)
+    , mRange(maxValue - minValue)
+  {
+  }
+  __host__ __device__ pixelType operator()(const pixelType& value)
+  {
+    if (mRange == 0)
+      return static_cast<pixelType>(0);
+
+    return (value - mMinValue) / mRange * 255;
+  }
+};
+
 }
 
 ImageResliceFilterCuda::ImageResliceFilterCuda()
@@ -74,7 +102,8 @@ void ImageResliceFilterCuda::doFilter()
   launchResliceKernel();
 }
 
-void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane)
+void ImageResliceFilterCuda::uploadVolume(
+  std::shared_ptr<Volume> volume, std::shared_ptr<Plane> plane)
 {
   if (!volume || !plane)
   {
@@ -228,13 +257,19 @@ void ImageResliceFilterCuda::launchResliceKernelImpl()
 #endif
     FilterKernel::resliceVolume<type>
       <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, static_cast<type*>(m_Pixels));
-    
+
+    thrust::device_ptr<type> pixelDataPtr(static_cast<type*>(m_Pixels));
+    auto [minValue, maxValue] =
+      thrust::minmax_element(pixelDataPtr, pixelDataPtr + m_hPlane->m_Width * m_hPlane->m_Height);
+    thrust::transform(pixelDataPtr, pixelDataPtr + m_hPlane->m_Width * m_hPlane->m_Height,
+      pixelDataPtr, FilterKernel::NormalizeFunctor<type>(*minValue, *maxValue));
+
 #if defined(BENCHMARK)
   }
 #endif
 #if defined(BENCHMARK)
   cudaEventRecord(stopEvent);
-#endif 
+#endif
   cudaDeviceSynchronize();
 #if defined(BENCHMARK)
   float elapsedTime = 0.0f;
