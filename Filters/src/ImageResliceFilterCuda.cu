@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <thrust/device_ptr.h>
 #include <thrust/extrema.h>
-// #define BENCHMARK
+#define BENCHMARK
 
 namespace FilterKernel
 {
@@ -156,7 +156,7 @@ void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume)
   textureDesc.borderColor[1] = 0.0f;
   textureDesc.borderColor[2] = 0.0f;
   textureDesc.borderColor[3] = 0.0f;
-  textureDesc.filterMode = cudaTextureFilterMode::cudaFilterModeLinear;
+  textureDesc.filterMode = cudaTextureFilterMode::cudaFilterModePoint;
   textureDesc.readMode = cudaTextureReadMode::cudaReadModeElementType;
   textureDesc.normalizedCoords = 0;
 
