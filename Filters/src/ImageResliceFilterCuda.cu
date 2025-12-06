@@ -52,7 +52,7 @@ struct NormalizeFunctor
     if (mRange == 0)
       return static_cast<pixelType>(0);
 
-    return (value - mMinValue) / mRange * 255;
+    return (value - mMinValue) / mRange;
   }
 };
 
