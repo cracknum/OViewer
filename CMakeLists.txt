@@ -30,8 +30,8 @@ include(cmake/files_group.cmake)
 set(ENABLE_DEBUG ON)
 
 if (ENABLE_DEBUG)
-add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
-endif()
+    add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
+endif ()
 
 add_subdirectory(Dicom)
 add_subdirectory(App)
@@ -41,6 +41,7 @@ add_subdirectory(GLObject)
 add_subdirectory(Primitive)
 add_subdirectory(Data)
 add_subdirectory(Filters)
+add_subdirectory(third_parties)
 
 option(enable_testing OFF)
 
