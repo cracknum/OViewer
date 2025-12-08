@@ -1,29 +1,12 @@
 #include "Log.h"
-#include "MainWindow.h"
-#include "RenderWindow.h"
-#include "ViewWindow.h"
-#include "Window.h"
-#include <QApplication>
-#include <QIcon>
-#include <qdebug.h>
-
+#include "Application.hpp"
 
 int main(int argc, char** argv)
 {
-  QApplication app(argc, argv);
-  Log::initLog(app, spdlog::level::debug);
+  Log::initLog(spdlog::level::debug);
+  Application app(argc, argv);
 
-  // MainWindow mainWindow;
-  // mainWindow.resize(1920, 1080);
-  // mainWindow.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
-  // mainWindow.setWindowTitle("OViewer");
-  // mainWindow.show();
-
-  RenderWindow mainWindow;
-  mainWindow.resize(1920, 1080);
-  mainWindow.setWindowIcon(QIcon(":/icon/resources/icon/icon.ico"));
-  mainWindow.setWindowTitle("OViewer");
-  mainWindow.show();
+  app.setWindowIcon("resources/icon/icon.png");
 
   return app.exec();
 }

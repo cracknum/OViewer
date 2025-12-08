@@ -6,11 +6,6 @@ project(OViewer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOMOC ON)
-
-find_package(Qt5 COMPONENTS Widgets Core Gui OpenGL)
 find_package(CUDAToolkit REQUIRED) # image process
 find_package(ITK CONFIG REQUIRED) # read dicom files
 find_package(spdlog CONFIG REQUIRED) # for log info
@@ -25,6 +20,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(export_config_file_path ${CMAKE_CURRENT_SOURCE_DIR}/Cmake/Export.h.in)
 include(cmake/ExportFunction.cmake)
 include(cmake/files_group.cmake)
+include(cmake/resource_copy.cmake)
+
 
 # for spdlog print debug info
 set(ENABLE_DEBUG ON)
