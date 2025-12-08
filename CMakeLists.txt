@@ -36,12 +36,11 @@ endif ()
 add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)
-add_subdirectory(UI)
 add_subdirectory(GLObject)
 add_subdirectory(Primitive)
 add_subdirectory(Data)
 add_subdirectory(Filters)
-add_subdirectory(third_parties)
+add_subdirectory(third_parties/RenderFramework)
 
 option(enable_testing OFF)
 
