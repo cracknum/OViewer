@@ -1,6 +1,7 @@
 #include "VertexIndexBuffer.h"
 #include "Vertices.h"
 #include <QOpenGLFunctions_4_4_Core>
+#include <glm/glm.hpp>
 #include <sstream>
 
 struct VertexIndexBuffer::Impl
@@ -10,12 +11,14 @@ struct VertexIndexBuffer::Impl
   GLuint m_EBO;
   Vertices m_Vertices;
   QOpenGLFunctions_4_4_Core* m_Function;
+  glm::mat4 m_IndexToWorldMatrix;
 
   explicit Impl(QOpenGLFunctions_4_4_Core* function)
     : m_VBO(0)
     , m_VAO(0)
     , m_EBO(0)
     , m_Function(function)
+    , m_IndexToWorldMatrix(1.0f)
   {
   }
 };

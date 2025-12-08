@@ -38,6 +38,7 @@ add_subdirectory(Primitive)
 add_subdirectory(Data)
 add_subdirectory(Filters)
 add_subdirectory(third_parties/RenderFramework)
+add_subdirectory(RenderingGL)
 
 option(enable_testing OFF)
 

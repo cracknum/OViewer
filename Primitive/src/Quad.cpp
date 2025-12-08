@@ -13,7 +13,6 @@ struct Quad::Impl
   std::unique_ptr<VertexIndexBuffer> m_Data;
   ShaderManager::ShaderPointer m_Shader;
   Functions* m_Functions;
-  glm::mat4 m_ModelMatrix;
 
   Impl(Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config)
     : m_ShaderManager(shaderManager)
@@ -32,29 +31,6 @@ struct Quad::Impl
     }
 
     m_Data = std::make_unique<VertexIndexBuffer>(functions);
-
-    Vertices vertices;
-    // clang-format off
-    vertices.m_Data = new GLfloat[12]
-    {
-      0, 0, 0,
-      1, 0, 0,
-      1, 1, 0,
-      0, 1, 0
-    };
-
-    m_ModelMatrix = glm::mat4(
-      glm::vec4(m_Config.m_U, 0.0f),
-      glm::vec4(m_Config.m_V, 0.0f),
-      glm::vec4(m_Config.m_Normal, 0.0f),
-      glm::vec4(m_Config.m_Origin, 1.0f)
-    );
-    // clang-format on
-    vertices.m_DataSize = 12;
-    vertices.m_Indices = new GLuint[6]{ 0, 1, 3, 1, 2, 3 };
-    vertices.m_IndicesSize = 6;
-    vertices.m_PointAttribute = Vertices::Attribute(GL_TRUE, 3);
-    m_Data->createBuffer(vertices);
   }
 };
 
@@ -66,37 +42,29 @@ Quad::Quad(
 
 Quad::~Quad() = default;
 
-void Quad::mousePressEvent(QMouseEvent* event) {}
+void Quad::setVertices(const std::shared_ptr<Vertices>& vertices)
+{
+  Superclass::setVertices(vertices);
+  m_Impl->m_Data->createBuffer(*(vertices.get()));
+}
 
-void Quad::mouseReleaseEvent(QMouseEvent* event) {}
-
-void Quad::mouseDoubleClickEvent(QMouseEvent* event) {}
-
-void Quad::mouseMoveEvent(QMouseEvent* event) {}
-
-void Quad::wheelEvent(QWheelEvent* event) {}
-
-void Quad::keyPressEvent(QKeyEvent* event) {}
-
-void Quad::keyReleaseEvent(QKeyEvent* event) {}
-
-void Quad::draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix)
+void Quad::draw()
 {
   m_Impl->m_Shader->use();
   bool setResult = false;
-  setResult = m_Impl->m_Shader->setMat4(m_Impl->m_ModelMatrix, "modelMatrix");
+  setResult = m_Impl->m_Shader->setMat4(mModelMatrix, "modelMatrix");
   if (!setResult)
   {
     SPDLOG_ERROR("modelMatrix set error");
   }
 
-  setResult = m_Impl->m_Shader->setMat4(viewMatrix, "viewMatrix");
+  setResult = m_Impl->m_Shader->setMat4(mViewMatrix, "viewMatrix");
   if (!setResult)
   {
     SPDLOG_ERROR("viewMatrix set error");
   }
 
-  setResult = m_Impl->m_Shader->setMat4(projectMatrix, "projectMatrix");
+  setResult = m_Impl->m_Shader->setMat4(mProjectMatrix, "projectMatrix");
   if (!setResult)
   {
     SPDLOG_ERROR("projectMatrix set error");
