@@ -41,7 +41,6 @@ add_subdirectory(GLObject)
 add_subdirectory(Primitive)
 add_subdirectory(Data)
 add_subdirectory(Filters)
-add_subdirectory(third_parties)
 
 option(enable_testing OFF)
 
