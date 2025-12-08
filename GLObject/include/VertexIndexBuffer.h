@@ -1,15 +1,15 @@
 #ifndef VERTEX_INDEX_BUFFER_OPENGL_H
 #define VERTEX_INDEX_BUFFER_OPENGL_H
 
-#include <memory>
 #include "GLObjectExport.h"
-#include <qopenglfunctions_4_4_core.h>
+#include <glad/glad.h>
+#include <memory>
 
 struct Vertices;
 class GLOBJECT_API VertexIndexBuffer
 {
 public:
-  explicit VertexIndexBuffer(QOpenGLFunctions_4_4_Core* function);
+  explicit VertexIndexBuffer();
   ~VertexIndexBuffer();
   void createBuffer(Vertices& vertices) const;
   void draw(GLenum drawMode);

@@ -1,22 +1,21 @@
 #ifndef SHADER_PROGRAM_H
 #define SHADER_PROGRAM_H
-#include <memory>
-#include <unordered_map>
-#include <string>
-#include <QOpenGLFunctions_4_4_Core>
 #include "GLObjectExport.h"
+#include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 enum class ShaderType;
 
 class GLOBJECT_API ShaderProgram final
 {
 public:
-  using Function = QOpenGLFunctions_4_4_Core;
   using ShaderPathMap = std::unordered_map<GLenum, const char*>;
-  void deleteShaders(Function* function) const;
-  void deleteProgram(Function* function) const;
-  explicit ShaderProgram(Function* function, const ShaderPathMap& shaderSource);
+  void deleteShaders() const;
+  void deleteProgram() const;
+  explicit ShaderProgram(const ShaderPathMap& shaderSource);
   ~ShaderProgram();
 
   void use() const;
@@ -35,6 +34,7 @@ public:
 
 private:
   [[nodiscard]] static std::string loadShaderSource(const char* path);
+
 private:
   struct Impl;
   std::unique_ptr<Impl> m_Impl;

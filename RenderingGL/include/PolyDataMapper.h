@@ -1,17 +1,18 @@
 #ifndef POLY_DATA_MAPPER_H
 #define POLY_DATA_MAPPER_H
+#include "RenderingGLExport.h"
 #include <Mapper.h>
 #include <memory>
-#include "RenderingGLExport.h"
 
 class PlaneSource;
+class ShaderManager;
 
-class RENDERINGGL_API PolyDataMapper : public Mapper
+class RENDERINGGL_API PolyDataMapper final : public Mapper
 {
 public:
-  PolyDataMapper();
-  ~PolyDataMapper();
-  void setDataSource(const std::shared_ptr<PlaneSource> planeSource);
+  explicit PolyDataMapper(const std::shared_ptr<ShaderManager>& shaderManager);
+  ~PolyDataMapper() override;
+  void setDataSource(const std::shared_ptr<PlaneSource>& planeSource);
   void render() override;
 
 private:

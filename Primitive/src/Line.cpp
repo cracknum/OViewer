@@ -7,20 +7,18 @@
 #include "Vertices.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 struct Line::Impl final
 {
-  Functions* m_Functions;
   std::shared_ptr<ShaderManager> m_ShaderManager;
   LineConfig m_LineConfig;
   std::shared_ptr<ShaderProgram> m_Shader;
   std::unique_ptr<VertexIndexBuffer> m_VertexIndexBuffer;
 
-  Impl(Functions* functions, std::shared_ptr<ShaderManager> shaderManager,
-    const LineConfig& lineConfig)
-    : m_Functions(functions)
+  Impl(std::shared_ptr<ShaderManager> shaderManager, const LineConfig& lineConfig)
+    : m_ShaderManager(std::move(shaderManager))
     , m_LineConfig(lineConfig)
-    , m_ShaderManager(shaderManager)
   {
     ShaderProgram::ShaderPathMap shaderPathMap = { { GL_VERTEX_SHADER,
                                                      ":/shader/shader/Line.vert" },
@@ -32,7 +30,7 @@ struct Line::Impl final
       m_Shader = m_ShaderManager->registerShader(PrimitiveType::SPLIT_LINE, shaderPathMap);
     }
 
-    m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>(functions);
+    m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>();
     Vertices vertices;
     vertices.m_Data = new float[4]{ static_cast<float>(lineConfig.m_StartPoint.x),
       static_cast<float>(lineConfig.m_StartPoint.y), static_cast<float>(lineConfig.m_EndPoint.x),
@@ -46,44 +44,15 @@ struct Line::Impl final
   }
 };
 
-Line::Line(
-  Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const LineConfig& lineConfig)
+Line::Line(const std::shared_ptr<ShaderManager>& shaderManager, const LineConfig& lineConfig)
 {
-  m_Impl = std::make_unique<Impl>(functions, shaderManager, lineConfig);
+  m_Impl = std::make_unique<Impl>(shaderManager, lineConfig);
   setColor(m_Impl->m_LineConfig);
   setWidth(m_Impl->m_LineConfig);
 }
 Line::~Line() = default;
 
-void Line::mousePressEvent(QMouseEvent* event)
-{
-  (void)event;
-}
-void Line::mouseReleaseEvent(QMouseEvent* event)
-{
-  (void)event;
-}
-void Line::mouseDoubleClickEvent(QMouseEvent* event)
-{
-  (void)event;
-}
-void Line::mouseMoveEvent(QMouseEvent* event)
-{
-  (void)event;
-}
-void Line::wheelEvent(QWheelEvent* event)
-{
-  (void)event;
-}
-void Line::keyPressEvent(QKeyEvent* event)
-{
-  (void)event;
-}
-void Line::keyReleaseEvent(QKeyEvent* event)
-{
-  (void)event;
-}
-void Line::draw(const glm::mat4& viewMatrix, const glm::mat4& projectMatrix)
+void Line::draw()
 {
   m_Impl->m_Shader->use();
   bool setResult = false;

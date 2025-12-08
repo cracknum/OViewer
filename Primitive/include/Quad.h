@@ -1,27 +1,21 @@
 #ifndef PLANE_H
 #define PLANE_H
-#include "PrimitiveExport.h"
-#include <glm/glm.hpp>
-#include <memory>
 #include "Primitive.h"
+#include "PrimitiveExport.h"
+#include <memory>
 
 class ShaderManager;
 struct QuadConfig;
-class QOpenGLFunctions_4_4_Core;
 
-class PRIMITIVE_API Quad: public Primitive
+class PRIMITIVE_API Quad final : public Primitive
 {
 public:
-  using Functions = QOpenGLFunctions_4_4_Core;
   using Superclass = Primitive;
   /**
-   * @param origin Quad的角点
-   * @param u Quad的一条边的向量
-   * @param v Quad的一条边的向量
+   * @param shaderManager
    */
-  Quad(
-    Functions* functions, std::shared_ptr<ShaderManager> shaderManager, const QuadConfig& config);
-  ~Quad();
+  explicit Quad(const std::shared_ptr<ShaderManager>& shaderManager);
+  ~Quad() override;
 
   void setVertices(const std::shared_ptr<Vertices>& vertices) override;
   void draw() override;

@@ -1,17 +1,15 @@
 #ifndef SHADER_MANAGER_OPENGL_H
 #define SHADER_MANAGER_OPENGL_H
+#include "GLObjectExport.h"
 #include "ShaderProgram.h"
 #include <memory>
-#include "GLObjectExport.h"
 
-class QOpenGLFunctions_4_4_Core;
 enum class PrimitiveType;
 
 class GLOBJECT_API ShaderManager final
 {
 public:
-  using Functions = QOpenGLFunctions_4_4_Core;
-  explicit ShaderManager(Functions* functions);
+  explicit ShaderManager();
   ~ShaderManager();
   using ShaderPathMap = ShaderProgram::ShaderPathMap;
   using ShaderPointer = std::shared_ptr<ShaderProgram>;

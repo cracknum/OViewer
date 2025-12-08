@@ -5,24 +5,33 @@ struct PolyDataMapper::Private
 {
   std::unique_ptr<Quad> mQuadPrimitive;
 
-  Private() { mQuadPrimitive = std::make_unique<Quad>(); }
+  explicit Private(const std::shared_ptr<ShaderManager>& shaderManager)
+  {
+    mQuadPrimitive = std::make_unique<Quad>(shaderManager);
+  }
 };
 
-PolyDataMapper::PolyDataMapper()
+PolyDataMapper::PolyDataMapper(const std::shared_ptr<ShaderManager>& shaderManager)
 {
-  mPrivate = std::make_unique<Private>();
+  mPrivate = std::make_unique<Private>(shaderManager);
 }
 
-PolyDataMapper::~PolyDataMapper() {}
+PolyDataMapper::~PolyDataMapper() = default;
 
-void PolyDataMapper::setDataSource(const std::shared_ptr<PlaneSource> planeSource) {
-	if (!planeSource)
-	{
-		return;
-	}
+void PolyDataMapper::setDataSource(const std::shared_ptr<PlaneSource>& planeSource)
+{
+  if (!planeSource)
+  {
+    return;
+  }
 
-	mPrivate->mQuadPrimitive->setVertices(planeSource->polyData());
-	mPrivate->mQuadPrimitive->setModelMatrix(planeSource->indexToWorldMatrix());
+  mPrivate->mQuadPrimitive->setVertices(planeSource->polyData());
+  mPrivate->mQuadPrimitive->setModelMatrix(planeSource->indexToWorldMatrix());
 }
 
-void PolyDataMapper::render() {}
+void PolyDataMapper::render()
+{
+  mPrivate->mQuadPrimitive->setViewMatrix(mViewMatrix);
+  mPrivate->mQuadPrimitive->setProjectMatrix(mProjectMatrix);
+  mPrivate->mQuadPrimitive->draw();
+}

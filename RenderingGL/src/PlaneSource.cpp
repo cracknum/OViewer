@@ -82,17 +82,16 @@ void PlaneSource::updateGeometry()
   mPrivate->mIndexToWorldMatrix[2] = glm::vec4(normal, 0.0f);
   mPrivate->mIndexToWorldMatrix[3] = glm::vec4(mPrivate->mOrigin.mData, 1.0f);
 
-  glm::length(right);
   // clang-format off
   mPrivate->mVertices->m_Data = new GLfloat[32]{ 
 	// vertex   texture   normal
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-	glm::length(right), 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	0.0f, glm::length(top), 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    glm::length(right), 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, glm::length(top), 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
     glm::length(right), glm::length(top), 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
   };
   // clang-format on
-  
+
   mPrivate->mVertices->m_DataSize = 32;
   mPrivate->mVertices->m_PointAttribute.first = true;
   mPrivate->mVertices->m_PointAttribute.second = 3;
