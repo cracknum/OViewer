@@ -6,4 +6,4 @@
 CMakeSettings.json
 /out
 CMakePresets.json
-/third_parties
+#/third_parties
