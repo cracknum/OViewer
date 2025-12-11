@@ -22,7 +22,7 @@ if (ENABLE_DICOM_TEST)
 endif ()
 
 if (ENABLE_IMAGE_FILTER_TEST)
-    set(TEST_LIB Filters Dicom Data VTK::IOImage)
+    set(TEST_LIB Filters Dicom Data VTK::IOImage RenderFramework::Widgets)
     set(Testing_files FiltersTest/ImageResliceTest.cpp)
     message(STATUS "add filters test")
 endif ()
