@@ -22,6 +22,7 @@ include(cmake/ExportFunction.cmake)
 include(cmake/files_group.cmake)
 include(cmake/resource_copy.cmake)
 
+set(ModuleName ${PROJECT_NAME})
 
 # for spdlog print debug info
 set(ENABLE_DEBUG ON)
