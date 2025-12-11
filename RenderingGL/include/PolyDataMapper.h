@@ -5,12 +5,12 @@
 #include <memory>
 
 class PlaneSource;
-class ShaderManager;
+class ShaderProgramManager;
 
 class RENDERINGGL_API PolyDataMapper final : public Mapper
 {
 public:
-  explicit PolyDataMapper(const std::shared_ptr<ShaderManager>& shaderManager);
+  explicit PolyDataMapper(const std::shared_ptr<ShaderProgramManager>& shaderManager);
   ~PolyDataMapper() override;
   void setDataSource(const std::shared_ptr<PlaneSource>& planeSource);
   void render() override;

@@ -29,11 +29,11 @@ endif ()
 
 
 if (NOT "${Testing_files}")
-    add_executable(${PROJECT_NAME} ${Testing_files})
-    target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main ${TEST_LIB})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
+    add_executable(${ModuleName}${PROJECT_NAME} ${Testing_files})
+    target_link_libraries(${ModuleName}${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main ${TEST_LIB})
+    target_include_directories(${ModuleName}${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
     include(GoogleTest)
 
-    gtest_discover_tests(${PROJECT_NAME})
+    gtest_discover_tests(${ModuleName}${PROJECT_NAME})
 endif ()
 

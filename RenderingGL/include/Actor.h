@@ -1,10 +1,10 @@
 #ifndef ACTOR_GL_H
 #define ACTOR_GL_H
-#include "GLExport.h"
+#include "RenderingGLExport.h"
 #include "Mapper.h"
 #include <memory>
 
-class GL_API Actor
+class RENDERINGGL_API Actor
 {
 public:
   Actor();

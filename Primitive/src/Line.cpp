@@ -1,35 +1,31 @@
 #include "Line.h"
 #include "LineConfig.h"
 #include "PrimitiveType.h"
-#include "ShaderManager.h"
-#include "ShaderProgram.h"
-#include "VertexIndexBuffer.h"
-#include "Vertices.h"
+#include <ShaderProgramManager.h>
+#include <ShaderProgram.h>
+#include <VertexIndexBuffer.h>
+#include <Vertices.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <utility>
 
 struct Line::Impl final
 {
-  std::shared_ptr<ShaderManager> m_ShaderManager;
+  std::shared_ptr<ShaderProgramManager> m_ShaderManager;
   LineConfig m_LineConfig;
-  std::shared_ptr<ShaderProgram> m_Shader;
+  ShaderProgramManager::ShaderProgramPointer m_ShaderProgram;
   std::unique_ptr<VertexIndexBuffer> m_VertexIndexBuffer;
 
-  Impl(std::shared_ptr<ShaderManager> shaderManager, const LineConfig& lineConfig)
+  Impl(std::shared_ptr<ShaderProgramManager> shaderManager, const LineConfig& lineConfig)
     : m_ShaderManager(std::move(shaderManager))
     , m_LineConfig(lineConfig)
   {
-    ShaderProgram::ShaderPathMap shaderPathMap = { { GL_VERTEX_SHADER,
+    std::unordered_map<GLenum, std::string> shaderPathMap = { { GL_VERTEX_SHADER,
                                                      ":/shader/shader/Line.vert" },
       { GL_GEOMETRY_SHADER, ":/shader/shader/Line.geom" },
       { GL_FRAGMENT_SHADER, ":/shader/shader/Line.frag" } };
-    m_Shader = m_ShaderManager->getShader(PrimitiveType::SPLIT_LINE);
-    if (!m_Shader)
-    {
-      m_Shader = m_ShaderManager->registerShader(PrimitiveType::SPLIT_LINE, shaderPathMap);
-    }
-
+    m_ShaderProgram = m_ShaderManager->getShaderProgram(shaderPathMap);
+   
     m_VertexIndexBuffer = std::make_unique<VertexIndexBuffer>();
     Vertices vertices;
     vertices.m_Data = new float[4]{ static_cast<float>(lineConfig.m_StartPoint.x),
@@ -44,7 +40,7 @@ struct Line::Impl final
   }
 };
 
-Line::Line(const std::shared_ptr<ShaderManager>& shaderManager, const LineConfig& lineConfig)
+Line::Line(const std::shared_ptr<ShaderProgramManager>& shaderManager, const LineConfig& lineConfig)
 {
   m_Impl = std::make_unique<Impl>(shaderManager, lineConfig);
   setColor(m_Impl->m_LineConfig);
@@ -54,26 +50,26 @@ Line::~Line() = default;
 
 void Line::draw()
 {
-  m_Impl->m_Shader->use();
+  m_Impl->m_ShaderProgram->use();
   bool setResult = false;
-  setResult = m_Impl->m_Shader->setInt1(m_Impl->m_LineConfig.m_LineWidth, "lineWidth");
+  setResult = m_Impl->m_ShaderProgram->setInt1(m_Impl->m_LineConfig.m_LineWidth, "lineWidth");
   if (!setResult)
   {
     SPDLOG_ERROR("lineWidth set error");
   }
-  setResult = m_Impl->m_Shader->setVec4(m_Impl->m_LineConfig.m_Color, "lineColor");
+  setResult = m_Impl->m_ShaderProgram->setVec4(m_Impl->m_LineConfig.m_Color, "lineColor");
   if (!setResult)
   {
     SPDLOG_ERROR("lineColor set error");
   }
-  setResult = m_Impl->m_Shader->setVec2(m_Impl->m_LineConfig.m_ViewPortSize, "viewPortSize");
+  setResult = m_Impl->m_ShaderProgram->setVec2(m_Impl->m_LineConfig.m_ViewPortSize, "viewPortSize");
   if (!setResult)
   {
     SPDLOG_ERROR("viewPortSize set error");
   }
 
   m_Impl->m_VertexIndexBuffer->draw(GL_LINES);
-  m_Impl->m_Shader->unuse();
+  m_Impl->m_ShaderProgram->unuse();
 }
 
 void Line::setColor(const LineConfig& config)

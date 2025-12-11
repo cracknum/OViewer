@@ -5,13 +5,13 @@ struct PolyDataMapper::Private
 {
   std::unique_ptr<Quad> mQuadPrimitive;
 
-  explicit Private(const std::shared_ptr<ShaderManager>& shaderManager)
+  explicit Private(const std::shared_ptr<ShaderProgramManager>& shaderManager)
   {
     mQuadPrimitive = std::make_unique<Quad>(shaderManager);
   }
 };
 
-PolyDataMapper::PolyDataMapper(const std::shared_ptr<ShaderManager>& shaderManager)
+PolyDataMapper::PolyDataMapper(const std::shared_ptr<ShaderProgramManager>& shaderManager)
 {
   mPrivate = std::make_unique<Private>(shaderManager);
 }

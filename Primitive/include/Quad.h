@@ -4,7 +4,7 @@
 #include "PrimitiveExport.h"
 #include <memory>
 
-class ShaderManager;
+class ShaderProgramManager;
 struct QuadConfig;
 
 class PRIMITIVE_API Quad final : public Primitive
@@ -14,7 +14,7 @@ public:
   /**
    * @param shaderManager
    */
-  explicit Quad(const std::shared_ptr<ShaderManager>& shaderManager);
+  explicit Quad(const std::shared_ptr<ShaderProgramManager>& shaderManager);
   ~Quad() override;
 
   void setVertices(const std::shared_ptr<Vertices>& vertices) override;

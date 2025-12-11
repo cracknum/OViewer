@@ -1,9 +1,9 @@
 #ifndef RENDERER_RENDER_FRAMEWORK_H
 #define RENDERER_RENDER_FRAMEWORK_H
 #include <memory>
-#include "GLExport.h"
+#include "RenderingGLExport.h"
 class Actor;
-class GL_API Renderer
+class RENDERINGGL_API Renderer
 {
 public:
   Renderer();

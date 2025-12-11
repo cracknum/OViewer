@@ -5,11 +5,11 @@
 #include "PrimitiveExport.h"
 #include <memory>
 
-class ShaderManager;
+class ShaderProgramManager;
 class PRIMITIVE_API Line final : public Primitive
 {
 public:
-  Line(const std::shared_ptr<ShaderManager>& shaderManager, const LineConfig& lineConfig);
+  Line(const std::shared_ptr<ShaderProgramManager>& shaderManager, const LineConfig& lineConfig);
   ~Line() override;
 
   void draw() override;

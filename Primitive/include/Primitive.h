@@ -1,11 +1,9 @@
 #ifndef GL_PRIMITIVE_H
 #define GL_PRIMITIVE_H
 
-#include "Vertices.h"
 #include <glm/glm.hpp>
 #include <memory>
-
-struct Vertices;
+#include <Vertices.h>
 
 class Primitive
 {

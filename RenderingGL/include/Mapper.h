@@ -1,10 +1,10 @@
 #ifndef MAPPER_GL_H
 #define MAPPER_GL_H
-#include "GLExport.h"
+#include "RenderingGLExport.h"
 #include <glm/glm.hpp>
 #include <memory>
 
-class GL_API Mapper
+class RENDERINGGL_API Mapper
 {
 public:
   Mapper();

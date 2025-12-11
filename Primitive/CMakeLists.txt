@@ -15,6 +15,7 @@ if (NOT "${Source_files}")
             Common GLObject
             spdlog::spdlog
             glm::glm
+            OpenGLCore::Object
     )
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     export_model(${export_config_file_path} ${PROJECT_NAME})
