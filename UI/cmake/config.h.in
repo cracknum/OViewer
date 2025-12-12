@@ -1,0 +1,4 @@
+// config.h.in
+#pragma once
+
+#define FONT_LOCATION "@Font_location@"

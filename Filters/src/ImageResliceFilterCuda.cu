@@ -32,8 +32,8 @@ __device__ float4 multiply(const glm::mat4& mat, const float4& point)
 }
 
 template <typename ComponentType>
-__global__ void resliceVolume(Volume* volume, cudaTextureObject_t texture, Plane* plane,
-  cudaSurfaceObject_t textureSurface, float2 windowLevel)
+__global__ void resliceVolume(
+  Volume* volume, cudaTextureObject_t texture, Plane* plane, cudaSurfaceObject_t textureSurface)
 {
   // already know plane bounds world coordinate
   const unsigned int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -60,7 +60,6 @@ ImageResliceFilterCuda::ImageResliceFilterCuda()
   , m_hVolume(nullptr)
   , m_GLTexture(0)
   , m_Resource(nullptr)
-  , m_WindowLevel(make_float2(0, 0))
 {
 }
 
@@ -111,11 +110,6 @@ void ImageResliceFilterCuda::doFilter()
   if (!m_Resource)
   {
     SPDLOG_ERROR("no texture registered into cuda");
-    return;
-  }
-  if (m_WindowLevel.x < 1e-6 || m_WindowLevel.y < 1e-6)
-  {
-    SPDLOG_ERROR("window level is not set");
     return;
   }
 
@@ -274,7 +268,7 @@ void ImageResliceFilterCuda::launchResliceKernelImpl(cudaSurfaceObject_t texture
   {
 #endif
     FilterKernel::resliceVolume<type>
-      <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, textureSurface, m_WindowLevel);
+      <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, textureSurface);
 
 #if defined(BENCHMARK)
   }

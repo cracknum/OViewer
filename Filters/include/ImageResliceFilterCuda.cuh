@@ -42,6 +42,5 @@ private:
   std::shared_ptr<Plane> m_hPlane;
   unsigned int m_GLTexture;
   cudaGraphicsResource_t m_Resource;
-  float2 m_WindowLevel;
 };
 #endif // IMAGE_RESLICE_FILTER_CUDA_H

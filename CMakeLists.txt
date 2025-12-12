@@ -28,8 +28,8 @@ set(ModuleName ${PROJECT_NAME})
 set(ENABLE_DEBUG ON)
 
 if (ENABLE_DEBUG)
-add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
-endif()
+    add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
+endif ()
 
 add_subdirectory(Dicom)
 add_subdirectory(App)
@@ -38,8 +38,9 @@ add_subdirectory(GLObject)
 add_subdirectory(Primitive)
 add_subdirectory(Data)
 add_subdirectory(Filters)
-add_subdirectory(third_party/RenderFramework)
+add_subdirectory(UI)
 add_subdirectory(RenderingGL)
+add_subdirectory(third_party/OpenGLCore)
 
 option(enable_testing OFF)
 
