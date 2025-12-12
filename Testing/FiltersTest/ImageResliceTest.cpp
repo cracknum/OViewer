@@ -66,7 +66,9 @@ vtkSmartPointer<vtkImageData> reslice()
 {
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
+  reader->SetDicomDirectory("D:/Workspace/Data/case2");
   reader->GenerateData();
+  auto dicomSeries = *(reader->begin());
 
   auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
   double* origin = imageData->GetOrigin();
@@ -81,6 +83,9 @@ vtkSmartPointer<vtkImageData> reslice()
   planeIndexToWorldMatrix->SetElement(0, 0, spacing[0]);
   planeIndexToWorldMatrix->SetElement(1, 1, spacing[1]);
   planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
+  planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
+  planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 10);
 
   vtkNew<vtkMatrix4x4> physicalToIndexMatrix;
   auto* indexToPhySicalMatrix = imageData->GetIndexToPhysicalMatrix();
@@ -109,6 +114,10 @@ public:
     : mViewerWidget(viewerWidget)
   {
     mShaderProgramManager = std::make_shared<ShaderProgramManager>();
+	 mVertexShaderSource =
+      ShaderUtils::loadShaderSource(R"(D:\Workspace\github\OViewer\Testing\FiltersTest\test.vert)");
+    mFragmentShaderSource =
+      ShaderUtils::loadShaderSource(R"(D:\Workspace\github\OViewer\Testing\FiltersTest\test.frag)");
   }
   bool handle(const EventObject& event) override
   {
