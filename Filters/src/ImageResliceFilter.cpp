@@ -123,9 +123,9 @@ int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
   outputImage->SetOrigin(planeWorldOrigin);
   outputImage->AllocateScalars(imageData->GetScalarType(), 1);
 
-  const void* pixels = ImageResliceFilterAlgo->getPixels();
-  memcpy(outputImage->GetScalarPointer(), pixels,
-    plane->m_Width * plane->m_Height * getDataTypeSize(DataType::FLOAT));
+//   const void* pixels = ImageResliceFilterAlgo->getPixels();
+//   memcpy(outputImage->GetScalarPointer(), pixels,
+//     plane->m_Width * plane->m_Height * getDataTypeSize(DataType::FLOAT));
 
   SPDLOG_INFO("finished");
   return 1;

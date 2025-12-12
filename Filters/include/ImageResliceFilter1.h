@@ -1,20 +1,31 @@
 #ifndef IMAGERESLICEFILTER1_H
 #define IMAGERESLICEFILTER1_H
 #include <array>
-#include <glm/glm.hpp>
 #include <memory>
+#include <vector>
+#include <vtkImageData.h>
+#include <vtkSmartPointer.h>
+#include "FiltersExport.h"
 
 struct Volume;
-class ImageResliceFilter1
+class Texture2DObject;
+class vtkTransform;
+class vtkPoints;
+class vtkMatrix4x4;
+class FILTERS_API ImageResliceFilter1
 {
 public:
-  void doFilter(std::shared_ptr<Volume> volume, const glm::mat4& planeWorldMatrix);
-
+  ImageResliceFilter1();
+  ~ImageResliceFilter1();
+  void setTexture(std::shared_ptr<Texture2DObject> textureObject);
+  bool doFilter(vtkSmartPointer<vtkImageData> volume, vtkSmartPointer<vtkTransform> planeLocalToWorldTransform);
 protected:
-  std::array<glm::vec3, 2> calculatePlaneLocalBounds();
-
+  vtkSmartPointer<vtkPoints> calculatePlaneLocalBounds(vtkImageData* volume, vtkTransform* planeLocalToWorldTransform);
+  int calculateMaxTextureSize(vtkImageData* volume);
+  static bool LineIntersectZero(vtkPoints* points, int p1, int p2, double* bounds);
 private:
-  std::shared_ptr<Volume> mVolume;
+  struct Private;
+  std::unique_ptr<Private> mPrivate;
 };
 
 #endif // IMAGERESLICEFILTER1_H

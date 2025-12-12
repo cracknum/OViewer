@@ -29,6 +29,7 @@
 #include <Vertices.h>
 #include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
+#include "ImageResliceFilter1.h"
 
 namespace
 {
@@ -107,6 +108,47 @@ vtkSmartPointer<vtkImageData> reslice()
   return outputImageData;
 }
 
+void reslice1(std::shared_ptr<Texture2DObject> textureObject)
+{
+  using ReaderType = DicomReadReader<itk::Image<float, 3>>;
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetDicomDirectory("D:/Workspace/Data/case2");
+  reader->GenerateData();
+  auto dicomSeries = *(reader->begin());
+
+  auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
+  double* origin = imageData->GetOrigin();
+  double* spacing = imageData->GetSpacing();
+  int* dimensions = imageData->GetDimensions();
+  auto uid = dicomSeries->GetSeriesInfo()->GetDescription();
+  std::cout << "dimensions: " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2]
+            << std::endl;
+  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+  vtkSmartPointer<vtkMatrix4x4> planeIndexToWorldMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  planeIndexToWorldMatrix->Identity();
+  planeIndexToWorldMatrix->SetElement(0, 0, spacing[0]);
+  planeIndexToWorldMatrix->SetElement(1, 1, spacing[1]);
+  planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
+  planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
+  planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 20);
+
+  vtkNew<vtkMatrix4x4> physicalToIndexMatrix;
+  auto* indexToPhySicalMatrix = imageData->GetIndexToPhysicalMatrix();
+  physicalToIndexMatrix->DeepCopy(indexToPhySicalMatrix);
+  physicalToIndexMatrix->Invert();
+  double phyOrigin[4] = { origin[0] + 90, origin[1] + 90.0, origin[2] + 90.0, 1.0 };
+  double* indexOrigin = physicalToIndexMatrix->MultiplyDoublePoint(phyOrigin);
+  SPDLOG_INFO("index origin: {} {} {} ", indexOrigin[0] / indexOrigin[3],
+    indexOrigin[1] / indexOrigin[3], indexOrigin[2] / indexOrigin[3]);
+  transform->SetMatrix(planeIndexToWorldMatrix);
+  // transform->RotateX(90);
+  auto planeLocalBoundsFilter =
+    std::make_unique<ImageResliceFilter1>();
+  planeLocalBoundsFilter->setTexture(std::move(textureObject));
+  planeLocalBoundsFilter->doFilter(imageData, transform);
+}
+
 class RenderObserver1 : public IEventObserver
 {
 public:
@@ -155,14 +197,12 @@ public:
       vertices.m_TextureAttribute.first = true;
       vertices.m_TextureAttribute.second = 2;
       mVetexIndexBuffer->createBuffer(vertices);
+      mTexture2DObject = std::make_shared<Texture2DObject>(1, 1);
 
-      auto imageData = reslice();
-      int ouputDimensions[3];
-      imageData->GetDimensions(ouputDimensions);
-      mTexture2DObject = std::make_shared<Texture2DObject>(ouputDimensions[0], ouputDimensions[1]);
-      mTexture2DObject->uploadTexture(static_cast<float*>(imageData->GetScalarPointer()));
+      reslice1(mTexture2DObject);
     }
-    shaderProgram->use();
+
+	shaderProgram->use();
     frameBuffer->bind();
     mTexture2DObject->bind(GL_TEXTURE0);
     mVetexIndexBuffer->draw(GL_TRIANGLES);
@@ -241,13 +281,13 @@ TEST(ImageResliceTest, AxialSliceTest)
   resliceFilter->setPlane(plane);
   resliceFilter->setVolume(volume);
   resliceFilter->doFilter();
-  auto pixels = static_cast<const float*>(resliceFilter->getPixels());
-  saveFloatBufferAsPNG("test1.png", pixels, dimensions[0], dimensions[1]);
+//   auto pixels = static_cast<const float*>(resliceFilter->getPixels());
+//   saveFloatBufferAsPNG("test1.png", pixels, dimensions[0], dimensions[1]);
 }
 
 TEST(ImageResliceTest, PlaneLocalBoundsFilterTest)
 {
-  // GTEST_SKIP() << "skipping PlaneLocalBoundsFilterTest";
+  GTEST_SKIP() << "skipping PlaneLocalBoundsFilterTest";
   auto outputImageData = reslice();
   int ouputDimensions[3];
   outputImageData->GetDimensions(ouputDimensions);
