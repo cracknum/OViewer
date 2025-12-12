@@ -31,18 +31,6 @@ __device__ float4 multiply(const glm::mat4& mat, const float4& point)
     mat[0][3] * point.x + mat[1][3] * point.y + mat[2][3] * point.z + mat[3][3] * point.w);
 }
 
-template <typename PixelType>
-__device__ float windowLevelTransform(float2 windowLevel, PixelType value)
-{
-  float window = windowLevel.x;
-  float level = windowLevel.y;
-
-  float tValue = (static_cast<float>(value) - (level - window * 0.5)) / window;
-
-  float cValue = fmaxf(0.0f, fminf(tValue, 1.0f));
-
-  return cValue;
-}
 template <typename ComponentType>
 __global__ void resliceVolume(Volume* volume, cudaTextureObject_t texture, Plane* plane,
   cudaSurfaceObject_t textureSurface, float2 windowLevel)
@@ -61,10 +49,7 @@ __global__ void resliceVolume(Volume* volume, cudaTextureObject_t texture, Plane
 
   auto data = tex3D<ComponentType>(texture, volumeIndex.x, volumeIndex.y, volumeIndex.z);
 
-  // window and level transform
-  float pixel = windowLevelTransform<ComponentType>(windowLevel, data);
-
-  surf2Dwrite(pixel, textureSurface, x * sizeof(ComponentType), y);
+  surf2Dwrite(data, textureSurface, x * sizeof(ComponentType), y);
 }
 }
 
@@ -119,11 +104,6 @@ void ImageResliceFilterCuda::setGLTexture(unsigned int glTexture)
 
   cudaGraphicsGLRegisterImage(
     &m_Resource, glTexture, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
-}
-
-void ImageResliceFilterCuda::setWindowLevel(float window, float level)
-{
-  m_WindowLevel = make_float2(window, level);
 }
 
 void ImageResliceFilterCuda::doFilter()

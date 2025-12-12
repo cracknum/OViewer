@@ -16,6 +16,7 @@
 #include <stb_image.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include "ImageResliceFilter.h"
+#include "ImageResliceFilter1.h"
 #include "Log.h"
 #include "OpenGLWindow.hpp"
 #include <Application.hpp>
@@ -29,7 +30,6 @@
 #include <Vertices.h>
 #include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
-#include "ImageResliceFilter1.h"
 
 namespace
 {
@@ -112,9 +112,9 @@ void reslice1(std::shared_ptr<Texture2DObject> textureObject)
 {
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
-  reader->SetDicomDirectory("D:/Workspace/Data/case2");
+  reader->SetDicomDirectory("F:/Workspace/Data/Covid Scans");
   reader->GenerateData();
-  auto dicomSeries = *(reader->begin());
+  auto dicomSeries = *(reader->begin() + 1);
 
   auto imageData = dicomSeries->GetImageInfo()->GetVtkVolume();
   double* origin = imageData->GetOrigin();
@@ -130,8 +130,8 @@ void reslice1(std::shared_ptr<Texture2DObject> textureObject)
   planeIndexToWorldMatrix->SetElement(1, 1, spacing[1]);
   planeIndexToWorldMatrix->SetElement(2, 2, spacing[2]);
   planeIndexToWorldMatrix->SetElement(0, 3, origin[0]);
-  planeIndexToWorldMatrix->SetElement(1, 3, origin[1]);
-  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 20);
+  planeIndexToWorldMatrix->SetElement(1, 3, origin[1] + 90);
+  planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 90);
 
   vtkNew<vtkMatrix4x4> physicalToIndexMatrix;
   auto* indexToPhySicalMatrix = imageData->GetIndexToPhysicalMatrix();
@@ -143,8 +143,7 @@ void reslice1(std::shared_ptr<Texture2DObject> textureObject)
     indexOrigin[1] / indexOrigin[3], indexOrigin[2] / indexOrigin[3]);
   transform->SetMatrix(planeIndexToWorldMatrix);
   // transform->RotateX(90);
-  auto planeLocalBoundsFilter =
-    std::make_unique<ImageResliceFilter1>();
+  auto planeLocalBoundsFilter = std::make_unique<ImageResliceFilter1>();
   planeLocalBoundsFilter->setTexture(std::move(textureObject));
   planeLocalBoundsFilter->doFilter(imageData, transform);
 }
@@ -156,10 +155,10 @@ public:
     : mViewerWidget(viewerWidget)
   {
     mShaderProgramManager = std::make_shared<ShaderProgramManager>();
-	 mVertexShaderSource =
-      ShaderUtils::loadShaderSource(R"(D:\Workspace\github\OViewer\Testing\FiltersTest\test.vert)");
-    mFragmentShaderSource =
-      ShaderUtils::loadShaderSource(R"(D:\Workspace\github\OViewer\Testing\FiltersTest\test.frag)");
+    mVertexShaderSource = ShaderUtils::loadShaderSource(
+      R"(F:\Workspace\Projects\OViewer\Testing\FiltersTest\test.vert)");
+    mFragmentShaderSource = ShaderUtils::loadShaderSource(
+      R"(F:\Workspace\Projects\OViewer\Testing\FiltersTest\test.frag)");
   }
   bool handle(const EventObject& event) override
   {
@@ -202,7 +201,8 @@ public:
       reslice1(mTexture2DObject);
     }
 
-	shaderProgram->use();
+    shaderProgram->use();
+    shaderProgram->setVec2(glm::vec2(4095, 1024), "windowLevel");
     frameBuffer->bind();
     mTexture2DObject->bind(GL_TEXTURE0);
     mVetexIndexBuffer->draw(GL_TRIANGLES);
@@ -281,8 +281,8 @@ TEST(ImageResliceTest, AxialSliceTest)
   resliceFilter->setPlane(plane);
   resliceFilter->setVolume(volume);
   resliceFilter->doFilter();
-//   auto pixels = static_cast<const float*>(resliceFilter->getPixels());
-//   saveFloatBufferAsPNG("test1.png", pixels, dimensions[0], dimensions[1]);
+  //   auto pixels = static_cast<const float*>(resliceFilter->getPixels());
+  //   saveFloatBufferAsPNG("test1.png", pixels, dimensions[0], dimensions[1]);
 }
 
 TEST(ImageResliceTest, PlaneLocalBoundsFilterTest)

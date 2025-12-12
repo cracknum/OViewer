@@ -21,9 +21,6 @@ public:
   void setPlane(std::shared_ptr<Plane> plane);
   Plane* getPlane();
   void setGLTexture(unsigned int glTexture);
-
-  void setWindowLevel(float window, float level);
-
   void doFilter();
 
 private:

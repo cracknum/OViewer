@@ -131,7 +131,6 @@ bool ImageResliceFilter1::doFilter(
   mPrivate->mResliceFilterCuda->setPlane(plane);
   mPrivate->mResliceFilterCuda->setVolume(volume);
   mPrivate->mResliceFilterCuda->setGLTexture(mPrivate->mTextureObject->textureId());
-  mPrivate->mResliceFilterCuda->setWindowLevel(4095, 1024);
   mPrivate->mResliceFilterCuda->doFilter();
 
   SPDLOG_INFO("finished reslice");
