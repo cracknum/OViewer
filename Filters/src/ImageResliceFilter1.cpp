@@ -1,25 +1,11 @@
-#include "ImageResliceFilter.h"
+#include "ImageResliceFilter1.h"
 #include "ImageResliceFilterCuda.cuh"
-#include "Plane.h"
 #include "Volume.h"
-#include <glm/glm.hpp>
+#include <Texture2DObject.h>
 #include <spdlog/spdlog.h>
-#include <vtkDemandDrivenPipeline.h>
-#include <vtkImageData.h>
-#include <vtkInformation.h>
-#include <vtkInformationIntegerKey.h>
-#include <vtkInformationKey.h>
-#include <vtkInformationObjectBaseKey.h>
-#include <vtkInformationVector.h>
-#include <vtkMatrix3x3.h>
 #include <vtkMatrix4x4.h>
-#include <vtkPointData.h>
-#include <vtkPointSet.h>
+#include <vtkPoints.h>
 #include <vtkTransform.h>
-
-vtkStandardNewMacro(ImageResliceFilter);
-vtkInformationKeyMacro(ImageResliceFilter, TEXTURE_SIZE, Integer);
-vtkInformationKeyMacro(ImageResliceFilter, PLANE_BOUNDS_POINTS, ObjectBase);
 
 namespace
 {
@@ -35,52 +21,77 @@ glm::mat4 convertToMat4(const vtkMatrix4x4* matrix)
   }
   return mat;
 }
-}
 
-//----------------------------------------------------------------------
-void ImageResliceFilter::PrintSelf(ostream& os, vtkIndent indent)
+bool sameMatrix(vtkMatrix4x4* matrix1, vtkMatrix4x4* matrix2)
 {
-  Superclass::PrintSelf(os, indent);
-}
-
-//----------------------------------------------------------------------
-ImageResliceFilter::ImageResliceFilter()
-  : ImageResliceFilterAlgo(nullptr)
-{
-  // input 0: volume data : vtkImageData
-  this->SetNumberOfInputPorts(1);
-  // output 0: vtkPolyData with plane's local bounds array 2D
-  this->SetNumberOfOutputPorts(1);
-}
-
-//----------------------------------------------------------------------
-ImageResliceFilter::~ImageResliceFilter() {}
-
-//----------------------------------------------------------------------
-int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** inputVector, vtkInformationVector* outputVector)
-{
-  auto inputInform = inputVector[0]->GetInformationObject(0);
-  auto outputInform = outputVector->GetInformationObject(0);
-  auto imageData = vtkImageData::SafeDownCast(inputInform->Get(vtkDataObject::DATA_OBJECT()));
-  auto outputImage = vtkImageData::SafeDownCast(outputInform->Get(vtkDataObject::DATA_OBJECT()));
-  if (!imageData || !PlaneLocalToWorldTransform)
+  for (size_t i = 0; i < 4; i++)
   {
-    vtkErrorMacro("image data or plane local to world transform is not set");
-    return 0;
+    for (size_t j = 0; j < 4; j++)
+    {
+      if (std::abs(matrix1->GetElement(i, j) - matrix2->GetElement(i, j)) > 0)
+      {
+        return false;
+      }
+    }
   }
 
-  int textureSize = inputInform->Get(TEXTURE_SIZE());
-  auto bounds = vtkPoints::SafeDownCast(outputInform->Get(PLANE_BOUNDS_POINTS()));
+  return true;
+}
+}
+
+struct ImageResliceFilter1::Private
+{
+  std::shared_ptr<Texture2DObject> mTextureObject;
+  std::unique_ptr<ImageResliceFilterCuda> mResliceFilterCuda;
+  vtkSmartPointer<vtkTransform> mPlaneLocalToWorldTransform;
+  vtkSmartPointer<vtkImageData> mImageData;
+
+  bool mTrackingStatus;
+  Private()
+    : mTrackingStatus(false)
+  {
+    mResliceFilterCuda = std::make_unique<ImageResliceFilterCuda>();
+  }
+};
+
+ImageResliceFilter1::ImageResliceFilter1()
+{
+  mPrivate = std::make_unique<Private>();
+}
+
+ImageResliceFilter1::~ImageResliceFilter1() = default;
+
+void ImageResliceFilter1::setTexture(std::shared_ptr<Texture2DObject> textureObject)
+{
+  mPrivate->mTextureObject = std::move(textureObject);
+}
+
+bool ImageResliceFilter1::doFilter(
+  vtkSmartPointer<vtkImageData> imageData, vtkSmartPointer<vtkTransform> planeLocalToWorldTransform)
+{
+  if (imageData == mPrivate->mImageData &&
+    sameMatrix(
+      planeLocalToWorldTransform->GetMatrix(), mPrivate->mPlaneLocalToWorldTransform->GetMatrix()))
+  {
+    return mPrivate->mTrackingStatus;
+  }
+
+  if (imageData != mPrivate->mImageData)
+  {
+    mPrivate->mImageData = std::move(imageData);
+    // auto maxTextureSize = calculateMaxTextureSize(imageData);
+  }
+  if (planeLocalToWorldTransform != mPrivate->mPlaneLocalToWorldTransform)
+  {
+    mPrivate->mPlaneLocalToWorldTransform = std::move(planeLocalToWorldTransform);
+  }
+
+  auto bounds = calculatePlaneLocalBounds(imageData, planeLocalToWorldTransform);
   if (!bounds || bounds->GetNumberOfPoints() < 2)
   {
-    vtkErrorMacro("plane and image data is not intersect");
-    return 0;
-  }
-
-  if (!ImageResliceFilterAlgo)
-  {
-    ImageResliceFilterAlgo = std::make_unique<ImageResliceFilterCuda>();
+    SPDLOG_INFO("plane and image data is not intersect");
+    mPrivate->mTrackingStatus = false;
+    return mPrivate->mTrackingStatus;
   }
 
   double origin[3], spacing[3];
@@ -91,17 +102,25 @@ int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
   SPDLOG_INFO("read imageData");
 
   double planeIndexOrigin[3] = { 0, 0, 0 };
-  double* planeWorldOrigin = PlaneLocalToWorldTransform->TransformDoublePoint(planeIndexOrigin);
+  double* planeWorldOrigin = planeLocalToWorldTransform->TransformDoublePoint(planeIndexOrigin);
   std::shared_ptr<Plane> plane = std::make_shared<Plane>(
     glm::vec3(planeWorldOrigin[0], planeWorldOrigin[2], planeWorldOrigin[1]),
     glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0),
-    convertToMat4(PlaneLocalToWorldTransform->GetMatrix()));
+    convertToMat4(planeLocalToWorldTransform->GetMatrix()));
 
   double minBound[3], maxBound[3];
   bounds->GetPoint(0, minBound);
   bounds->GetPoint(1, maxBound);
   plane->m_Width = maxBound[0] - minBound[0] + 1;
   plane->m_Height = maxBound[1] - minBound[1] + 1;
+
+  if (!mPrivate->mTextureObject)
+  {
+    mPrivate->mTrackingStatus = false;
+    return false;
+  }
+  mPrivate->mTextureObject->updateBufferSize(plane->m_Width, plane->m_Height);
+
   SPDLOG_INFO("plane width: {}, height: {}", plane->m_Width, plane->m_Height);
 
   std::shared_ptr<Volume> volume = std::make_shared<Volume>(
@@ -109,50 +128,24 @@ int ImageResliceFilter::RequestData(vtkInformation* vtkNotUsed(request),
     glm::ivec3(dimensions[0], dimensions[1], dimensions[2]), DataType::FLOAT,
     imageData->GetScalarPointer(), convertToMat4(imageData->GetIndexToPhysicalMatrix()));
 
-  ImageResliceFilterAlgo->setPlane(plane);
-  ImageResliceFilterAlgo->setVolume(volume);
-  ImageResliceFilterAlgo->doFilter();
+  mPrivate->mResliceFilterCuda->setPlane(plane);
+  mPrivate->mResliceFilterCuda->setVolume(volume);
+  mPrivate->mResliceFilterCuda->setGLTexture(mPrivate->mTextureObject->textureId());
+  mPrivate->mResliceFilterCuda->doFilter();
 
   SPDLOG_INFO("finished reslice");
-
-  outputImage->SetDimensions(plane->m_Width, plane->m_Height, 1);
-
-  float scale[3];
-  PlaneLocalToWorldTransform->GetScale(scale);
-  outputImage->SetSpacing(scale[0], scale[1], scale[2]);
-  outputImage->SetOrigin(planeWorldOrigin);
-  outputImage->AllocateScalars(imageData->GetScalarType(), 1);
-
-//   const void* pixels = ImageResliceFilterAlgo->getPixels();
-//   memcpy(outputImage->GetScalarPointer(), pixels,
-//     plane->m_Width * plane->m_Height * getDataTypeSize(DataType::FLOAT));
-
-  SPDLOG_INFO("finished");
-  return 1;
+  mPrivate->mTrackingStatus = true;
+  return mPrivate->mTrackingStatus;
 }
 
-//----------------------------------------------------------------------
-int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** inputVector, vtkInformationVector* outputVector)
+vtkSmartPointer<vtkPoints> ImageResliceFilter1::calculatePlaneLocalBounds(
+  vtkImageData* volume, vtkTransform* planeLocalToWorldTransform)
 {
-  auto inputInform = inputVector[0]->GetInformationObject(0);
-  auto outputInform = outputVector->GetInformationObject(0);
-  auto imageData = vtkImageData::SafeDownCast(inputInform->Get(vtkDataObject::DATA_OBJECT()));
-  vtkSmartPointer<vtkPoints> boundPoints = vtkSmartPointer<vtkPoints>::New();
-
-  // calculate max texture size
-  int dimensions[3];
-  imageData->GetDimensions(dimensions);
-  int maxDiagonalLength2 = std::max({ dimensions[0] * dimensions[0], dimensions[1] * dimensions[1],
-    dimensions[2] * dimensions[2] });
-  int textureMaxSize = std::sqrt(maxDiagonalLength2);
-
-  outputInform->Set(TEXTURE_SIZE(), textureMaxSize);
   // get image data bounds in world and PhysicalToIndexMatrix
   double imageDataBounds[6]{};
   double bounds[6]{ std::numeric_limits<double>::max(), std::numeric_limits<double>::min(),
     std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), 0, 0 };
-  imageData->GetBounds(imageDataBounds);
+  volume->GetBounds(imageDataBounds);
   double bbMin[3] = { imageDataBounds[0], imageDataBounds[2], imageDataBounds[4] };
   double bbMax[3] = { imageDataBounds[1], imageDataBounds[3], imageDataBounds[5] };
 
@@ -170,15 +163,15 @@ int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
   // coordinates
   vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
   vtkSmartPointer<vtkMatrix4x4> planeWorldToLocalMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  if (!PlaneLocalToWorldTransform || !PlaneLocalToWorldTransform->GetMatrix())
+  if (!planeLocalToWorldTransform || !planeLocalToWorldTransform->GetMatrix())
   {
     std::cout << "transform or matrix get error: PlaneLocalToWorldTransform is nullptr: "
-              << (PlaneLocalToWorldTransform == nullptr)
-              << " matrix is nullptr: " << (PlaneLocalToWorldTransform->GetMatrix() == nullptr)
+              << (planeLocalToWorldTransform == nullptr)
+              << " matrix is nullptr: " << (planeLocalToWorldTransform->GetMatrix() == nullptr)
               << std::endl;
-    return 0;
+    return nullptr;
   }
-  planeWorldToLocalMatrix->DeepCopy(PlaneLocalToWorldTransform->GetMatrix());
+  planeWorldToLocalMatrix->DeepCopy(planeLocalToWorldTransform->GetMatrix());
   planeWorldToLocalMatrix->Invert();
 
   transform->Concatenate(planeWorldToLocalMatrix);
@@ -199,19 +192,28 @@ int ImageResliceFilter::RequestInformation(vtkInformation* vtkNotUsed(request),
   if ((bounds[0] > 9999999.0) || (bounds[2] > 9999999.0) || (bounds[1] < -9999999.0) ||
     (bounds[3] < -9999999.0))
   {
-    return 1;
+    return nullptr;
   }
   // index 1 and 2: bounds
+  vtkSmartPointer<vtkPoints> boundPoints = vtkSmartPointer<vtkPoints>::New();
   boundPoints->InsertNextPoint(bounds[0], bounds[2], bounds[4]);
   boundPoints->InsertNextPoint(bounds[1], bounds[3], bounds[5]);
-  outputInform->Set(PLANE_BOUNDS_POINTS(), boundPoints);
 
-  return 1;
+  return boundPoints;
 }
 
-//----------------------------------------------------------------------
-bool ImageResliceFilter::LineIntersectZero(vtkPoints* points, int p1, int p2, double* bounds)
+int ImageResliceFilter1::calculateMaxTextureSize(vtkImageData* volume)
+{
+  // calculate max texture size
+  int dimensions[3];
+  volume->GetDimensions(dimensions);
+  int maxDiagonalLength2 = std::max({ dimensions[0] * dimensions[0], dimensions[1] * dimensions[1],
+    dimensions[2] * dimensions[2] });
+  int textureMaxSize = std::sqrt(maxDiagonalLength2);
+  return textureMaxSize;
+}
 
+bool ImageResliceFilter1::LineIntersectZero(vtkPoints* points, int p1, int p2, double* bounds)
 {
   double point1[3];
   double point2[3];

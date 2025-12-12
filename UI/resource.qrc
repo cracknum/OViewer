@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/icon">
-        <file>resources/openFolder.svg</file>
-    </qresource>
-</RCC>
