@@ -1,6 +1,5 @@
 #ifndef LOG_COMMON_H
 #define LOG_COMMON_H
-#include <qapplication.h>
 #include "spdlog/async.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -8,7 +7,7 @@
 
 namespace Log
 {
-void initLog(const QApplication& app, const spdlog::level::level_enum& level)
+void initLog(const spdlog::level::level_enum& level)
 {
   spdlog::init_thread_pool(8192, 1); // 异步队列大小，线程数
 
@@ -25,13 +24,12 @@ void initLog(const QApplication& app, const spdlog::level::level_enum& level)
   spdlog::set_default_logger(logger);
 
   SPDLOG_INFO("Application started");
-
-  app.connect(&app, &QCoreApplication::aboutToQuit, []() { spdlog::shutdown(); });
 }
 
 void destroyLog()
 {
   spdlog::shutdown();
+  SPDLOG_INFO("Application shutdown");
 }
 }
 #endif

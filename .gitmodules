@@ -1,4 +1,3 @@
-[submodule "third_parties/RenderFramework"]
-	path = third_parties/RenderFramework
+[submodule "third_party/RenderFramework"]
+	path = third_party/RenderFramework
 	url = https://github.com/cracknum/OViewerUI.git
-	branch = master

@@ -30,14 +30,15 @@ if (NOT "${Source_files}")
             glm::glm
             ${vtk_libs}
             CUDA::cudart
+            OpenGLCore::Object
     )
     target_include_directories(${PROJECT_NAME}
             PUBLIC include
             PRIVATE ${SARibbonBar_INCLUDE_DIR})
     set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES native)
-
     export_model(${export_config_file_path} ${PROJECT_NAME})
     group_sources_by_directory(${PROJECT_NAME})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WIN32_LEAN_AND_MEAN)
 
     vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${vtk_libs})
 endif ()

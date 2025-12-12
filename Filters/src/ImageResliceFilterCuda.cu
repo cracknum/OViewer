@@ -1,10 +1,24 @@
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef WINGDIAPI
+#define WINGDIAPI __declspec(dllimport)
+#endif
+
+#ifndef APIENTRY
+#define APIENTRY __stdcall
+#endif
+
 #include "ImageResliceFilterCuda.cuh"
-// #include <spdlog/spdlog.h>
+#define FMT_UNICODE 0
+#include <cuda_gl_interop.h>
 #include <iostream>
+#include <spdlog/spdlog.h>
+#include <sstream>
 #include <stdexcept>
-#include <thrust/device_ptr.h>
-#include <thrust/extrema.h>
 // #define BENCHMARK
+#define LOG_ERROR
 
 namespace FilterKernel
 {
@@ -16,9 +30,10 @@ __device__ float4 multiply(const glm::mat4& mat, const float4& point)
     mat[0][2] * point.x + mat[1][2] * point.y + mat[2][2] * point.z + mat[3][2] * point.w,
     mat[0][3] * point.x + mat[1][3] * point.y + mat[2][3] * point.z + mat[3][3] * point.w);
 }
+
 template <typename ComponentType>
-__global__ void resliceVolume(
-  Volume* volume, cudaTextureObject_t texture, Plane* plane, ComponentType* pixels)
+__global__ void resliceVolume(Volume* volume, cudaTextureObject_t texture, Plane* plane,
+  cudaSurfaceObject_t textureSurface, float2 windowLevel)
 {
   // already know plane bounds world coordinate
   const unsigned int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -33,37 +48,19 @@ __global__ void resliceVolume(
   float4 volumeIndex = multiply(volume->m_WorldToIndex, worldPlanePixel);
 
   auto data = tex3D<ComponentType>(texture, volumeIndex.x, volumeIndex.y, volumeIndex.z);
-  pixels[y * plane->m_Width + x] = data;
+
+  surf2Dwrite(data, textureSurface, x * sizeof(ComponentType), y);
 }
-
-template <typename pixelType>
-struct NormalizeFunctor
-{
-  pixelType mMinValue;
-  pixelType mRange;
-
-  NormalizeFunctor(pixelType minValue, pixelType maxValue)
-    : mMinValue(minValue)
-    , mRange(maxValue - minValue)
-  {
-  }
-  __host__ __device__ pixelType operator()(const pixelType& value)
-  {
-    if (mRange == 0)
-      return static_cast<pixelType>(0);
-
-    return (value - mMinValue) / mRange;
-  }
-};
-
 }
 
 ImageResliceFilterCuda::ImageResliceFilterCuda()
   : m_Texture(0)
   , m_dVolume(nullptr)
   , m_dPlane(nullptr)
-  , m_hPixels(nullptr)
   , m_hVolume(nullptr)
+  , m_GLTexture(0)
+  , m_Resource(nullptr)
+  , m_WindowLevel(make_float2(0, 0))
 {
 }
 
@@ -97,28 +94,58 @@ Plane* ImageResliceFilterCuda::getPlane()
   return m_hPlane.get();
 }
 
+void ImageResliceFilterCuda::setGLTexture(unsigned int glTexture)
+{
+  m_GLTexture = glTexture;
+  if (m_Resource)
+  {
+    cudaGraphicsUnregisterResource(m_Resource);
+  }
+
+  cudaGraphicsGLRegisterImage(
+    &m_Resource, glTexture, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
+}
+
 void ImageResliceFilterCuda::doFilter()
 {
+  if (!m_Resource)
+  {
+    SPDLOG_ERROR("no texture registered into cuda");
+    return;
+  }
+  if (m_WindowLevel.x < 1e-6 || m_WindowLevel.y < 1e-6)
+  {
+    SPDLOG_ERROR("window level is not set");
+    return;
+  }
+
   if (m_dVolume == nullptr || m_hPlane == nullptr)
   {
     uploadVolume(m_hVolume);
     uploadPlane(m_hPlane);
   }
-
-  launchResliceKernel();
+  cudaGraphicsMapResources(1, &m_Resource);
+  cudaArray_t array;
+  cudaGraphicsSubResourceGetMappedArray(&array, m_Resource, 0, 0);
+  cudaSurfaceObject_t textureSurface;
+  cudaResourceDesc resourceDesc{};
+  resourceDesc.res.array.array = array;
+  resourceDesc.resType = cudaResourceTypeArray;
+  cudaCreateSurfaceObject(&textureSurface, &resourceDesc);
+  launchResliceKernel(textureSurface);
+  cudaGraphicsUnmapResources(1, &m_Resource);
 }
 
 void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume)
 {
   if (!volume)
   {
-    /*SPDLOG_DEBUG(
-      "volume is nullptr: {}, plane is nullptr: {}", volume == nullptr, plane == nullptr);*/
+    SPDLOG_DEBUG("volume is nullptr: {}", volume == nullptr);
     return;
   }
   if (!volume->m_Data)
   {
-    // SPDLOG_DEBUG("volume data is nullptr");
+    SPDLOG_DEBUG("volume data is nullptr");
     return;
   }
 
@@ -161,7 +188,7 @@ void ImageResliceFilterCuda::uploadVolume(std::shared_ptr<Volume> volume)
   textureDesc.normalizedCoords = 0;
 
   err = cudaCreateTextureObject(&m_Texture, &desc, &textureDesc, nullptr);
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  SPDLOG_DEBUG(cudaGetErrorString(err));
 
   m_hVolume = volume;
 }
@@ -172,26 +199,11 @@ void ImageResliceFilterCuda::uploadPlane(std::shared_ptr<Plane> plane)
   if (!m_dPlane)
   {
     err = cudaMalloc(&m_dPlane, sizeof(Plane));
-    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    SPDLOG_DEBUG(cudaGetErrorString(err));
   }
 
   err = cudaMemcpy(m_dPlane, plane.get(), sizeof(Plane), cudaMemcpyHostToDevice);
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-
-  // create cache for plane pixels;
-  err = cudaMalloc(
-    &m_Pixels, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-  err = cudaMallocHost(
-    &m_hPixels, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-  memset(m_hPixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
-
-  err = cudaMemset(
-    m_Pixels, 0, plane->m_Width * plane->m_Height * getDataTypeSize(m_hVolume->m_DataType));
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-
-  m_hPlane = plane;
+  SPDLOG_DEBUG(cudaGetErrorString(err));
 }
 
 void ImageResliceFilterCuda::destroyResources()
@@ -199,12 +211,11 @@ void ImageResliceFilterCuda::destroyResources()
   if (m_dVolume || m_dPlane)
   {
     auto err = cudaFree(m_dVolume);
-    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    SPDLOG_DEBUG(cudaGetErrorString(err));
     err = cudaFree(m_dPlane);
-    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+    SPDLOG_DEBUG(cudaGetErrorString(err));
     err = cudaDestroyTextureObject(m_Texture);
-    std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
-    cudaFreeHost(m_hPixels);
+    SPDLOG_DEBUG(cudaGetErrorString(err));
   }
 }
 cudaChannelFormatDesc ImageResliceFilterCuda::createChannelFormat()
@@ -225,32 +236,27 @@ cudaChannelFormatDesc ImageResliceFilterCuda::createChannelFormat()
       throw std::runtime_error("unsupported type");
   }
 }
-void ImageResliceFilterCuda::launchResliceKernel()
+void ImageResliceFilterCuda::launchResliceKernel(cudaSurfaceObject_t textureSurface)
 {
   switch (m_hVolume->m_DataType)
   {
     case DataType::CHAR:
-      return launchResliceKernelImpl<DataType::CHAR>();
+      return launchResliceKernelImpl<DataType::CHAR>(textureSurface);
     case DataType::UNSIGNED_CHAR:
-      return launchResliceKernelImpl<DataType::UNSIGNED_CHAR>();
+      return launchResliceKernelImpl<DataType::UNSIGNED_CHAR>(textureSurface);
     case DataType::SHORT:
-      return launchResliceKernelImpl<DataType::SHORT>();
+      return launchResliceKernelImpl<DataType::SHORT>(textureSurface);
     case DataType::UNSIGNED_SHORT:
-      return launchResliceKernelImpl<DataType::UNSIGNED_SHORT>();
+      return launchResliceKernelImpl<DataType::UNSIGNED_SHORT>(textureSurface);
     case DataType::FLOAT:
-      return launchResliceKernelImpl<DataType::FLOAT>();
+      return launchResliceKernelImpl<DataType::FLOAT>(textureSurface);
     default:
       throw std::runtime_error("unsupported type");
   }
 }
 
-const void* ImageResliceFilterCuda::getPixels() const
-{
-  return m_hPixels;
-}
-
 template <DataType dt>
-void ImageResliceFilterCuda::launchResliceKernelImpl()
+void ImageResliceFilterCuda::launchResliceKernelImpl(cudaSurfaceObject_t textureSurface)
 {
 #if defined(BENCHMARK)
   cudaEvent_t startEvent, stopEvent;
@@ -268,13 +274,7 @@ void ImageResliceFilterCuda::launchResliceKernelImpl()
   {
 #endif
     FilterKernel::resliceVolume<type>
-      <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, static_cast<type*>(m_Pixels));
-
-    thrust::device_ptr<type> pixelDataPtr(static_cast<type*>(m_Pixels));
-    auto [minValue, maxValue] =
-      thrust::minmax_element(pixelDataPtr, pixelDataPtr + m_hPlane->m_Width * m_hPlane->m_Height);
-    thrust::transform(pixelDataPtr, pixelDataPtr + m_hPlane->m_Width * m_hPlane->m_Height,
-      pixelDataPtr, FilterKernel::NormalizeFunctor<type>(*minValue, *maxValue));
+      <<<gridSize, blockSize>>>(m_dVolume, m_Texture, m_dPlane, textureSurface, m_WindowLevel);
 
 #if defined(BENCHMARK)
   }
@@ -289,22 +289,18 @@ void ImageResliceFilterCuda::launchResliceKernelImpl()
   std::cout << "slice time: " << elapsedTime / count << "ms" << std::endl;
 #endif
   cudaError_t err = cudaGetLastError();
-  std::cout << __LINE__ << ": " << __FUNCTION__ << ":" << cudaGetErrorString(err) << std::endl;
+  SPDLOG_DEBUG(cudaGetErrorString(err));
   if (err != cudaSuccess)
   {
-    std::cout << "params: " << std::endl
-              << "grid size: " << gridSize.x << " " << gridSize.y << " " << gridSize.z << std::endl
-              << "type: " << typeid(type).name() << std::endl
-              << "m_dVolume address: " << m_dVolume << std::endl
-              << "m_Texture id: " << m_Texture << std::endl
-              << "m_dPlane address: " << m_dPlane << std::endl
-              << "m_Pixels address: " << m_Pixels << ": " << static_cast<type*>(m_Pixels)
-              << std::endl;
-  }
-  else
-  {
-    cudaMemcpy(m_hPixels, m_Pixels,
-      m_hPlane->m_Width * m_hPlane->m_Height * getDataTypeSize(m_hVolume->m_DataType),
-      cudaMemcpyDeviceToHost);
+    std::ostringstream oss;
+
+    oss << "params: " << std::endl
+        << "grid size: " << gridSize.x << " " << gridSize.y << " " << gridSize.z << std::endl
+        << "type: " << typeid(type).name() << std::endl
+        << "m_dVolume address: " << m_dVolume << std::endl
+        << "m_Texture id: " << m_Texture << std::endl
+        << "m_dPlane address: " << m_dPlane << std::endl
+        << std::endl;
+    SPDLOG_ERROR(oss.str());
   }
 }
