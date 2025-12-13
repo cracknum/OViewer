@@ -63,7 +63,8 @@ bool UIContext::init(IWindow* window)
   float xscale, yscale;
   glfwGetWindowContentScale(static_cast<GLFWwindow*>(mWindow->getNativeWindow()), &xscale, &yscale);
 
-  io.Fonts->AddFontFromFileTTF(FONT_LOCATION, xscale * 20.0f);
+  io.Fonts->AddFontFromFileTTF(
+    FONT_LOCATION, xscale * 20.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
   return true;
 }
 ImGuiContext* UIContext::GetContext()
