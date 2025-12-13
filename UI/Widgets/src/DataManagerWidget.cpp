@@ -10,11 +10,19 @@
 
 struct DataManagerWidget::Private
 {
+  itk::SmartPointer<DicomSeries> mSeries;
+  int mSelectIndex;
+
+  Private()
+    : mSelectIndex(-1)
+  {
+  }
 };
 
 DataManagerWidget::DataManagerWidget(const char* widgetName, int widgetFlags /*= 0*/)
   : Widget(widgetName, widgetFlags)
 {
+  mPrivate = std::make_unique<Private>();
 }
 
 DataManagerWidget::~DataManagerWidget() {}
@@ -23,8 +31,26 @@ bool DataManagerWidget::render()
 {
   if (ImGui::Begin(mWidgetName.c_str(), false, mWidgetFlags))
   {
-    auto eventData = std::make_unique<DisplayDataNodeTreeData>();
-    this->invokeEvent(WidgetEvent(EventId::DisplayDataNodeTree, std::move(eventData)));
+    if (ImGui::TreeNode("DataManager##dataManager"))
+    {
+      if (mPrivate->mSeries)
+      {
+        const auto studyInfo = mPrivate->mSeries->GetStudyInfo();
+        const auto seriesInfo = mPrivate->mSeries->GetSeriesInfo();
+        const auto imageInfo = mPrivate->mSeries->GetImageInfo();
+        const auto equipInfo = mPrivate->mSeries->GetEquipInfo();
+        const auto desc = studyInfo->GetDescription() + " " + seriesInfo->GetNumber() + " " +
+          equipInfo->GetSliceThickness() + "##row_0";
+
+        if (ImGui::Selectable(desc.c_str(), mPrivate->mSelectIndex == 0))
+        {
+          auto eventData = std::make_unique<SeriesSelectedData>(mPrivate->mSeries);
+          this->invokeEvent(DcmEvent(EventId::SeriesSelected, std::move(eventData)));
+          mPrivate->mSelectIndex = 0;
+        }
+      }
+      ImGui::TreePop();
+    }
   }
   ImGui::End();
 
@@ -40,7 +66,7 @@ bool DataManagerWidget::handle(const EventObject& event)
   }
   auto seriesSelectEvent = dynamic_cast<const DcmEvent*>(&event);
   auto seriesSelectData = dynamic_cast<const SeriesSelectedData*>(seriesSelectEvent->eventData());
-  itk::SmartPointer<DicomSeries> series = seriesSelectData->dicomSeries();
-  SPDLOG_DEBUG("select series");
+  mPrivate->mSeries = seriesSelectData->dicomSeries();
+  mPrivate->mSelectIndex = -1;
   return false;
 }
