@@ -1,11 +1,16 @@
 #include "OpenGLViewerWidget.h"
+#include "DcmEvent.h"
+#include "DcmEventData.h"
+#include "DicomSeries.h"
+#include "EventId.h"
 #include "MouseEvent.h"
+#include "MouseEventData.h"
 #include <imgui.h>
 #include <spdlog/spdlog.h>
-
 struct OpenGLViewerWidget::Private
 {
   std::shared_ptr<FrameBuffer> mFrameBuffer;
+  itk::SmartPointer<DicomSeries> mDicomSeries;
 
   Private() { mFrameBuffer = std::make_shared<FrameBuffer>(1, 1); }
 };
@@ -62,6 +67,21 @@ void OpenGLViewerWidget::resize(int width, int height)
 std::shared_ptr<FrameBuffer> OpenGLViewerWidget::renderBuffer()
 {
   return mPrivate->mFrameBuffer;
+}
+bool OpenGLViewerWidget::handle(const EventObject& event)
+{
+  if (event.eventId() != EventId::SeriesSelected)
+  {
+    return false;
+  }
+
+  const auto eventData = dynamic_cast<const SeriesSelectedData*>(event.eventData());
+  if (!eventData)
+  {
+    return false;  
+  }
+  mPrivate->mDicomSeries = eventData->dicomSeries();
+  return false;
 }
 
 void OpenGLViewerWidget::mousePressCheck()

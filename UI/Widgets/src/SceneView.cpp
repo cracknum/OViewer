@@ -40,7 +40,7 @@ struct SceneView::Impl final
   std::shared_ptr<DataManagerWidget> mDataManagerWidget;
   std::unique_ptr<PixelValueWidget> mPixelValueWidget;
   std::unique_ptr<ImageNavigatorWidget> mImageNavigatorWidget;
-  std::unique_ptr<ImagePropertiesWidget> mImagePropertiesWidget;
+  std::shared_ptr<ImagePropertiesWidget> mImagePropertiesWidget;
   std::unique_ptr<LogWidget> mLogWidget;
   std::shared_ptr<OpenGLViewerWidget> mViewerWidget;
   std::shared_ptr<SeriesSelectDialog> mSeriesSelectDialog;
@@ -58,7 +58,7 @@ struct SceneView::Impl final
     mDataManagerWidget = std::make_shared<DataManagerWidget>(UI_DATA_MANAGER);
     mPixelValueWidget = std::make_unique<PixelValueWidget>(UI_PIXEL_VALUE_WINDOW);
     mImageNavigatorWidget = std::make_unique<ImageNavigatorWidget>(UI_IMAGE_NAVIGATOR_WINDOW);
-    mImagePropertiesWidget = std::make_unique<ImagePropertiesWidget>(UI_PROPERTIES_WINDOW);
+    mImagePropertiesWidget = std::make_shared<ImagePropertiesWidget>(UI_PROPERTIES_WINDOW);
     mSeriesSelectDialog = std::make_shared<SeriesSelectDialog>("Pick Image##SeriesSelectDialog");
     mDicomReader = DicomReaderType::New();
     mLogWidget = std::make_unique<LogWidget>(UI_LOG_BOX);
@@ -66,6 +66,8 @@ struct SceneView::Impl final
       UI_VIEW_BOX, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove);
 
     mSeriesSelectDialog->addObserver(mDataManagerWidget);
+    mSeriesSelectDialog->addObserver(mImagePropertiesWidget);
+    mSeriesSelectDialog->addObserver(mViewerWidget);
   }
 };
 

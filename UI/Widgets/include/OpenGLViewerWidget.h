@@ -1,12 +1,14 @@
 #ifndef OPENGL_VIEWER_WIDGET_UI
 #define OPENGL_VIEWER_WIDGET_UI
 #include "FrameBuffer.h"
+#include "IEventObserver.h"
 #include "Widget.h"
 #include "WidgetsExport.h"
 #include <memory>
 
-
-class WIDGETS_API OpenGLViewerWidget final : public Widget
+class WIDGETS_API OpenGLViewerWidget final
+  : public Widget
+  , public IEventObserver
 {
 public:
   explicit OpenGLViewerWidget(const char* widgetNamae, int widgetFlags = 0);
@@ -15,6 +17,7 @@ public:
   bool render() override;
   void resize(int width, int height) override;
   std::shared_ptr<FrameBuffer> renderBuffer();
+  bool handle(const EventObject& event) override;
 
 private:
   void mousePressCheck();

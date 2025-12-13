@@ -3,7 +3,6 @@
 
 struct ImagePropertiesWidget::Private
 {
-
 };
 
 ImagePropertiesWidget::ImagePropertiesWidget(const char* widgetName, int widgetFlags)
@@ -24,3 +23,4 @@ bool ImagePropertiesWidget::render()
 }
 
 void ImagePropertiesWidget::resize(int width, int height) {}
+bool ImagePropertiesWidget::handle(const EventObject& event) {}

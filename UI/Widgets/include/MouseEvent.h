@@ -1,4 +1,5 @@
-#ifndef MOUSE_EVENT
+#ifndef MOUSE_EVENT_H
+#define MOUSE_EVENT_H
 #include "EventId.h"
 #include "EventObject.h"
 #include "MouseEventData.h"
