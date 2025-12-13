@@ -9,6 +9,7 @@
 #include "RenderEvent.h"
 #include "RenderEventData.h"
 
+#include "FileBrowserDialog.h"
 #include "WidgetEvent.h"
 #include "WidgetEventData.h"
 #include <GLFW/glfw3.h>
@@ -58,6 +59,7 @@ struct WindowPrivate final
   std::unique_ptr<OpenGLContext> mOpenGLContext;
   std::shared_ptr<SceneView> mSceneView;
   std::unique_ptr<MenuBar> mMenuBar;
+  std::shared_ptr<FileBrowserDialog> mFileBrowserDialog;
 
   WindowPrivate()
     : mIsRunning(false)
@@ -92,11 +94,12 @@ bool OpenGLWindow::init(int width, int height, const std::string& title)
   mPrivate->mOpenGLContext->init(this);
   mPrivate->mUIContext->init(this);
   mPrivate->mSceneView = std::make_shared<SceneView>(mPrivate->mUIContext->GetContext());
+  mPrivate->mFileBrowserDialog = std::make_shared<FileBrowserDialog>("dialog");
   this->addObserver(mPrivate->mSceneView);
+  this->addObserver(mPrivate->mFileBrowserDialog);
+  mPrivate->mFileBrowserDialog->addObserver(mPrivate->mSceneView);
   this->invokeEvent(
-    WidgetEvent(
-      EventId::WidgetResize,
-      std::make_unique<WidgetResizeData>(ImVec2(width, height))));
+    WidgetEvent(EventId::WidgetResize, std::make_unique<WidgetResizeData>(ImVec2(width, height))));
   initMenu();
 
   return mPrivate->mIsRunning;
@@ -110,6 +113,7 @@ bool OpenGLWindow::render()
   this->invokeEvent(RenderEvent(EventId::RenderUpdateStart, std::make_unique<RenderUpdateData>()));
   mPrivate->mMenuBar->render();
   mPrivate->mSceneView->render();
+  mPrivate->mFileBrowserDialog->render();
   this->invokeEvent(RenderEvent(EventId::RenderUpdateEnd, std::make_unique<RenderUpdateData>()));
   mPrivate->mUIContext->postRender();
   mPrivate->mOpenGLContext->postRender();
@@ -199,17 +203,18 @@ void OpenGLWindow::initMenu()
 {
   MenuBar::Menu menu;
   menu.setName("File");
-  MenuBar::Menu::Item item1("open", std::make_shared<MenuItemClickedObserver>());
-  MenuBar::Menu::Item item2("close", std::make_shared<MenuItemClickedObserver>());
+  MenuBar::Menu::Item item1("open", EventId::FileOpened, mPrivate->mFileBrowserDialog);
+  MenuBar::Menu::Item item2(
+    "close", EventId::FileClosed, std::make_shared<MenuItemClickedObserver>());
   menu.addItem(item1);
   menu.addItem(item2);
 
   MenuBar::Menu exitMenu;
   exitMenu.setName("App");
 
-  auto exitObserver = std::make_shared<ExitObserver>();
+  const auto exitObserver = std::make_shared<ExitObserver>();
   exitObserver->setExitCallBack([this]() { exit(); });
-  MenuBar::Menu::Item exitItem("exit", exitObserver);
+  const MenuBar::Menu::Item exitItem("exit", EventId::Exit, exitObserver);
 
   exitMenu.addItem(exitItem);
 

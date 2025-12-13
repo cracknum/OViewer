@@ -1,43 +1,30 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
+#include "EventId.h"
+#include "EventObject.h"
+#include "IEventObserver.h"
 #include "Widget.h"
+#include "WidgetsExport.h"
 #include <memory>
 #include <string>
 #include <vector>
-#include "WidgetsExport.h"
-#include "IEventObserver.h"
-#include "EventObject.h"
-class MenuItemClicked final: public EventObject
-{
-public:
-  MenuItemClicked(const EventId& eventId, std::unique_ptr<EventData> eventData);
-  ~MenuItemClicked() override = default;
-};
 
-class MenuItemData final: public EventData
-{
-public:
-  explicit MenuItemData(std::string menuItemName);
-  ~MenuItemData() override = default;
-
-  [[nodiscard]] std::string menuItemName() const;
-private:
-  std::string mMenuItemName;
-};
 class WIDGETS_API MenuBar final : public Widget
 {
 public:
   class Menu
   {
   public:
-    class Item final: public UIObject
+    class Item final : public UIObject
     {
     public:
-      Item(std::string  name, const std::shared_ptr<IEventObserver>& observer);
+      Item(std::string name, const EventId& bindEvent,
+        const std::shared_ptr<IEventObserver>& observer);
 
     private:
       friend class MenuBar;
       std::string mName;
+      EventId mBindEventId;
     };
 
   public:

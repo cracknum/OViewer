@@ -15,6 +15,8 @@ set(source_files
         src/LogWidget.cpp
         src/PixelValueWidget.cpp
         src/OpenGLViewerWidget.cpp
+        src/FileBrowserDialog.cpp
+        src/SeriesSelectDialog.cpp
 )
 
 set(header_files
@@ -29,6 +31,8 @@ set(header_files
         include/LogWidget.h
         include/PixelValueWidget.h
         include/OpenGLViewerWidget.h
+        include/FileBrowserDialog.h
+        include/SeriesSelectDialog.h
 )
 
 add_library(${PROJECT_NAME} SHARED ${source_files} ${header_files})
@@ -42,6 +46,7 @@ target_link_libraries(
         GL
         spdlog::spdlog
         OpenGLCore::Object
+        Dicom
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE WIDGETS_EXPORTS)
 add_library(${frame_work_name}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

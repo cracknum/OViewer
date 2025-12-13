@@ -1,18 +1,19 @@
 #include "SceneView.hpp"
 #include "DataManagerWidget.h"
+#include "DicomReader.hpp"
 #include "IEventObserver.h"
 #include "ImageNavigatorWidget.h"
 #include "ImagePropertiesWidget.h"
 #include "LogWidget.h"
 #include "OpenGLViewerWidget.h"
 #include "PixelValueWidget.h"
+#include "SeriesSelectDialog.h"
+#include "WidgetEvent.h"
+#include "WidgetEventData.h"
 #include "imgui_internal.h"
 #include <imfilebrowser.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
-#include "WidgetEvent.h"
-#include "WidgetEventData.h"
-
 
 struct SceneView::Impl final
 {
@@ -36,12 +37,15 @@ struct SceneView::Impl final
   const char* UI_LOG_BOX = "Logs##ui.log";
   const char* UI_VIEW_BOX = "View3D##ui.view";
 
-  std::unique_ptr<DataManagerWidget> mDataManagerWidget;
+  std::shared_ptr<DataManagerWidget> mDataManagerWidget;
   std::unique_ptr<PixelValueWidget> mPixelValueWidget;
   std::unique_ptr<ImageNavigatorWidget> mImageNavigatorWidget;
   std::unique_ptr<ImagePropertiesWidget> mImagePropertiesWidget;
   std::unique_ptr<LogWidget> mLogWidget;
   std::shared_ptr<OpenGLViewerWidget> mViewerWidget;
+  std::shared_ptr<SeriesSelectDialog> mSeriesSelectDialog;
+  using DicomReaderType = DicomReadReader<itk::Image<float, 3>>;
+  itk::SmartPointer<DicomReaderType> mDicomReader;
 
   Impl()
     : mDataManagerNode(0)
@@ -51,13 +55,17 @@ struct SceneView::Impl final
     , mLogNode(0)
     , mViewNode(0)
   {
-    mDataManagerWidget = std::make_unique<DataManagerWidget>(UI_DATA_MANAGER);
+    mDataManagerWidget = std::make_shared<DataManagerWidget>(UI_DATA_MANAGER);
     mPixelValueWidget = std::make_unique<PixelValueWidget>(UI_PIXEL_VALUE_WINDOW);
     mImageNavigatorWidget = std::make_unique<ImageNavigatorWidget>(UI_IMAGE_NAVIGATOR_WINDOW);
     mImagePropertiesWidget = std::make_unique<ImagePropertiesWidget>(UI_PROPERTIES_WINDOW);
+    mSeriesSelectDialog = std::make_shared<SeriesSelectDialog>("Pick Image##SeriesSelectDialog");
+    mDicomReader = DicomReaderType::New();
     mLogWidget = std::make_unique<LogWidget>(UI_LOG_BOX);
     mViewerWidget = std::make_shared<OpenGLViewerWidget>(
       UI_VIEW_BOX, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove);
+
+    mSeriesSelectDialog->addObserver(mDataManagerWidget);
   }
 };
 
@@ -165,6 +173,7 @@ void SceneView::render(SceneView* mScene) const
   mImpl->mLogWidget->render();
   mImpl->mImagePropertiesWidget->render();
   mImpl->mViewerWidget->render();
+  mImpl->mSeriesSelectDialog->render();
 }
 
 SceneView::SceneView(SceneView&&) noexcept = default;
@@ -180,10 +189,17 @@ bool SceneView::handle(const EventObject& event)
   auto widgetEvent = dynamic_cast<const WidgetEvent*>(&event);
   if (widgetEvent)
   {
-    auto resizeData = dynamic_cast<const WidgetResizeData*>(widgetEvent->eventData());
-    if (resizeData)
+    if (widgetEvent->eventId() == EventId::WidgetResize)
     {
+      auto resizeData = dynamic_cast<const WidgetResizeData*>(widgetEvent->eventData());
       mImpl->mViewerWidget->resize(resizeData->widgetSize().x, resizeData->widgetSize().y);
+    }
+    else if (widgetEvent->eventId() == EventId::FileOpened)
+    {
+      const auto fileOpenedData = dynamic_cast<const FileOpenedData*>(widgetEvent->eventData());
+      mImpl->mDicomReader->SetDicomDirectory(fileOpenedData->filePath());
+      mImpl->mDicomReader->GenerateData();
+      mImpl->mSeriesSelectDialog->setDicomSeries(mImpl->mDicomReader->getSeries());
     }
   }
   return false;

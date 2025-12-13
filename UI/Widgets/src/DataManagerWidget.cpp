@@ -1,7 +1,11 @@
 #include "DataManagerWidget.h"
+#include "DcmEvent.h"
+#include "DcmEventData.h"
+#include "DicomSeries.h"
 #include "WidgetEvent.h"
 #include "WidgetEventData.h"
 #include <imgui.h>
+#include <spdlog/spdlog.h>
 #include <string>
 
 struct DataManagerWidget::Private
@@ -28,3 +32,15 @@ bool DataManagerWidget::render()
 }
 
 void DataManagerWidget::resize(int width, int height) {}
+bool DataManagerWidget::handle(const EventObject& event)
+{
+  if (event.eventId() != EventId::SeriesSelected)
+  {
+    return false;
+  }
+  auto seriesSelectEvent = dynamic_cast<const DcmEvent*>(&event);
+  auto seriesSelectData = dynamic_cast<const SeriesSelectedData*>(seriesSelectEvent->eventData());
+  itk::SmartPointer<DicomSeries> series = seriesSelectData->dicomSeries();
+  SPDLOG_DEBUG("select series");
+  return false;
+}

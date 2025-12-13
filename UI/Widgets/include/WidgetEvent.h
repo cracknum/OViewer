@@ -15,4 +15,14 @@ public:
   ~WidgetEvent() = default;
 };
 
+class MenuItemClicked final : public EventObject
+{
+public:
+  MenuItemClicked(const EventId& eventId, std::unique_ptr<EventData> eventData)
+    : EventObject(eventId, std::move(eventData))
+  {
+  }
+  ~MenuItemClicked() override = default;
+};
+
 #endif // WIDGET_EVENT_H

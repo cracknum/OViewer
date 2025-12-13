@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 
-
 struct OpenGLViewerWidget::Private
 {
   std::shared_ptr<FrameBuffer> mFrameBuffer;
@@ -30,19 +29,19 @@ bool OpenGLViewerWidget::render()
     int width = mPrivate->mFrameBuffer->textureWidth();
     int height = mPrivate->mFrameBuffer->textureHeight();
 
-    if (texture == 0 || width <= 0 || height <= 0)
-      return false; // 安全检查
-
-    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-    if (canvasSize.x <= 0 || canvasSize.y <= 0)
-      return false;
-
-    ImTextureID textureId(texture);
-    ImGui::Image(textureId, canvasSize, ImVec2(0, 1), ImVec2(1, 0));
-
-    if (ImGui::IsWindowHovered())
+    if (texture != 0 & width > 0 & height > 0)
     {
-      handleInput();
+      ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+      if (canvasSize.x <= 0 || canvasSize.y <= 0)
+        return false;
+
+      ImTextureID textureId(texture);
+      ImGui::Image(textureId, canvasSize, ImVec2(0, 1), ImVec2(1, 0));
+
+      if (ImGui::IsWindowHovered())
+      {
+        handleInput();
+      }
     }
   }
   ImGui::End();
@@ -52,7 +51,8 @@ bool OpenGLViewerWidget::render()
 
 void OpenGLViewerWidget::resize(int width, int height)
 {
-  if (mPrivate->mFrameBuffer->textureWidth() - width != 0 || mPrivate->mFrameBuffer->textureHeight() - height != 0)
+  if (mPrivate->mFrameBuffer->textureWidth() - width != 0 ||
+    mPrivate->mFrameBuffer->textureHeight() - height != 0)
   {
     mPrivate->mFrameBuffer->updateBufferSize(width, height);
     SPDLOG_DEBUG("resize framebuffer");

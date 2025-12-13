@@ -8,6 +8,7 @@ void DicomSeries::parseInfo(const itk::MetaDataDictionary& metaData)
   m_SeriesInfo->parseInfo(metaData);
   m_StudyInfo->parseInfo(metaData);
   m_ImageInfo->parseInfo(metaData);
+  m_SeriesInfo->Print(std::cout);
 }
 DicomSeries::DicomSeries()
 {

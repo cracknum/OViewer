@@ -25,10 +25,12 @@ public:
   SeriesVector::iterator end() { return m_Series.end(); }
   SeriesVector::const_iterator const_begin() const { return m_Series.cbegin(); }
   SeriesVector::const_iterator const_end() const { return m_Series.cend(); }
+  [[nodiscard]] SeriesVector getSeries() const { return m_Series; }
 
 protected:
   DicomReadReader();
   ~DicomReadReader() override = default;
+
 private:
   std::string m_DicomDirectory;
 

@@ -1,6 +1,7 @@
 #ifndef EVENT_ID_H
 #define EVENT_ID_H
 #include <string>
+#include <vector>
 // clang-format off
 enum class EventId
 {
@@ -29,6 +30,10 @@ enum class EventId
   DisplayImageNavigator,                          // this event called when display image navigator panel
   DisplayImageProperties,                         // this event called when display image properties panel
   DisplayLog,                                     // this event called when display log panel
+
+  //-------------- dcm event---------------------
+  SeriesSelected,                                 // this event called when selected a series data to visual
+  //-------------- dcm event---------------------
   //-------------- custom event------------------
   CustomEvent = 1000                              // if you need custom event, event id shoudle greater than 1000
 };
@@ -39,6 +44,7 @@ inline std::vector<std::string> EventIdStr = {
   "MousePressed", "MouseMove", "MouseRelease", "MouseDrag", "MouseForward", "MouseBackward",
   "WidgetResize",
   "DisplayDataNodeTree", "DisplayPixelValue", "DisplayImageNavigator", "DisplayImageProperties", "DisplayLog",
+  "SeriesSelected",
   "Exit"
 };
 

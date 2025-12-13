@@ -1,5 +1,7 @@
 #include "MenuBar.h"
 #include "EventId.h"
+#include "WidgetEvent.h"
+#include "WidgetEventData.h"
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <utility>
@@ -10,20 +12,10 @@ struct MenuBar::Impl final
   std::vector<Menu> mMenus;
 };
 
-MenuItemClicked::MenuItemClicked(const EventId& eventId, std::unique_ptr<EventData> eventData)
-  : EventObject(eventId, std::move(eventData))
-{
-}
-MenuItemData::MenuItemData(std::string menuItemName)
-  : mMenuItemName(std::move(menuItemName))
-{
-}
-std::string MenuItemData::menuItemName() const
-{
-  return mMenuItemName;
-}
-MenuBar::Menu::Item::Item(std::string name, const std::shared_ptr<IEventObserver>& observer)
+MenuBar::Menu::Item::Item(
+  std::string name, const EventId& bindEvent, const std::shared_ptr<IEventObserver>& observer)
   : mName(std::move(name))
+  , mBindEventId(bindEvent)
 {
   addObserver(observer);
 }
@@ -53,10 +45,10 @@ bool MenuBar::render()
       {
         for (auto& item : menu.mMenuItems)
         {
-          if (ImGui::MenuItem(item.mName.c_str()) && item.mName == "exit")
+          if (ImGui::MenuItem(item.mName.c_str()))
           {
-            item.invokeEvent(MenuItemClicked(
-              EventId::Exit, std::make_unique<MenuItemData>(item.mName)));
+            item.invokeEvent(
+              MenuItemClicked(item.mBindEventId, std::make_unique<MenuItemData>(item.mName)));
           }
         }
         ImGui::EndMenu();

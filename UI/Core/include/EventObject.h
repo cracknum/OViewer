@@ -2,6 +2,7 @@
 #define INTERFACE_EVENT_OBJECT_H
 #include "EventData.h"
 #include "EventId.h"
+#include <memory>
 class UIObject;
 class EventObject
 {
@@ -10,18 +11,11 @@ public:
     : mEventId(eventId)
     , mEventData(std::move(eventData))
   {
-
   }
 
   virtual ~EventObject() = default;
-  [[nodiscard]] EventId eventId() const
-  {
-    return mEventId;
-  }
-  [[nodiscard]] const EventData* eventData() const
-  {
-    return mEventData.get();
-  }
+  [[nodiscard]] EventId eventId() const { return mEventId; }
+  [[nodiscard]] const EventData* eventData() const { return mEventData.get(); }
 
 protected:
   EventId mEventId;
