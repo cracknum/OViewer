@@ -1,5 +1,4 @@
 #include "OpenGLViewerWidget.h"
-#include "DcmEvent.h"
 #include "DcmEventData.h"
 #include "DicomSeries.h"
 #include "EventId.h"
@@ -11,8 +10,6 @@ struct OpenGLViewerWidget::Private
 {
   std::shared_ptr<FrameBuffer> mFrameBuffer;
   itk::SmartPointer<DicomSeries> mDicomSeries;
-
-  Private() { mFrameBuffer = std::make_shared<FrameBuffer>(1, 1); }
 };
 OpenGLViewerWidget::OpenGLViewerWidget(const char* widgetNamae, int widgetFlags)
   : Widget(widgetNamae, widgetFlags)
@@ -30,17 +27,30 @@ bool OpenGLViewerWidget::render()
 
   if (ImGui::Begin(mWidgetName.c_str(), nullptr, mWidgetFlags))
   {
-    unsigned int texture = mPrivate->mFrameBuffer->texture();
-    int width = mPrivate->mFrameBuffer->textureWidth();
-    int height = mPrivate->mFrameBuffer->textureHeight();
+    const ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
-    if (texture != 0 & width > 0 & height > 0)
+    if (!mPrivate->mFrameBuffer)
     {
-      ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-      if (canvasSize.x <= 0 || canvasSize.y <= 0)
-        return false;
+      mPrivate->mFrameBuffer = std::make_unique<FrameBuffer>(canvasSize.x, canvasSize.y);
+      SPDLOG_DEBUG("framebuffer size: {} {}", canvasSize.x, canvasSize.y);
+    }
+    else if (mPrivate->mFrameBuffer->textureWidth() - canvasSize.x != 0 ||
+      mPrivate->mFrameBuffer->textureHeight() - canvasSize.y != 0)
+    {
+      mPrivate->mFrameBuffer->updateBufferSize(canvasSize.x, canvasSize.y);
+      SPDLOG_DEBUG("framebuffer size: {} {}", canvasSize.x, canvasSize.y);
+    }
 
-      ImTextureID textureId(texture);
+    if (canvasSize.x <= 0 || canvasSize.y <= 0)
+    {
+      if (!mPrivate->mFrameBuffer)
+      {
+        mPrivate->mFrameBuffer = std::make_shared<FrameBuffer>(canvasSize.x, canvasSize.y);
+      }
+
+      const unsigned int texture = mPrivate->mFrameBuffer->texture();
+
+      const ImTextureID textureId(texture);
       ImGui::Image(textureId, canvasSize, ImVec2(0, 1), ImVec2(1, 0));
 
       if (ImGui::IsWindowHovered())
@@ -54,15 +64,7 @@ bool OpenGLViewerWidget::render()
   return true;
 }
 
-void OpenGLViewerWidget::resize(int width, int height)
-{
-  if (mPrivate->mFrameBuffer->textureWidth() - width != 0 ||
-    mPrivate->mFrameBuffer->textureHeight() - height != 0)
-  {
-    mPrivate->mFrameBuffer->updateBufferSize(width, height);
-    SPDLOG_DEBUG("resize framebuffer");
-  }
-}
+void OpenGLViewerWidget::resize(int width, int height) {}
 
 std::shared_ptr<FrameBuffer> OpenGLViewerWidget::renderBuffer()
 {
@@ -78,7 +80,7 @@ bool OpenGLViewerWidget::handle(const EventObject& event)
   const auto eventData = dynamic_cast<const SeriesSelectedData*>(event.eventData());
   if (!eventData)
   {
-    return false;  
+    return false;
   }
   mPrivate->mDicomSeries = eventData->dicomSeries();
   return false;
@@ -88,7 +90,7 @@ void OpenGLViewerWidget::mousePressCheck()
 {
   if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
   {
-    auto& io = ImGui::GetIO();
+    const auto& io = ImGui::GetIO();
 
     auto buttonPos = io.MouseClickedPos[ImGuiMouseButton_Left];
     auto eventData = std::make_unique<MousePressedData>(buttonPos, ImGuiMouseButton_Left);
@@ -100,7 +102,7 @@ void OpenGLViewerWidget::mousePressCheck()
 
 void OpenGLViewerWidget::mouseMoveCheck()
 {
-  auto& io = ImGui::GetIO();
+  const auto& io = ImGui::GetIO();
   if (!ImGui::IsAnyMouseDown() && (fabsf(io.MouseDelta.x) > 1e-6 || fabsf(io.MouseDelta.y) > 1e-6))
   {
     ImVec2 mousePos = io.MousePos;
@@ -116,12 +118,11 @@ void OpenGLViewerWidget::mouseDragCheck()
 {
   if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
   {
-    auto& io = ImGui::GetIO();
     ImVec2 accumulateDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
     auto eventData = std::make_unique<MouseDragData>(accumulateDelta, ImGuiMouseButton_Left);
     this->invokeEvent(MouseEvent(EventId::MouseDrag, std::move(eventData)));
 
-    SPDLOG_DEBUG("mouse draging");
+    SPDLOG_DEBUG("mouse dragging");
   }
 }
 
