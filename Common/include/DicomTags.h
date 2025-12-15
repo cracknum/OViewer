@@ -10,6 +10,7 @@ constexpr auto PatientSex = "0010|0040";
 constexpr auto PatientAge = "0010|1010";
 constexpr auto PatientSize = "0010|1020";
 constexpr auto PatientWeight = "0010|1030";
+constexpr auto BodyPartExamined = "0018|0015";
 
 // 检查信息（Study Information）
 constexpr auto StudyInstanceUID = "0020|000D";

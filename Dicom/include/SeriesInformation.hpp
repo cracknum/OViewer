@@ -2,10 +2,10 @@
 #define SERIES_INFORMATION_CXX_H
 #include "Macros.h"
 
-#include <itkObject.h>
-#include <string>
 #include "DicomExport.h"
 #include "InformationParser.h"
+#include <itkObject.h>
+#include <string>
 
 class DICOM_API SeriesInformation : public InformationParser
 {
@@ -32,6 +32,7 @@ public:
 protected:
   SeriesInformation() {}
   ~SeriesInformation() override {}
+  void PrintSelf(std::ostream& os, itk::Indent indent) const override;
 
 private:
   /**

@@ -12,6 +12,7 @@ struct Volume
   DataType m_DataType;
   glm::mat4 m_IndexToWorld;
   glm::mat4 m_WorldToIndex;
+  // TODO: create a texture using 4 * maxSize
 
   Volume(const glm::vec3& origin, const glm::vec3& spacing, const glm::ivec3& dimensions,
     const DataType& dataType, void* data = nullptr, const glm::mat4& indexToWorld = glm::mat4(1.0f))

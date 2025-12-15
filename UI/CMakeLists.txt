@@ -1,46 +1,34 @@
-cmake_minimum_required(VERSION 3.19...4.0)
+cmake_minimum_required(VERSION 3.19...3.22)
 
-project(UI LANGUAGES CXX)
+project(RenderFramework)
 
-file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp" "include/*.h")
-file(GLOB_RECURSE Source_files "src/*.cpp")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (NOT TARGET Qt5::Core)
-    find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+find_package(imgui CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+
+
+add_subdirectory(third_party)
+configure_file(cmake/config.h.in config.h @ONLY)
+set(CONFIG_FILE_PATH ${CMAKE_CURRENT_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+set(frame_work_name ${PROJECT_NAME})
+
+# for spdlog print debug info
+set(ENABLE_DEBUG ON)
+
+if (ENABLE_DEBUG)
+    add_definitions(-DSPDLOG_ACTIVE_LEVEL=1)
 endif ()
 
-if (NOT TARGET SARibbonBar::SARibbonBar)
-    set(CMAKE_PREFIX_PATH $ENV{SARibbonBar_DIR};${CMAKE_PREFIX_PATH})
-    find_package(SARibbonBar REQUIRED)
-endif ()
+add_subdirectory(Core)
+add_subdirectory(Widgets)
+add_subdirectory(GL)
+add_subdirectory(Test)
 
-if (NOT TARGET spdlog::spdlog)
-    find_package(spdlog CONFIG REQUIRED)
-endif ()
-
-if (NOT TARGET glm::glm)
-    find_package(glm CONFIG REQUIRED)
-endif()
-
-set(vtk_libs VTK::GUISupportQt VTK::FiltersSources VTK::RenderingCore VTK::RenderingOpenGL2)
-if (NOT "${Source_files}")
-    add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files} ${CMAKE_CURRENT_SOURCE_DIR}/resource.qrc)
-    target_link_libraries(${PROJECT_NAME} PUBLIC
-            Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
-            Common Primitive Dicom Filters Data
-            SARibbonBar::SARibbonBar
-            spdlog::spdlog
-            glm::glm
-            ${vtk_libs}
-    )
-    target_include_directories(${PROJECT_NAME}
-            PUBLIC include
-            PRIVATE ${SARibbonBar_INCLUDE_DIR})
-            
-    export_model(${export_config_file_path} ${PROJECT_NAME})
-    group_sources_by_directory(${PROJECT_NAME})
-
-    vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${vtk_libs})
-
-endif ()
 

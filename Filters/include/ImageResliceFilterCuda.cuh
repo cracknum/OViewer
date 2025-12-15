@@ -20,9 +20,8 @@ public:
 
   void setPlane(std::shared_ptr<Plane> plane);
   Plane* getPlane();
-
+  void setGLTexture(unsigned int glTexture);
   void doFilter();
-  const void* getPixels() const;
 
 private:
   friend class ImageResliceTest;
@@ -31,17 +30,17 @@ private:
 
   void destroyResources();
   cudaChannelFormatDesc createChannelFormat();
-  void launchResliceKernel();
+  void launchResliceKernel(cudaSurfaceObject_t textureSurface);
   template <DataType dt>
-  void launchResliceKernelImpl();
+  void launchResliceKernelImpl(cudaSurfaceObject_t textureSurface);
 
 private:
   Volume* m_dVolume;
   Plane* m_dPlane;
   cudaTextureObject_t m_Texture;
-  void* m_Pixels;
-  void* m_hPixels;
   std::shared_ptr<Volume> m_hVolume;
   std::shared_ptr<Plane> m_hPlane;
+  unsigned int m_GLTexture;
+  cudaGraphicsResource_t m_Resource;
 };
 #endif // IMAGE_RESLICE_FILTER_CUDA_H
