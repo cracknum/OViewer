@@ -1,10 +1,6 @@
 #include "RenderWindow.h"
 #include "DicomReader.hpp"
 #include "DicomSeries.h"
-#include "ImageResliceFilter.h"
-#include "Plane.h"
-#include "Volume.h"
-#include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
 #include <vtkActor.h>
 #include <vtkCommand.h>
@@ -27,16 +23,11 @@ public:
   void Execute(vtkObject* caller, unsigned long eventId, void* callData) override
   {
     mPlaneIndexToWorldTransform->Translate(0, 0, 0.1);
-    mResliceFilter->SetPlaneLocalToWorldTransform(mPlaneIndexToWorldTransform);
-    mResliceFilter->Update();
-    mTexture->SetInputData(mResliceFilter->GetOutput());
     mInteractor->Render();
   }
 
 public:
   vtkSmartPointer<vtkPlaneSource> mPlaneSource;
-  vtkSmartPointer<vtkTexture> mTexture;
-  vtkSmartPointer<ImageResliceFilter> mResliceFilter;
   vtkSmartPointer<vtkTransform> mPlaneIndexToWorldTransform;
   vtkSmartPointer<vtkImageData> mImageData;
   vtkSmartPointer<vtkRenderWindowInteractor> mInteractor;
@@ -55,8 +46,6 @@ vtkStandardNewMacro(RenderCallBack);
 RenderWindow::RenderWindow(QWidget* parent)
   : QVTKOpenGLNativeWidget(parent)
 {
-  mImageResliceFilter = vtkSmartPointer<ImageResliceFilter>::New();
-
   using ReaderType = DicomReadReader<itk::Image<float, 3>>;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetDicomDirectory("F:/Workspace/Data/Covid Scans");
@@ -80,9 +69,6 @@ RenderWindow::RenderWindow(QWidget* parent)
   planeIndexToWorldMatrix->SetElement(2, 3, origin[2] + 1);
 
   mPlaneIndexToWorldTransform->SetMatrix(planeIndexToWorldMatrix);
-  mImageResliceFilter->SetPlaneLocalToWorldTransform(mPlaneIndexToWorldTransform);
-  mImageResliceFilter->SetInputData(imageData);
-  mImageResliceFilter->Update();
 
   mPlaneSource = vtkSmartPointer<vtkPlaneSource>::New();
   mPlaneSource->SetOrigin(0, 0, 0);
@@ -92,19 +78,13 @@ RenderWindow::RenderWindow(QWidget* parent)
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(mPlaneSource->GetOutputPort());
   mPlaneActor->SetMapper(mapper);
-  vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New();
-  texture->SetInputData(mImageResliceFilter->GetOutput());
-  texture->SetColorModeToDirectScalars();
-  mPlaneActor->SetTexture(texture);
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
 
   renderer->AddActor(mPlaneActor);
   renderWindow()->AddRenderer(renderer);
 
   vtkSmartPointer<RenderCallBack> renderCallBack = vtkSmartPointer<RenderCallBack>::New();
-  renderCallBack->mTexture = texture;
   renderCallBack->mPlaneSource = mPlaneSource;
-  renderCallBack->mResliceFilter = mImageResliceFilter;
   renderCallBack->mPlaneIndexToWorldTransform = mPlaneIndexToWorldTransform;
   renderCallBack->mInteractor = interactor();
 

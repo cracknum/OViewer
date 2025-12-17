@@ -5,7 +5,6 @@
 #include <vtkSmartPointer.h>
 
 
-class ImageResliceFilter;
 class vtkTransform;
 class vtkPlaneSource;
 class vtkActor;
@@ -19,7 +18,6 @@ public:
   ~RenderWindow() override;
 
 protected:
-  vtkSmartPointer<ImageResliceFilter> mImageResliceFilter;
   vtkSmartPointer<vtkTransform> mPlaneIndexToWorldTransform;
   vtkSmartPointer<vtkPlaneSource> mPlaneSource;
   vtkSmartPointer<vtkActor> mPlaneActor;
