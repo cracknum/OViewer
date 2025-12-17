@@ -37,6 +37,7 @@ add_subdirectory(Dicom)
 add_subdirectory(App)
 add_subdirectory(Common)
 add_subdirectory(UI)
+add_subdirectory(MultiPlanarReconstruct)
 
 option(enable_testing OFF)
 
