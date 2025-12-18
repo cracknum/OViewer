@@ -50,6 +50,10 @@ protected:
    * @brief get axis direction vector
    */
   vtkVector3d getAxisVector(Axis axis) const; 
+  /**
+   * @brief whether the geometry is image geometry
+   */
+  void setImageGeometry(bool imageGeometry);
 private:
   struct Private;
   std::unique_ptr<Private> mPrivate;

@@ -18,16 +18,19 @@ public:
    * in xy plane
    */
   void initializePlane(double bounds[4], vtkTransform* indexToWorldTransform);
+  /**
+   * @brief get the plane normal, the method ensures the result is normalized
+   */
   vtkVector3d getNormal() const;
   double SignedDistance(const double point[3]) const;
   [[nodiscard]] bool isAbove(const double point[3]) const;
   [[nodiscard]] bool IntersectionPoint(const double lineOrigin[3], const vtkVector3d& lineDirection, double intersectPoint[3]) const;
   [[nodiscard]] bool IntersectionParametricPoint(const double lineOrigin[3], const vtkVector3d& lineDirection, double &t) const;
-  [[nodiscard]] bool IntersectionLine(const PlaneGeometry* planeGeometry, double startPoint[3], double endPoint[3]) const;
+  [[nodiscard]] bool IntersectionLine(const PlaneGeometry* planeGeometry, double lineOrigin[3], vtkVector3d& lineDirection) const;
   [[nodiscard]] double angle(const PlaneGeometry* planeGeometry) const;
-  [[nodiscard]] double angle(const double startPoint[3], const double endPoint[3]) const;
+  [[nodiscard]] double angle(const vtkVector3d& lineDirection) const;
   [[nodiscard]] bool isParallel(const PlaneGeometry* planeGeometry);
-  [[nodiscard]] bool isOnPlane(const double startPoint[3], const double endPoint[3]) const;
+  [[nodiscard]] bool isOnPlane(const double lineOrigin[3], const vtkVector3d& lineDirection) const;
   [[nodiscard]] bool isOnPlane(const double point[3]) const;
   [[nodiscard]] void projectToPlane(const double point[3], double projectedPoint[3]);
   [[nodiscard]] bool map(const double point[3], double mappedPoint[2]);

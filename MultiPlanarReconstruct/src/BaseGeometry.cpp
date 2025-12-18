@@ -7,11 +7,13 @@
 
 struct BaseGeometry::Private
 {
-	// index coordinates bounding box;
+  // index coordinates bounding box;
   std::unique_ptr<vtkBoundingBox> mBoundingBox;
   vtkSmartPointer<vtkTransform> mIndexToWorldTransform;
+  bool mIsImageGeometry;
 
   Private()
+    : mIsImageGeometry(false)
   {
     mBoundingBox = std::make_unique<vtkBoundingBox>();
     mIndexToWorldTransform = vtkSmartPointer<vtkTransform>::New();
@@ -93,7 +95,7 @@ void BaseGeometry::setIndexToWorldTransform(vtkTransform* transform)
   if (transform)
   {
     mPrivate->mIndexToWorldTransform->DeepCopy(transform);
-	Modified();
+    Modified();
   }
 }
 
@@ -135,4 +137,9 @@ vtkVector3d BaseGeometry::getAxisVector(Axis axis) const
   vector.SetY(vector.GetY() * axisIndexLength);
   vector.SetZ(vector.GetZ() * axisIndexLength);
   return vector;
+}
+
+void BaseGeometry::setImageGeometry(bool imageGeometry)
+{
+  mPrivate->mIsImageGeometry = imageGeometry;
 }
