@@ -1,34 +1,32 @@
 #ifndef MPR_BASE_GEOMETRY_H
 #define MPR_BASE_GEOMETRY_H
 #include "MultiPlanarReconstructExport.h"
-#include <vtkObject.h>
 #include <memory>
+#include <vtkObject.h>
 #include <vtkVector.h>
 
+
 class vtkTransform;
+class vtkMatrix3x3;
 /**
  * @brief BaseGeometry is the base class to represent a object state
  */
 class MULTIPLANARRECONSTRUCT_API BaseGeometry : public vtkObject
 {
 public:
-	static BaseGeometry* New();
+  static BaseGeometry* New();
 
-	enum Axis
-	{
-		X,
-		Y,
-		Z
-	};
-
-protected:
-  BaseGeometry();
-  ~BaseGeometry() override;
+  enum Axis
+  {
+    X,
+    Y,
+    Z
+  };
 
   void getOrigin(double origin[3]) const;
   void setOrigin(double origin[3]);
   void getSpacing(double spacing[3]) const;
-  double getSpacing(Axis axis) const; 
+  double getSpacing(Axis axis) const;
   void setSpacing(double spacing[3]);
 
   vtkTransform* getIndexToWorldTransform();
@@ -49,11 +47,23 @@ protected:
   /**
    * @brief get axis direction vector
    */
-  vtkVector3d getAxisVector(Axis axis) const; 
+  vtkVector3d getAxisVector(Axis axis) const;
   /**
    * @brief whether the geometry is image geometry
    */
   void setImageGeometry(bool imageGeometry);
+  /**
+   * @brief frame of reference is important for data alignment
+   */
+  void setFrameOfReferenceId(unsigned int frameOfReference);
+  unsigned int getFrameOfReferenceId() const;
+
+  vtkMatrix3x3* getLinearTransformMatrix() const;
+
+protected:
+  BaseGeometry();
+  ~BaseGeometry() override;
+
 private:
   struct Private;
   std::unique_ptr<Private> mPrivate;

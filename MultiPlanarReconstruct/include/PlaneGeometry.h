@@ -3,10 +3,21 @@
 #include "BaseGeometry.h"
 #include <memory>
 #include <vtkLine.h>
+#include <array>
 
 class vtkTransform;
+class vtkImageData;
+class vtkMatrix3x3;
 class PlaneGeometry : public BaseGeometry
 {
+	public:
+  enum class StandardPlane
+  {
+	Axial,
+	Sagittal,
+	Coronal
+  };
+
 public:
   vtkTypeMacro(PlaneGeometry, BaseGeometry);
   static PlaneGeometry* New();
@@ -18,6 +29,14 @@ public:
    * in xy plane
    */
   void initializePlane(double bounds[4], vtkTransform* indexToWorldTransform);
+  /**
+   * @brief initialize having arbitrary normal plane
+   */
+  void initializePlane(vtkImageData* imageData, const double planeNormal[3]);
+  /**
+   * @brief initialize standard plane, which means it would be one of axial, sagittal and coronal
+   */
+  void initializeStandardPlane(vtkImageData* imageData, StandardPlane planeType);
   /**
    * @brief get the plane normal, the method ensures the result is normalized
    */
@@ -38,6 +57,11 @@ public:
 protected:
   PlaneGeometry();
   ~PlaneGeometry() override;
+
+  /**
+   * @brief calculate the domain axis to determain the spacing and number of slice. It will return the image index axis' closest world axis
+   */
+  std::array<int, 3> calculateDominantAxis(vtkMatrix3x3* worldToIndexMatrix);
 
 private:
   struct Private;

@@ -4,20 +4,47 @@
 #include <vtkObjectFactory.h>
 #include <vtkSmartPointer.h>
 #include <vtkTransform.h>
+#include <vtkMatrix3x3.h>
+#include <vtkCommand.h>
 
-struct BaseGeometry::Private
+struct BaseGeometry::Private: public vtkCommand
 {
   // index coordinates bounding box;
   std::unique_ptr<vtkBoundingBox> mBoundingBox;
   vtkSmartPointer<vtkTransform> mIndexToWorldTransform;
+  vtkSmartPointer<vtkMatrix3x3> mLinearMatrix;
+  unsigned int mFrameOfReference;
   bool mIsImageGeometry;
 
   Private()
     : mIsImageGeometry(false)
+    , mFrameOfReference(0)
   {
     mBoundingBox = std::make_unique<vtkBoundingBox>();
     mIndexToWorldTransform = vtkSmartPointer<vtkTransform>::New();
     mIndexToWorldTransform->Identity();
+	mLinearMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
+	mLinearMatrix->Identity();
+
+	mIndexToWorldTransform->AddObserver(vtkCommand::ModifiedEvent, this);
+  }
+
+  void Execute(vtkObject* caller, unsigned long eventId, void* callData) override
+  {
+	if (caller == mIndexToWorldTransform && eventId == vtkCommand::ModifiedEvent)
+	{
+		mLinearMatrix->Identity();
+		auto transform = vtkTransform::SafeDownCast(caller);
+		auto transformMatrix = transform->GetMatrix();
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			for (size_t j = 0; j < 3; j++)
+			{
+				mLinearMatrix->SetElement(i, j, transformMatrix->GetElement(i, j));
+			}
+		}
+	}
   }
 };
 
@@ -142,4 +169,18 @@ vtkVector3d BaseGeometry::getAxisVector(Axis axis) const
 void BaseGeometry::setImageGeometry(bool imageGeometry)
 {
   mPrivate->mIsImageGeometry = imageGeometry;
+}
+
+void BaseGeometry::setFrameOfReferenceId(unsigned int frameOfReference) {
+	mPrivate->mFrameOfReference = frameOfReference;
+}
+
+unsigned int BaseGeometry::getFrameOfReferenceId() const
+{
+  return mPrivate->mFrameOfReference;
+}
+
+vtkMatrix3x3* BaseGeometry::getLinearTransformMatrix() const
+{
+    return mPrivate->mLinearMatrix;
 }
