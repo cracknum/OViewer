@@ -22,6 +22,8 @@ void PlaneGeometry::initializePlane(vtkImageData* imageData, const double planeN
 void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPlane planeType)
 {
   // WARN: the matrix must be a perpendicular matrix, otherwise, this will be a fault
+  // 确认这个变换矩阵是否为imageData的direction
+  // matrix，或者这个方向由SlicedGeometry设置的imageData的方向矩阵
   auto matrix = Superclass::getLinearTransformMatrix();
   auto indexToWorldTransform = Superclass::getIndexToWorldTransform();
   if (!matrix)
@@ -103,20 +105,20 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
     case StandardPlane::Axial:
       fillArray3(planeRight, { 1, 0, 0 });
       fillArray3(planeBottom, { 0, 1, 0 });
-	  width = extents[0] + 1;
-	  height = extents[1] + 1;
+      width = extents[0] + 1;
+      height = extents[1] + 1;
       break;
     case StandardPlane::Sagittal:
       fillArray3(planeRight, { 0, 1, 0 });
       fillArray3(planeBottom, { 0, 0, 1 });
-	  width = extents[1] + 1;
-	  height = extents[2] + 1;
+      width = extents[1] + 1;
+      height = extents[2] + 1;
       break;
     case StandardPlane::Coronal:
       fillArray3(planeRight, { 1, 0, 0 });
       fillArray3(planeBottom, { 0, 0, 1 });
-	  width = extents[0] + 1;
-	  height = extents[2] + 1;
+      width = extents[0] + 1;
+      height = extents[2] + 1;
     default:
       break;
   }
@@ -128,17 +130,17 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
 
   double* rightDirection = indexToWorldTransform->TransformDoublePoint(planeRight);
   double* bottomDirection = indexToWorldTransform->TransformDoublePoint(planeBottom);
-  double normal[3]; 
+  double normal[3];
   vtkMath::Cross(rightDirection, bottomDirection, normal);
 
-  double bounds[6] = {0, width, 0, height, 0, 1};
+  double bounds[6] = { 0, width, 0, height, 0, 1 };
   Superclass::setBounds(bounds);
-  
+
   auto setMatrixColumn = [](vtkMatrix4x4* matrix, double* direction, int column)
   {
-	matrix->SetElement(0, column, direction[0]);
-	matrix->SetElement(1, column, direction[1]);
-	matrix->SetElement(2, column, direction[2]);
+    matrix->SetElement(0, column, direction[0]);
+    matrix->SetElement(1, column, direction[1]);
+    matrix->SetElement(2, column, direction[2]);
   };
   setMatrixColumn(indexToWorldMatrix, rightDirection, 0);
   setMatrixColumn(indexToWorldMatrix, bottomDirection, 1);
