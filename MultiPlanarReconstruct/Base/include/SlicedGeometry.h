@@ -1,14 +1,14 @@
 #ifndef SLICED_GEOMETRY_H
 #define SLICED_GEOMETRY_H
+#include "BaseExport.h"
 #include "BaseGeometry.h"
-#include "SlicedGeometry.h"
 #include "PlaneType.h"
+#include "SlicedGeometry.h"
 #include <memory>
-#include "MultiPlanarReconstructExport.h"
 
 class vtkImageData;
 class PlaneGeometry;
-class MULTIPLANARRECONSTRUCT_API SlicedGeometry : public BaseGeometry
+class BASE_API SlicedGeometry final : public BaseGeometry
 {
 public:
   static SlicedGeometry* New();

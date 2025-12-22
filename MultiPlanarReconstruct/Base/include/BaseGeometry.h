@@ -1,11 +1,9 @@
 #ifndef MPR_BASE_GEOMETRY_H
 #define MPR_BASE_GEOMETRY_H
-#include "MultiPlanarReconstructExport.h"
-#include <memory>
+#include "BaseExport.h"
 #include <vtkObject.h>
 #include <vtkSmartPointer.h>
 #include <vtkVector.h>
-
 
 class vtkTransform;
 class vtkMatrix3x3;
@@ -14,7 +12,7 @@ class BaseGeometryPrivate;
 /**
  * @brief BaseGeometry is the base class to represent a object state
  */
-class MULTIPLANARRECONSTRUCT_API BaseGeometry : public vtkObject
+class BASE_API BaseGeometry : public vtkObject
 {
 public:
   static BaseGeometry* New();

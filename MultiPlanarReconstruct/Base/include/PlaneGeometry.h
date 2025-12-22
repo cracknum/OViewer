@@ -1,7 +1,7 @@
 #ifndef PLANE_GEOMETRY_H
 #define PLANE_GEOMETRY_H
+#include "BaseExport.h"
 #include "BaseGeometry.h"
-#include "MultiPlanarReconstructExport.h"
 #include "PlaneType.h"
 #include <array>
 #include <memory>
@@ -10,7 +10,7 @@
 class vtkTransform;
 class vtkImageData;
 class vtkMatrix3x3;
-class MULTIPLANARRECONSTRUCT_API PlaneGeometry : public BaseGeometry
+class BASE_API PlaneGeometry final : public BaseGeometry
 {
 public:
   vtkTypeMacro(PlaneGeometry, BaseGeometry);
@@ -49,7 +49,7 @@ public:
   [[nodiscard]] bool isParallel(const PlaneGeometry* planeGeometry);
   [[nodiscard]] bool isOnPlane(const double lineOrigin[3], const vtkVector3d& lineDirection) const;
   [[nodiscard]] bool isOnPlane(const double point[3]) const;
-  [[nodiscard]] void projectToPlane(const double point[3], double projectedPoint[3]);
+  void projectToPlane(const double point[3], double projectedPoint[3]);
   [[nodiscard]] bool map(const double point[3], double mappedPoint[2]);
 
   /**

@@ -2,32 +2,15 @@ cmake_minimum_required(VERSION 3.19...4.0)
 
 project(MultiPlanarReconstruct LANGUAGES CXX)
 
-file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp")
-file(GLOB_RECURSE Source_files "src/*.cpp")
-
-if(NOT TARGET Qt5::Core)
+if (NOT TARGET Qt5::Core)
     find_package(Qt5 REQUIRED COMPONENTS Core)
-endif()
+endif ()
 
-if(NOT TARGET VTK::CommonDataModel)
+if (NOT TARGET VTK::CommonDataModel)
     find_package(VTK REQUIRED COMPONENTS CommonDataModel CommonExecutionModel)
-endif()
+endif ()
 
-add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    Qt5::Core
-    Common
-    VTK::CommonDataModel VTK::CommonExecutionModel
-)
-target_include_directories(${PROJECT_NAME} PUBLIC include)
-export_model(${export_config_file_path} ${PROJECT_NAME})
+set(MODULE_NAME ${PROJECT_NAME})
 
-# --------- enable testing ----------
-if(MPR_TESTING)
-    if(NOT TARGET gtest_main)
-        find_package(Gtest CONFIG REQUIRED)
-    endif()
-
-    add_executable(${PROJECT_NAME}_TEST tests/SlicedGeometry_unittest.cpp)
-    target_link_libraries(${PROJECT_NAME}_TEST PRIVATE ${PROJECT_NAME} GTest::gtest GTest::gtest_main)
-endif()
+add_subdirectory(Base)
+add_subdirectory(Rendering)
