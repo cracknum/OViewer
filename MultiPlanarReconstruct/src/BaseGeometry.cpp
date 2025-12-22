@@ -53,16 +53,14 @@ public:
 
 vtkStandardNewMacro(BaseGeometryPrivate)
 
-vtkStandardNewMacro(BaseGeometry)
+  vtkStandardNewMacro(BaseGeometry)
 
-  BaseGeometry::BaseGeometry()
+    BaseGeometry::BaseGeometry()
 {
   mPrivate = BaseGeometryPrivate::New();
 }
 
-BaseGeometry::~BaseGeometry()
-{
-}
+BaseGeometry::~BaseGeometry() {}
 
 void BaseGeometry::getOrigin(double origin[3]) const
 {

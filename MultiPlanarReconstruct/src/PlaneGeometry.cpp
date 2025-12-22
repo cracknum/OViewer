@@ -137,7 +137,8 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
       break;
   }
 
-  double bounds[6] = { 0, static_cast<double>(width - 1), 0, static_cast<double>(height - 1), 0, 1 };
+  double bounds[6] = { 0, static_cast<double>(width - 1), 0, static_cast<double>(height - 1), 0,
+    1 };
   Superclass::setBounds(bounds);
 
   auto setMatrixColumn = [](vtkMatrix4x4* matrix, double* direction, int column)
@@ -147,7 +148,7 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
     matrix->SetElement(2, column, direction[2]);
   };
   double rightDirection[3]{};
-  double bottomDirection[3]{}; 
+  double bottomDirection[3]{};
   double planeOriginWorld[3]{};
   std::copy_n(indexToWorldTransform->TransformDoubleVector(planeRight), 3, rightDirection);
   std::copy_n(indexToWorldTransform->TransformDoubleVector(planeBottom), 3, bottomDirection);
@@ -155,12 +156,13 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
 
   double normal[3];
   vtkMath::Cross(rightDirection, bottomDirection, normal);
-  
+
   setMatrixColumn(indexToWorldMatrix, rightDirection, 0);
   setMatrixColumn(indexToWorldMatrix, bottomDirection, 1);
   setMatrixColumn(indexToWorldMatrix, normal, 2);
   setMatrixColumn(indexToWorldMatrix, planeOriginWorld, 3);
 
+  indexToWorldTransform->SetMatrix(indexToWorldMatrix);
   Superclass::setIndexToWorldTransform(indexToWorldTransform);
 }
 
@@ -179,15 +181,6 @@ void PlaneGeometry::normalizeMatrixColumn(vtkMatrix3x3* normalizedMatrix)
 
 vtkVector3d PlaneGeometry::getNormal() const
 {
-  for (size_t i = 0; i < 4; i++)
-  {
-    for (size_t j = 0; j < 4; j++)
-    {
-      std::cout << indexToWorldMatrix->GetElement(i, j) << " ";
-    }
-    std::cout << std::endl;
-  }
-
   auto normal = Superclass::getAxisVector(Axis::Z);
   normal.Normalize();
 
@@ -345,9 +338,7 @@ bool PlaneGeometry::map(const double point[3], double mappedPoint[2])
   return false;
 }
 
-PlaneGeometry::PlaneGeometry()
-{
-}
+PlaneGeometry::PlaneGeometry() {}
 
 PlaneGeometry::~PlaneGeometry() {}
 

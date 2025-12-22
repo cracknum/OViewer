@@ -104,7 +104,7 @@ TEST_F(SlicedGeometryFixture, initializeAxialTest)
 
   auto coronalPlaneNormal = coronalPlaneGeometry->getNormal();
   EXPECT_DOUBLE_EQ(coronalPlaneNormal[0], 0.0);
-  EXPECT_DOUBLE_EQ(coronalPlaneNormal[1], 1.0);
+  EXPECT_DOUBLE_EQ(coronalPlaneNormal[1], -1.0);
   EXPECT_DOUBLE_EQ(coronalPlaneNormal[2], 0.0);
 
   numberOfSlices = coronalSlicedGeometry->getNumberOfSlices();
