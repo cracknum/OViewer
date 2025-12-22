@@ -33,6 +33,8 @@ constexpr auto PixelSpacing = "0028|0030";
 constexpr auto BitsAllocated = "0028|0100";
 constexpr auto PixelRepresentation = "0028|0103";
 constexpr auto PixelData = "7FE0|0010";
+constexpr auto ImagePositionPatient = "0020|0032";
+constexpr auto ImageOrientationPatient = "0020|0037";
 
 // 设备与采集参数（Equipment & Acquisition Parameters）
 constexpr auto Manufacturer = "0008|0070";

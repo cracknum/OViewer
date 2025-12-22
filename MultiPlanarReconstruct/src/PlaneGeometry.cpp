@@ -4,11 +4,10 @@
 #include <vtkImageData.h>
 #include <vtkMath.h>
 #include <vtkMatrix3x3.h>
+#include <vtkObjectFactory.h>
 #include <vtkTransform.h>
 
-struct PlaneGeometry::Private
-{
-};
+vtkStandardNewMacro(PlaneGeometry);
 
 void PlaneGeometry::initializePlane(double bounds[4], vtkTransform* indexToWorldTransform)
 {
@@ -22,36 +21,44 @@ void PlaneGeometry::initializePlane(vtkImageData* imageData, const double planeN
 void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPlane planeType)
 {
   // WARN: the matrix must be a perpendicular matrix, otherwise, this will be a fault
-  // 确认这个变换矩阵是否为imageData的direction
-  // matrix，或者这个方向由SlicedGeometry设置的imageData的方向矩阵
-  auto matrix = Superclass::getLinearTransformMatrix();
-  auto indexToWorldTransform = Superclass::getIndexToWorldTransform();
-  if (!matrix)
+  int extents[3]{};
+  double spacing[3]{};
+  double imageOrigin[3]{};
+  imageData->GetOrigin(imageOrigin);
+
+  auto imageDataDirectionMatrix = imageData->GetDirectionMatrix();
+  imageData->GetSpacing(spacing);
+
+  auto scaleMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
+  auto matrix = vtkSmartPointer<vtkMatrix3x3>::New();
+  scaleMatrix->Identity();
+  scaleMatrix->SetElement(0, 0, spacing[0]);
+  scaleMatrix->SetElement(1, 1, spacing[1]);
+  scaleMatrix->SetElement(2, 2, spacing[2]);
+  vtkMatrix3x3::Multiply3x3(imageDataDirectionMatrix, scaleMatrix, matrix);
+  auto indexToWorldMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  for (size_t i = 0; i < 3; i++)
   {
-    return;
+    for (size_t j = 0; j < 3; j++)
+    {
+      indexToWorldMatrix->SetElement(i, j, matrix->GetElement(i, j));
+    }
   }
+  indexToWorldMatrix->SetElement(0, 3, imageOrigin[0]);
+  indexToWorldMatrix->SetElement(1, 3, imageOrigin[1]);
+  indexToWorldMatrix->SetElement(2, 3, imageOrigin[2]);
 
   auto worldToIndexMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
   auto normalizedMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
   normalizedMatrix->DeepCopy(matrix);
   // normalize column vector
-  for (size_t i = 0; i < 3; i++)
-  {
-    double column[3] = { normalizedMatrix->GetElement(0, i), normalizedMatrix->GetElement(1, i),
-      normalizedMatrix->GetElement(2, i) };
-    vtkMath::Normalize(column);
-    normalizedMatrix->SetElement(0, i, column[0]);
-    normalizedMatrix->SetElement(1, i, column[1]);
-    normalizedMatrix->SetElement(2, i, column[2]);
-  }
+  normalizeMatrixColumn(normalizedMatrix);
 
   vtkMatrix3x3::Transpose(normalizedMatrix, worldToIndexMatrix);
 
   auto axes = calculateDominantAxis(worldToIndexMatrix); // axes: world axis -> image axis
 
   int directionSign[3];
-  int extents[3];
-  double spacing[3];
 
   // reconstruct the relationship between image axis and world axis
   for (size_t i = 0; i < 3; i++)
@@ -59,13 +66,11 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
     int dominantAxis = axes[i];
     // 因为这个值为主轴中的最大值，所以可以代表主轴的方向
     directionSign[i] = worldToIndexMatrix->GetElement(dominantAxis, i) > 0 ? 1 : -1;
-    extents[i] = imageData->GetExtent()[dominantAxis];
+    extents[i] = imageData->GetDimensions()[dominantAxis];
     spacing[i] = imageData->GetSpacing()[dominantAxis];
   }
 
   // 根据最新的轴和轴的方向调整矩阵
-  auto indexToWorldMatrix = indexToWorldTransform->GetMatrix();
-
   for (size_t i = 0; i < 3; i++)
   {
     for (size_t j = 0; j < 3; j++)
@@ -75,9 +80,6 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
       indexToWorldMatrix->SetElement(i, j, elem);
     }
   }
-
-  double imageOrigin[3];
-  imageData->GetOrigin(imageOrigin);
 
   // 计算平面的偏移到起始点的偏移量
   for (size_t i = 0; i < 3; i++)
@@ -90,6 +92,13 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
       imageOrigin[j] -= offset * matrix->GetElement(j, i);
     }
   }
+
+  indexToWorldMatrix->SetElement(0, 3, imageOrigin[0]);
+  indexToWorldMatrix->SetElement(1, 3, imageOrigin[1]);
+  indexToWorldMatrix->SetElement(2, 3, imageOrigin[2]);
+
+  auto indexToWorldTransform = vtkSmartPointer<vtkTransform>::New();
+  indexToWorldTransform->SetMatrix(indexToWorldMatrix);
 
   double planeOrigin[3]{}, planeRight[3]{}, planeBottom[3]{};
   auto fillArray3 = [](double filledArray[3], const std::initializer_list<double> fillList)
@@ -105,35 +114,30 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
     case StandardPlane::Axial:
       fillArray3(planeRight, { 1, 0, 0 });
       fillArray3(planeBottom, { 0, 1, 0 });
-      width = extents[0] + 1;
-      height = extents[1] + 1;
+      fillArray3(planeOrigin, { 0, 0, 0.5 });
+      width = extents[0];
+      height = extents[1];
       break;
     case StandardPlane::Sagittal:
       fillArray3(planeRight, { 0, 1, 0 });
       fillArray3(planeBottom, { 0, 0, 1 });
-      width = extents[1] + 1;
-      height = extents[2] + 1;
+      fillArray3(planeOrigin, { 0.5, 0, 0 });
+      width = extents[1];
+      height = extents[2];
       break;
     case StandardPlane::Coronal:
       fillArray3(planeRight, { 1, 0, 0 });
       fillArray3(planeBottom, { 0, 0, 1 });
-      width = extents[0] + 1;
-      height = extents[2] + 1;
+      fillArray3(planeOrigin, { 0, 0.5, 0 });
+      width = extents[0];
+      height = extents[2];
+      break;
     default:
+      SPDLOG_ERROR("plane type error");
       break;
   }
 
-  indexToWorldMatrix->SetElement(0, 3, imageOrigin[0]);
-  indexToWorldMatrix->SetElement(1, 3, imageOrigin[1]);
-  indexToWorldMatrix->SetElement(2, 3, imageOrigin[2]);
-  indexToWorldTransform->Modified();
-
-  double* rightDirection = indexToWorldTransform->TransformDoublePoint(planeRight);
-  double* bottomDirection = indexToWorldTransform->TransformDoublePoint(planeBottom);
-  double normal[3];
-  vtkMath::Cross(rightDirection, bottomDirection, normal);
-
-  double bounds[6] = { 0, width, 0, height, 0, 1 };
+  double bounds[6] = { 0, static_cast<double>(width - 1), 0, static_cast<double>(height - 1), 0, 1 };
   Superclass::setBounds(bounds);
 
   auto setMatrixColumn = [](vtkMatrix4x4* matrix, double* direction, int column)
@@ -142,13 +146,48 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
     matrix->SetElement(1, column, direction[1]);
     matrix->SetElement(2, column, direction[2]);
   };
+  double rightDirection[3]{};
+  double bottomDirection[3]{}; 
+  double planeOriginWorld[3]{};
+  std::copy_n(indexToWorldTransform->TransformDoubleVector(planeRight), 3, rightDirection);
+  std::copy_n(indexToWorldTransform->TransformDoubleVector(planeBottom), 3, bottomDirection);
+  std::copy_n(indexToWorldTransform->TransformDoublePoint(planeOrigin), 3, planeOriginWorld);
+
+  double normal[3];
+  vtkMath::Cross(rightDirection, bottomDirection, normal);
+  
   setMatrixColumn(indexToWorldMatrix, rightDirection, 0);
   setMatrixColumn(indexToWorldMatrix, bottomDirection, 1);
   setMatrixColumn(indexToWorldMatrix, normal, 2);
+  setMatrixColumn(indexToWorldMatrix, planeOriginWorld, 3);
+
+  Superclass::setIndexToWorldTransform(indexToWorldTransform);
+}
+
+void PlaneGeometry::normalizeMatrixColumn(vtkMatrix3x3* normalizedMatrix)
+{
+  for (size_t i = 0; i < 3; i++)
+  {
+    double column[3] = { normalizedMatrix->GetElement(0, i), normalizedMatrix->GetElement(1, i),
+      normalizedMatrix->GetElement(2, i) };
+    vtkMath::Normalize(column);
+    normalizedMatrix->SetElement(0, i, column[0]);
+    normalizedMatrix->SetElement(1, i, column[1]);
+    normalizedMatrix->SetElement(2, i, column[2]);
+  }
 }
 
 vtkVector3d PlaneGeometry::getNormal() const
 {
+  for (size_t i = 0; i < 4; i++)
+  {
+    for (size_t j = 0; j < 4; j++)
+    {
+      std::cout << indexToWorldMatrix->GetElement(i, j) << " ";
+    }
+    std::cout << std::endl;
+  }
+
   auto normal = Superclass::getAxisVector(Axis::Z);
   normal.Normalize();
 
@@ -306,14 +345,8 @@ bool PlaneGeometry::map(const double point[3], double mappedPoint[2])
   return false;
 }
 
-bool PlaneGeometry::map(const double point[2], double mappedPoint[3])
-{
-  return false;
-}
-
 PlaneGeometry::PlaneGeometry()
 {
-  mPrivate = std::make_unique<Private>();
 }
 
 PlaneGeometry::~PlaneGeometry() {}

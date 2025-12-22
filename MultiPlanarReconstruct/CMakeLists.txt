@@ -21,3 +21,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 export_model(${export_config_file_path} ${PROJECT_NAME})
+
+# --------- enable testing ----------
+if(MPR_TESTING)
+    if(NOT TARGET gtest_main)
+        find_package(Gtest CONFIG REQUIRED)
+    endif()
+
+    add_executable(${PROJECT_NAME}_TEST tests/SlicedGeometry_unittest.cpp)
+    target_link_libraries(${PROJECT_NAME}_TEST PRIVATE ${PROJECT_NAME} GTest::gtest GTest::gtest_main)
+endif()

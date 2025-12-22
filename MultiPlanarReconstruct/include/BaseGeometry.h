@@ -3,11 +3,14 @@
 #include "MultiPlanarReconstructExport.h"
 #include <memory>
 #include <vtkObject.h>
+#include <vtkSmartPointer.h>
 #include <vtkVector.h>
 
 
 class vtkTransform;
 class vtkMatrix3x3;
+class BaseGeometryPrivate;
+
 /**
  * @brief BaseGeometry is the base class to represent a object state
  */
@@ -65,7 +68,6 @@ protected:
   ~BaseGeometry() override;
 
 private:
-  struct Private;
-  std::unique_ptr<Private> mPrivate;
+  vtkSmartPointer<BaseGeometryPrivate> mPrivate;
 };
 #endif // MPR_BASE_GEOMETRY_H

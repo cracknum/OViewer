@@ -1,14 +1,17 @@
 #include "BaseGeometry.h"
 #include <vtkBoundingBox.h>
+#include <vtkCommand.h>
+#include <vtkMatrix3x3.h>
 #include <vtkMatrix4x4.h>
 #include <vtkObjectFactory.h>
 #include <vtkSmartPointer.h>
 #include <vtkTransform.h>
-#include <vtkMatrix3x3.h>
-#include <vtkCommand.h>
 
-struct BaseGeometry::Private: public vtkCommand
+class BaseGeometryPrivate : public vtkCommand
 {
+public:
+  vtkTypeMacro(BaseGeometryPrivate, vtkCommand);
+  static BaseGeometryPrivate* New();
   // index coordinates bounding box;
   std::unique_ptr<vtkBoundingBox> mBoundingBox;
   vtkSmartPointer<vtkTransform> mIndexToWorldTransform;
@@ -16,46 +19,50 @@ struct BaseGeometry::Private: public vtkCommand
   unsigned int mFrameOfReference;
   bool mIsImageGeometry;
 
-  Private()
+  BaseGeometryPrivate()
     : mIsImageGeometry(false)
     , mFrameOfReference(0)
   {
     mBoundingBox = std::make_unique<vtkBoundingBox>();
     mIndexToWorldTransform = vtkSmartPointer<vtkTransform>::New();
     mIndexToWorldTransform->Identity();
-	mLinearMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
-	mLinearMatrix->Identity();
+    mLinearMatrix = vtkSmartPointer<vtkMatrix3x3>::New();
+    mLinearMatrix->Identity();
 
-	mIndexToWorldTransform->AddObserver(vtkCommand::ModifiedEvent, this);
+    mIndexToWorldTransform->AddObserver(vtkCommand::ModifiedEvent, this);
   }
 
   void Execute(vtkObject* caller, unsigned long eventId, void* callData) override
   {
-	if (caller == mIndexToWorldTransform && eventId == vtkCommand::ModifiedEvent)
-	{
-		mLinearMatrix->Identity();
-		auto transform = vtkTransform::SafeDownCast(caller);
-		auto transformMatrix = transform->GetMatrix();
+    if (caller == mIndexToWorldTransform && eventId == vtkCommand::ModifiedEvent)
+    {
+      mLinearMatrix->Identity();
+      auto transform = vtkTransform::SafeDownCast(caller);
+      auto transformMatrix = transform->GetMatrix();
 
-		for (size_t i = 0; i < 3; i++)
-		{
-			for (size_t j = 0; j < 3; j++)
-			{
-				mLinearMatrix->SetElement(i, j, transformMatrix->GetElement(i, j));
-			}
-		}
-	}
+      for (size_t i = 0; i < 3; i++)
+      {
+        for (size_t j = 0; j < 3; j++)
+        {
+          mLinearMatrix->SetElement(i, j, transformMatrix->GetElement(i, j));
+        }
+      }
+    }
   }
 };
+
+vtkStandardNewMacro(BaseGeometryPrivate)
 
 vtkStandardNewMacro(BaseGeometry)
 
   BaseGeometry::BaseGeometry()
 {
-  mPrivate = std::make_unique<Private>();
+  mPrivate = BaseGeometryPrivate::New();
 }
 
-BaseGeometry::~BaseGeometry() {}
+BaseGeometry::~BaseGeometry()
+{
+}
 
 void BaseGeometry::getOrigin(double origin[3]) const
 {
@@ -171,8 +178,9 @@ void BaseGeometry::setImageGeometry(bool imageGeometry)
   mPrivate->mIsImageGeometry = imageGeometry;
 }
 
-void BaseGeometry::setFrameOfReferenceId(unsigned int frameOfReference) {
-	mPrivate->mFrameOfReference = frameOfReference;
+void BaseGeometry::setFrameOfReferenceId(unsigned int frameOfReference)
+{
+  mPrivate->mFrameOfReference = frameOfReference;
 }
 
 unsigned int BaseGeometry::getFrameOfReferenceId() const
@@ -182,5 +190,5 @@ unsigned int BaseGeometry::getFrameOfReferenceId() const
 
 vtkMatrix3x3* BaseGeometry::getLinearTransformMatrix() const
 {
-    return mPrivate->mLinearMatrix;
+  return mPrivate->mLinearMatrix;
 }

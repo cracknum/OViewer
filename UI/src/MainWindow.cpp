@@ -1,12 +1,12 @@
-#include "MainWindow.h"
 #include "DicomReader.hpp"
 #include "ImageInformation.hpp"
+#include "MainWindow.h"
 #include "ProjectManagePanel.h"
+#include <itkImage.h>
 #include <QFileDialog>
 #include <QGridLayout>
 #include <SARibbonBar.h>
 #include <SARibbonCategory.h>
-#include <itkImage.h>
 #include <spdlog/spdlog.h>
 #include <vtkFloatArray.h>
 
@@ -86,7 +86,7 @@ void MainWindow::openFolder()
     m_Impl->m_SeriesVector.push_back(*it);
   }
 
-  m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
+  // m_Impl->m_Panel->slotSetImageTable(m_Impl->m_SeriesVector);
   SPDLOG_INFO("read finished");
 }
 
