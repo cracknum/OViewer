@@ -5,8 +5,8 @@
 #include "ImageInformation.hpp"
 #include <itkGDCMImageIO.h>
 #include <itkGDCMSeriesFileNames.h>
-#include <itkImageSeriesReader.h>
 #include <itkImage.h>
+#include <itkImageSeriesReader.h>
 
 template <typename OutputImageType>
 DicomReadReader<OutputImageType>::DicomReadReader() = default;
@@ -52,6 +52,8 @@ void DicomReadReader<OutputImageType>::GenerateData()
       itk::SmartPointer<DicomSeries> dicomSeries = m_Series.at(i);
       dicomSeries->parseInfo(gdcmIO->GetMetaDataDictionary());
       dicomSeries->GetImageInfo()->SetVolume<OutputImageType::PixelType>(image);
+      dicomSeries->GetImageInfo()->setVolumeDirectionMatrix(
+        dicomSeries->GetImageInfo()->GetVtkVolume());
     }
     catch (itk::ExceptionObject& e)
     {

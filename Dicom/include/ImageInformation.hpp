@@ -11,11 +11,14 @@
 #include <itkImageRegion.h>
 #include <itkVTKImageExport.h>
 #include <string>
-#include <vtkImageData.h>
-#include <vtkSmartPointer.h>
+// clang-format off
 #include "itkImageToVTKImageFilter.h"
 #include <vtkImageChangeInformation.h>
+// clang-format on#include <vtkImageData.h>
+#include <vtkSmartPointer.h>
 #include <vtkTransform.h>
+
+class vtkMatrix3x3;
 
 class DICOM_API ImageInformation final : public InformationParser
 {
@@ -81,6 +84,8 @@ public:
   vtkSmartPointer<vtkImageData> GetVtkVolume();
 
   bool isInstanceUidEmpty() const;
+
+  void setVolumeDirectionMatrix(vtkImageData* imageData);
 
 protected:
   ImageInformation();
@@ -161,6 +166,7 @@ private:
    */
   itk::ImageIOBase::IOComponentType m_ComponentType;
   vtkSmartPointer<vtkImageData> m_VtkImage;
+  vtkSmartPointer<vtkMatrix3x3> mDirectionMatrix;
 };
 
 #endif // IMAGE_INFORMATION_CXX_H
