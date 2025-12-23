@@ -3,40 +3,70 @@
 #include <memory>
 #include <vtkSmartPointer.h>
 #include <vtkWidgetRepresentation.h>
+#include "PlaneType.h"
 
-class vtkProp3D;
+class vtkMatrix4x4;
+class vtkImageAlgorithm;
+class vtkPlaneSource;
+class vtkActor;
+class vtkTexture;
+class vtkPolyDataMapper;
 class vtkImageMapToColors;
+class vtkLookupTable;
+class vtkImageData;
+class SliceNavigator;
+
 // TODO: 参考类vtkResliceCursorLineRepresentation类族设计
-class MPRSliceRepresentation final : public vtkWidgetRepresentation
+class MPRSliceRepresentation : public vtkWidgetRepresentation
 {
 public:
   static MPRSliceRepresentation* New();
-  vtkTypeMacro(MPRSliceRepresentation, vtkObject);
+  void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  /**
-   * @brief 获取需要渲染的数据
-   * @return 需要渲染的数据
-   */
-  vtkProp3D* getProp() const;
+  vtkTypeMacro(MPRSliceRepresentation, vtkObject);
+  void setImageData(vtkImageData* imageData);
+  void setSliceType(StandardPlane planeType);
+
   /**
    * @brief 设置窗位和窗宽
    * @param level 窗位
    * @param window 窗宽
    */
   void setLevelWindow(int level, int window);
+
   /**
-   * @brief 设置颜色映射函数
-   * @param colorMap 设置颜色映射函数
+   * @brief 构建显示信息
    */
-  void setColorMap(vtkImageMapToColors* colorMap);
-  void BuildRepresentation() override;
+  virtual void BuildRepresentation() override;
 
 protected:
   MPRSliceRepresentation();
   ~MPRSliceRepresentation() override;
 
-private:
-  struct Private;
-  std::unique_ptr<Private> mPrivate;
+  void updateInternal();
+
+protected:
+  int mLevel;
+  int mWindow;
+  vtkSmartPointer<vtkMatrix4x4> mResliceAxes;
+  vtkSmartPointer<vtkImageAlgorithm> mReslicer;
+  vtkSmartPointer<vtkImageData> mImageData;
+
+  vtkSmartPointer<SliceNavigator> mSlicedNavigator;
+  StandardPlane mPlaneType;
+
+  ///@{
+  /// 纹理映射 HU -> RGBA
+  vtkSmartPointer<vtkTexture> mTexture;
+  vtkSmartPointer<vtkImageMapToColors> mColorMap;
+  vtkSmartPointer<vtkLookupTable> mLookupTable;
+  ///@}
+  
+  /// @{
+  /// 图像显示pipeline
+  vtkSmartPointer<vtkPlaneSource> mPlaneSource;
+  vtkSmartPointer<vtkActor> mTexturedActor;
+  vtkSmartPointer<vtkPolyDataMapper> mTexturedMapper;
+  ///@}
 };
 #endif // MPR_SLICE_REPRESENTATION_H

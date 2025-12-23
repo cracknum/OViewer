@@ -6,13 +6,13 @@ file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp")
 file(GLOB_RECURSE Source_files "src/*.cpp")
 
 if (NOT TARGET VTK::RenderingCore)
-    find_package(VTK REQUIRED COMPONENTS RenderingCore InteractionWidgets)
+    find_package(VTK REQUIRED COMPONENTS RenderingCore InteractionWidgets ImagingCore)
 endif ()
 
 add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files})
 target_link_libraries(${PROJECT_NAME} PUBLIC
         Common Base
-        VTK::RenderingCore VTK::InteractionWidgets
+        VTK::RenderingCore VTK::InteractionWidgets VTK::ImagingCore
 )
 
 add_library(${MODULE_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

@@ -71,6 +71,11 @@ TEST_F(SlicedGeometryFixture, initializeAxialTest)
   EXPECT_DOUBLE_EQ(axialPlaneNormal[0], 0.0);
   EXPECT_DOUBLE_EQ(axialPlaneNormal[1], 0.0);
   EXPECT_DOUBLE_EQ(axialPlaneNormal[2], 1.0);
+}
+
+TEST_F(SlicedGeometryFixture, initializeSagittalTest)
+{
+  double bounds[6];
 
   auto sagittalSlicedGeometry = vtkSmartPointer<SlicedGeometry>::New();
   sagittalSlicedGeometry->initialize(mImageData, StandardPlane::Sagittal);
@@ -81,10 +86,10 @@ TEST_F(SlicedGeometryFixture, initializeAxialTest)
   EXPECT_DOUBLE_EQ(sagittalPlaneNormal[1], 0.0);
   EXPECT_DOUBLE_EQ(sagittalPlaneNormal[2], 0.0);
 
-  numberOfSlices = sagittalSlicedGeometry->getNumberOfSlices();
-  xExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::X);
-  yExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::Y);
-  zExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::Z);
+  auto numberOfSlices = sagittalSlicedGeometry->getNumberOfSlices();
+  auto xExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::X);
+  auto yExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::Y);
+  auto zExtent = sagittalSlicedGeometry->getExtent(BaseGeometry::Axis::Z);
   sagittalSlicedGeometry->getBounds(bounds);
 
   int sagittalIndex[3] = { 1, 2, 0 };
@@ -97,6 +102,11 @@ TEST_F(SlicedGeometryFixture, initializeAxialTest)
     EXPECT_EQ(bounds[2 * i], 0);
     EXPECT_EQ(bounds[2 * i + 1], mDimensions[sagittalIndex[i]] - 1);
   }
+}
+
+TEST_F(SlicedGeometryFixture, initializeCoronalTest)
+{
+  double bounds[6];
 
   auto coronalSlicedGeometry = vtkSmartPointer<SlicedGeometry>::New();
   coronalSlicedGeometry->initialize(mImageData, StandardPlane::Coronal);
@@ -107,10 +117,10 @@ TEST_F(SlicedGeometryFixture, initializeAxialTest)
   EXPECT_DOUBLE_EQ(coronalPlaneNormal[1], -1.0);
   EXPECT_DOUBLE_EQ(coronalPlaneNormal[2], 0.0);
 
-  numberOfSlices = coronalSlicedGeometry->getNumberOfSlices();
-  xExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::X);
-  yExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::Y);
-  zExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::Z);
+  auto numberOfSlices = coronalSlicedGeometry->getNumberOfSlices();
+  auto xExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::X);
+  auto yExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::Y);
+  auto zExtent = coronalSlicedGeometry->getExtent(BaseGeometry::Axis::Z);
   coronalSlicedGeometry->getBounds(bounds);
 
   int coronalIndex[3] = { 0, 2, 1 };

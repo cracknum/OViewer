@@ -101,6 +101,8 @@ void SlicedGeometry::initialize(vtkImageData* imageData, StandardPlane planeType
   Superclass::setBounds(bounds);
   Superclass::setSpacing(spacing);
   std::copy(directionVector.GetData(), directionVector.GetData() + 3, mPrivate->mDirectionVector);
+
+  this->Modified();
 }
 
 void SlicedGeometry::reinitialize() {}
