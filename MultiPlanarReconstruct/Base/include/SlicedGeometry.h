@@ -17,9 +17,12 @@ public:
   void initialize(vtkImageData* imageData, StandardPlane planeType);
   void reinitialize();
 
-  PlaneGeometry* getPlaneGeometry(int sliceNumber) const;
+  PlaneGeometry* getPlaneGeometry(int sliceNumber);
   unsigned int getNumberOfSlices() const;
   bool isValidSlice(int sliceNumber) const;
+  void createPlane(int sliceNumber);
+
+  bool setPlaneGeometry(int sliceNumber);
 
 protected:
   SlicedGeometry();

@@ -1,5 +1,5 @@
-#include "PlaneGeometry.h"
 #include "SlicedGeometry.h"
+#include "PlaneGeometry.h"
 #include <spdlog/spdlog.h>
 #include <vector>
 #include <vtkImageData.h>
@@ -107,11 +107,16 @@ void SlicedGeometry::initialize(vtkImageData* imageData, StandardPlane planeType
 
 void SlicedGeometry::reinitialize() {}
 
-PlaneGeometry* SlicedGeometry::getPlaneGeometry(int sliceNumber) const
+PlaneGeometry* SlicedGeometry::getPlaneGeometry(int sliceNumber)
 {
   if (!isValidSlice(sliceNumber))
   {
     return nullptr;
+  }
+  auto planeGeometry = mPrivate->mPlaneGeometryVector[sliceNumber];
+  if (!planeGeometry)
+  {
+    createPlane(sliceNumber);
   }
 
   return mPrivate->mPlaneGeometryVector[sliceNumber];
@@ -130,6 +135,42 @@ bool SlicedGeometry::isValidSlice(int sliceNumber) const
     return false;
   }
   return true;
+}
+void SlicedGeometry::createPlane(int sliceNumber)
+{
+  const auto firstPlaneGeometry = this->getPlaneGeometry(0);
+  auto firstPlaneNormal = firstPlaneGeometry->getNormal();
+  const auto zSpacing = firstPlaneGeometry->getExtentInMM(BaseGeometry::Z) /
+    firstPlaneGeometry->getExtent(BaseGeometry::Z);
+  firstPlaneNormal.Normalize();
+  double firstPlaneOrigin[3];
+  firstPlaneGeometry->getOrigin(firstPlaneOrigin);
+  vtkMath::MultiplyScalar(firstPlaneNormal.GetData(), zSpacing * sliceNumber);
+  double currentPlaneOrigin[3]{};
+  vtkMath::Add(firstPlaneNormal.GetData(), firstPlaneOrigin, currentPlaneOrigin);
+  auto planeGeometry = vtkSmartPointer<PlaneGeometry>::New();
+  planeGeometry->DeepCopy(firstPlaneGeometry);
+  planeGeometry->setOrigin(currentPlaneOrigin);
+  this->mPrivate->mPlaneGeometryVector[sliceNumber] = planeGeometry;
+}
+bool SlicedGeometry::setPlaneGeometry(int sliceNumber)
+{
+  if (isValidSlice(sliceNumber))
+  {
+    const auto plane = getPlaneGeometry(sliceNumber);
+    if (!plane)
+    {
+      createPlane(sliceNumber);
+      return true;
+      this->Modified();
+    }
+  }
+  else
+  {
+    SPDLOG_WARN("slice number is incorrect");
+  }
+
+  return false;
 }
 
 SlicedGeometry::SlicedGeometry()

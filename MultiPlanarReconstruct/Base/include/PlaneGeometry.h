@@ -57,6 +57,7 @@ public:
    * the image index axis' closest world axis
    */
   static std::array<int, 3> calculateDominantAxis(vtkMatrix3x3* worldToIndexMatrix);
+  void DeepCopy(BaseGeometry* geometry) override;
 
 protected:
   PlaneGeometry();

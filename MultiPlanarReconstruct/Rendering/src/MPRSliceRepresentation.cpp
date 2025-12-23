@@ -3,6 +3,7 @@
 #include "SliceNavigator.h"
 #include "SlicedGeometry.h"
 #include <vtkActor.h>
+#include <vtkImageData.h>
 #include <vtkImageMapToColors.h>
 #include <vtkImageReslice.h>
 #include <vtkMatrix4x4.h>
@@ -11,8 +12,6 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkTexture.h>
 #include <vtkWindowLevelLookupTable.h>
-#include <vtkImageData.h>
-
 
 vtkStandardNewMacro(MPRSliceRepresentation);
 
@@ -38,10 +37,8 @@ void MPRSliceRepresentation::setSliceType(StandardPlane planeType)
 
 void MPRSliceRepresentation::setLevelWindow(int level, int window)
 {
-  auto lookupTable = vtkWindowLevelLookupTable::SafeDownCast(this->mLookupTable);
-  lookupTable->SetWindow(window);
-  lookupTable->SetLevel(level);
-  lookupTable->Build();
+  this->mLevel = level;
+  this->mWindow = window;
   this->Modified();
 }
 void MPRSliceRepresentation::BuildRepresentation()

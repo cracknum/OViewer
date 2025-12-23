@@ -19,9 +19,9 @@ public:
 
   enum Axis
   {
-    X,
-    Y,
-    Z
+    X = 0,
+    Y = 1,
+    Z = 2
   };
 
   void getOrigin(double origin[3]) const;
@@ -60,6 +60,8 @@ public:
   unsigned int getFrameOfReferenceId() const;
 
   vtkMatrix3x3* getLinearTransformMatrix() const;
+
+  virtual void DeepCopy(BaseGeometry* geometry);
 
 protected:
   BaseGeometry();

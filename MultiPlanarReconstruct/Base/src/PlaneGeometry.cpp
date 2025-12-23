@@ -389,3 +389,7 @@ std::array<int, 3> PlaneGeometry::calculateDominantAxis(vtkMatrix3x3* worldToInd
 
   return axes;
 }
+void PlaneGeometry::DeepCopy(BaseGeometry* geometry)
+{
+  BaseGeometry::DeepCopy(geometry);
+}

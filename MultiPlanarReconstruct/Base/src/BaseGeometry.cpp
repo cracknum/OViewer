@@ -190,3 +190,11 @@ vtkMatrix3x3* BaseGeometry::getLinearTransformMatrix() const
 {
   return mPrivate->mLinearMatrix;
 }
+void BaseGeometry::DeepCopy(BaseGeometry* geometry)
+{
+  *(mPrivate->mBoundingBox) = *(geometry->mPrivate->mBoundingBox.get());
+  mPrivate->mFrameOfReference = geometry->mPrivate->mFrameOfReference;
+  mPrivate->mIndexToWorldTransform->DeepCopy(geometry->mPrivate->mIndexToWorldTransform);
+  mPrivate->mIsImageGeometry = geometry->mPrivate->mIsImageGeometry;
+  mPrivate->mLinearMatrix->DeepCopy(geometry->mPrivate->mLinearMatrix);
+}
