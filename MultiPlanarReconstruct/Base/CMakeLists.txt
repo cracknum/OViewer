@@ -34,6 +34,6 @@ if (${MODULE_NAME}_${PROJECT_NAME}_TESTING)
         find_package(Gtest CONFIG REQUIRED)
     endif ()
 
-    add_executable(${PROJECT_NAME}_TEST tests/SlicedGeometry_unittest.cpp)
-    target_link_libraries(${PROJECT_NAME}_TEST PRIVATE ${MODULE_NAME}::${PROJECT_NAME} GTest::gtest GTest::gtest_main)
+    add_executable(${MODULE_NAME}_${PROJECT_NAME}_TESTING tests/SlicedGeometry_unittest.cpp)
+    target_link_libraries(${MODULE_NAME}_${PROJECT_NAME}_TESTING PRIVATE ${MODULE_NAME}::${PROJECT_NAME} GTest::gtest GTest::gtest_main)
 endif ()
