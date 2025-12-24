@@ -64,7 +64,7 @@ BaseGeometry::~BaseGeometry() {}
 
 void BaseGeometry::getOrigin(double origin[3]) const
 {
-  auto matrix = mPrivate->mIndexToWorldTransform->GetMatrix();
+  const auto* matrix = mPrivate->mIndexToWorldTransform->GetMatrix();
   for (size_t i = 0; i < 3; i++)
   {
     origin[i] = matrix->GetElement(i, 3);
@@ -74,10 +74,13 @@ void BaseGeometry::getOrigin(double origin[3]) const
 void BaseGeometry::setOrigin(double origin[3])
 {
   auto matrix = mPrivate->mIndexToWorldTransform->GetMatrix();
+  auto newMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  newMatrix->DeepCopy(matrix);
   for (size_t i = 0; i < 3; i++)
   {
-    matrix->SetElement(i, 3, origin[i]);
+    newMatrix->SetElement(i, 3, origin[i]);
   }
+  mPrivate->mIndexToWorldTransform->SetMatrix(newMatrix);
   Modified();
 }
 
@@ -100,15 +103,18 @@ double BaseGeometry::getSpacing(Axis axis) const
 void BaseGeometry::setSpacing(double spacing[3])
 {
   auto matrix = mPrivate->mIndexToWorldTransform->GetMatrix();
+  auto newMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  newMatrix->DeepCopy(matrix);
   for (size_t axis = Axis::X; axis <= Axis::Z; axis++)
   {
     auto vector = vtkVector3d(
       matrix->GetElement(0, axis), matrix->GetElement(1, axis), matrix->GetElement(2, axis));
     vector.Normalize();
-    matrix->SetElement(0, axis, vector.GetX() * spacing[axis]);
-    matrix->SetElement(1, axis, vector.GetY() * spacing[axis]);
-    matrix->SetElement(2, axis, vector.GetZ() * spacing[axis]);
+    newMatrix->SetElement(0, axis, vector.GetX() * spacing[axis]);
+    newMatrix->SetElement(1, axis, vector.GetY() * spacing[axis]);
+    newMatrix->SetElement(2, axis, vector.GetZ() * spacing[axis]);
   }
+  mPrivate->mIndexToWorldTransform->SetMatrix(newMatrix);
   Modified();
 }
 
