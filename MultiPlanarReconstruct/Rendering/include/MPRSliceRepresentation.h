@@ -1,12 +1,13 @@
 #ifndef MPR_SLICE_REPRESENTATION_H
 #define MPR_SLICE_REPRESENTATION_H
+#include "PlaneType.h"
+#include "RenderingExport.h"
 #include <memory>
 #include <vtkSmartPointer.h>
 #include <vtkWidgetRepresentation.h>
-#include "PlaneType.h"
 
 class vtkMatrix4x4;
-class vtkImageAlgorithm;
+class vtkImageReslice;
 class vtkPlaneSource;
 class vtkActor;
 class vtkTexture;
@@ -17,13 +18,13 @@ class vtkImageData;
 class SliceNavigator;
 
 // TODO: 参考类vtkResliceCursorLineRepresentation类族设计
-class MPRSliceRepresentation : public vtkWidgetRepresentation
+class RENDERING_API MPRSliceRepresentation : public vtkWidgetRepresentation
 {
 public:
   static MPRSliceRepresentation* New();
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  vtkTypeMacro(MPRSliceRepresentation, vtkObject);
+  vtkTypeMacro(MPRSliceRepresentation, vtkWidgetRepresentation);
   void setImageData(vtkImageData* imageData);
   void setSliceType(StandardPlane planeType);
 
@@ -33,23 +34,27 @@ public:
    * @param window 窗宽
    */
   void setLevelWindow(int level, int window);
-
+  int getLevel() const;
+  int getWindow() const;
+  SliceNavigator* getSliceNavigator();
   /**
    * @brief 构建显示信息
    */
   virtual void BuildRepresentation() override;
-
+  int RenderOpaqueGeometry(vtkViewport* vtkNotUsed(viewport)) override;
+  ///@{
+  ///必要实现方法
+  void GetActors(vtkPropCollection* props) override;
+  /// ///@}
 protected:
   MPRSliceRepresentation();
   ~MPRSliceRepresentation() override;
-
-  void updateInternal();
 
 protected:
   int mLevel;
   int mWindow;
   vtkSmartPointer<vtkMatrix4x4> mResliceAxes;
-  vtkSmartPointer<vtkImageAlgorithm> mReslicer;
+  vtkSmartPointer<vtkImageReslice> mReslicer;
   vtkSmartPointer<vtkImageData> mImageData;
 
   vtkSmartPointer<SliceNavigator> mSlicedNavigator;

@@ -1,16 +1,20 @@
 #include "MPRSliceRepresentation.h"
 #include "PlaneGeometry.h"
-#include "SliceNavigator.h"
 #include "SlicedGeometry.h"
+#include "SliceNavigator.h"
+#include <spdlog/spdlog.h>
 #include <vtkActor.h>
 #include <vtkImageData.h>
 #include <vtkImageMapToColors.h>
 #include <vtkImageReslice.h>
 #include <vtkMatrix4x4.h>
+#include <vtkMetaImageWriter.h>
 #include <vtkObjectFactory.h>
 #include <vtkPlaneSource.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPropCollection.h>
 #include <vtkTexture.h>
+#include <vtkTransform.h>
 #include <vtkWindowLevelLookupTable.h>
 
 vtkStandardNewMacro(MPRSliceRepresentation);
@@ -41,9 +45,43 @@ void MPRSliceRepresentation::setLevelWindow(int level, int window)
   this->mWindow = window;
   this->Modified();
 }
+SliceNavigator* MPRSliceRepresentation::getSliceNavigator()
+{
+  return mSlicedNavigator;
+}
 void MPRSliceRepresentation::BuildRepresentation()
 {
-  updateInternal();
+  if (this->mPlaneType == StandardPlane::None || !this->mImageData || !this->mWindow)
+  {
+    SPDLOG_ERROR("plane type, image data or slice window is not setted");
+    return;
+  }
+  if (this->mSlicedNavigator->GetPlaneType() == StandardPlane::None)
+  {
+    this->mSlicedNavigator->setReferenceImage(this->mImageData, this->mPlaneType);
+  }
+  auto planeGeometry = this->mSlicedNavigator->getCurrentPlaneGeometry();
+  double bounds[6]{};
+  double spacing[3]{};
+  double origin[3]{};
+  planeGeometry->getOrigin(origin);
+  planeGeometry->getBounds(bounds);
+  planeGeometry->getSpacing(spacing);
+  auto transform = planeGeometry->getIndexToWorldTransform();
+  auto matrix = transform->GetMatrix();
+  this->mResliceAxes->DeepCopy(matrix);
+  mReslicer->SetInputData(mImageData);
+  mReslicer->SetOutputExtent(bounds[0], bounds[1], bounds[2], bounds[3], 0, 0);
+  mReslicer->SetOutputSpacing(spacing[0], spacing[1], spacing[2]);
+  mReslicer->SetOutputOrigin(origin);
+  mReslicer->Update();
+  auto sliceImage = mReslicer->GetOutput();
+  auto metaDataWriter = vtkSmartPointer<vtkMetaImageWriter>::New();
+  metaDataWriter->SetInputData(sliceImage);
+  auto sliceNumber = this->mSlicedNavigator->GetCurrentSliceNumber();
+  std::string fileName = std::to_string(sliceNumber) + "_slice.mhd";
+  metaDataWriter->SetFileName(fileName.c_str());
+  metaDataWriter->Write();
 }
 MPRSliceRepresentation::MPRSliceRepresentation()
   : mLevel(0)
@@ -81,4 +119,13 @@ MPRSliceRepresentation::MPRSliceRepresentation()
 }
 MPRSliceRepresentation::~MPRSliceRepresentation() = default;
 
-void MPRSliceRepresentation::updateInternal() {}
+void MPRSliceRepresentation::GetActors(vtkPropCollection* props)
+{
+  props->AddItem(this->mTexturedActor);
+}
+
+int MPRSliceRepresentation::RenderOpaqueGeometry(vtkViewport* vtkNotUsed(viewport))
+{
+  BuildRepresentation();
+  return 1;
+}

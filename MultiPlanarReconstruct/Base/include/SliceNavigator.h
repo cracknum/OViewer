@@ -21,6 +21,7 @@ public:
 
   vtkSetMacro(PlaneType, StandardPlane);
   vtkGetMacro(PlaneType, StandardPlane);
+  vtkGetMacro(CurrentSliceNumber, int);
   /**
    * 设置参照数据以及平面类型
    * @param imageData 需要参照的数据

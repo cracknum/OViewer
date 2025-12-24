@@ -38,6 +38,7 @@ void SliceNavigator::nextSlice()
   if (this->mSlicedGeometry->setPlaneGeometry(CurrentSliceNumber + 1))
   {
     CurrentSliceNumber += 1;
+    this->Modified();
   }
 }
 void SliceNavigator::previousSlice()
@@ -45,6 +46,7 @@ void SliceNavigator::previousSlice()
   if (this->mSlicedGeometry->setPlaneGeometry(CurrentSliceNumber - 1))
   {
     CurrentSliceNumber -= 1;
+    this->Modified();
   }
 }
 
