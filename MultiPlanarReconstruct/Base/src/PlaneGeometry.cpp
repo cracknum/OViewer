@@ -150,12 +150,12 @@ void PlaneGeometry::initializeStandardPlane(vtkImageData* imageData, StandardPla
   double rightDirection[3]{};
   double bottomDirection[3]{};
   double planeOriginWorld[3]{};
+  double normal[3];
+  vtkMath::Cross(planeRight, planeBottom, normal);
   std::copy_n(indexToWorldTransform->TransformDoubleVector(planeRight), 3, rightDirection);
   std::copy_n(indexToWorldTransform->TransformDoubleVector(planeBottom), 3, bottomDirection);
+  std::copy_n(indexToWorldTransform->TransformDoubleVector(normal), 3, normal);
   std::copy_n(indexToWorldTransform->TransformDoublePoint(planeOrigin), 3, planeOriginWorld);
-
-  double normal[3];
-  vtkMath::Cross(rightDirection, bottomDirection, normal);
 
   setMatrixColumn(indexToWorldMatrix, rightDirection, 0);
   setMatrixColumn(indexToWorldMatrix, bottomDirection, 1);

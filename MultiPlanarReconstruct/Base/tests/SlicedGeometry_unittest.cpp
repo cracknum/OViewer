@@ -1,10 +1,13 @@
 #include "PlaneGeometry.h"
 #include "PlaneType.h"
+#include "SliceNavigator.h"
 #include "SlicedGeometry.h"
 #include <gtest/gtest.h>
 #include <vtkImageData.h>
 #include <vtkMatrix3x3.h>
+#include <vtkMatrix4x4.h>
 #include <vtkSmartPointer.h>
+#include <vtkTransform.h>
 
 class SlicedGeometryFixture : public ::testing::Test
 {
@@ -133,4 +136,152 @@ TEST_F(SlicedGeometryFixture, initializeCoronalTest)
     EXPECT_EQ(bounds[2 * i], 0);
     EXPECT_EQ(bounds[2 * i + 1], mDimensions[coronalIndex[i]] - 1);
   }
+}
+
+TEST_F(SlicedGeometryFixture, AxialSliceNavigatorCreatTest)
+{
+  auto axialsliceNavigator = vtkSmartPointer<SliceNavigator>::New();
+  axialsliceNavigator->setReferenceImage(mImageData, StandardPlane::Axial);
+  auto plane = axialsliceNavigator->getCurrentPlaneGeometry();
+
+  ASSERT_TRUE(plane != nullptr);
+  axialsliceNavigator->nextSlice();
+  auto plane1 = axialsliceNavigator->getCurrentPlaneGeometry();
+  ASSERT_TRUE(plane1 != nullptr);
+  auto* planeTransform = plane->getIndexToWorldTransform();
+  auto* plane1Transform = plane->getIndexToWorldTransform();
+  auto* planeMatrix = planeTransform->GetMatrix();
+  auto* plane1Matrix = plane1Transform->GetMatrix();
+  ASSERT_TRUE(plane != plane1);
+  for (size_t i = 0; i < 3; i++)
+  {
+    for (size_t j = 0; j < 3; j++)
+    {
+      ASSERT_TRUE(std::abs(planeMatrix->GetElement(i, j) - plane1Matrix->GetElement(i, j)) < 1e-6);
+    }
+  }
+  double planeOrigin[3]{};
+  double plane1Origin[3]{};
+  double planeSpacing[3]{};
+  double plane1Spacing[3]{};
+  plane->getOrigin(planeOrigin);
+  plane1->getOrigin(plane1Origin);
+  plane->getSpacing(planeSpacing);
+  plane1->getSpacing(plane1Spacing);
+  for (size_t i = 0; i < 3; i++)
+  {
+    ASSERT_TRUE(std::abs(planeSpacing[i] - plane1Spacing[i]) < 1e-6);
+  }
+  auto planeNormal = plane->getNormal();
+  planeNormal.Normalize();
+  for (size_t i = 0; i < 3; i++)
+  {
+    EXPECT_EQ(planeOrigin[i] + planeNormal.GetData()[i] * planeSpacing[i], plane1Origin[i])
+      << "plane1 origin: " << plane1Origin[0] << " " << plane1Origin[1] << " " << plane1Origin[2]
+      << "\n"
+      << "plane Origin: " << planeOrigin[0] << " " << planeOrigin[1] << " " << planeOrigin[2];
+  }
+
+  axialsliceNavigator->previousSlice();
+  auto plane2 = axialsliceNavigator->getCurrentPlaneGeometry();
+  EXPECT_EQ(plane, plane2);
+}
+
+TEST_F(SlicedGeometryFixture, SagittalSliceNavigatorCreatTest)
+{
+  auto sagtittalsliceNavigator = vtkSmartPointer<SliceNavigator>::New();
+  sagtittalsliceNavigator->setReferenceImage(mImageData, StandardPlane::Sagittal);
+  auto plane = sagtittalsliceNavigator->getCurrentPlaneGeometry();
+
+  ASSERT_TRUE(plane != nullptr);
+  sagtittalsliceNavigator->nextSlice();
+  auto plane1 = sagtittalsliceNavigator->getCurrentPlaneGeometry();
+  ASSERT_TRUE(plane1 != nullptr);
+  auto* planeTransform = plane->getIndexToWorldTransform();
+  auto* plane1Transform = plane->getIndexToWorldTransform();
+  auto* planeMatrix = planeTransform->GetMatrix();
+  auto* plane1Matrix = plane1Transform->GetMatrix();
+  ASSERT_TRUE(plane != plane1);
+  for (size_t i = 0; i < 3; i++)
+  {
+    for (size_t j = 0; j < 3; j++)
+    {
+      ASSERT_TRUE(std::abs(planeMatrix->GetElement(i, j) - plane1Matrix->GetElement(i, j)) < 1e-6);
+    }
+  }
+  double planeOrigin[3]{};
+  double plane1Origin[3]{};
+  double planeSpacing[3]{};
+  double plane1Spacing[3]{};
+  plane->getOrigin(planeOrigin);
+  plane1->getOrigin(plane1Origin);
+  plane->getSpacing(planeSpacing);
+  plane1->getSpacing(plane1Spacing);
+  for (size_t i = 0; i < 3; i++)
+  {
+    ASSERT_TRUE(std::abs(planeSpacing[i] - plane1Spacing[i]) < 1e-6);
+  }
+  auto planeNormal = plane->getNormal();
+  planeNormal.Normalize();
+  for (size_t i = 0; i < 3; i++)
+  {
+    EXPECT_EQ(planeOrigin[i] + planeNormal.GetData()[i] * planeSpacing[i], plane1Origin[i])
+	  << "plane spacing: " << planeSpacing[0] << " " << planeSpacing[1] << " " << planeSpacing[2] << "\n"
+      << "plane1 origin: " << plane1Origin[0] << " " << plane1Origin[1] << " " << plane1Origin[2]
+      << "\n"
+      << "plane Origin: " << planeOrigin[0] << " " << planeOrigin[1] << " " << planeOrigin[2];
+  }
+
+  sagtittalsliceNavigator->previousSlice();
+  auto plane2 = sagtittalsliceNavigator->getCurrentPlaneGeometry();
+  EXPECT_EQ(plane, plane2);
+}
+
+TEST_F(SlicedGeometryFixture, CoronalSliceNavigatorCreatTest)
+{
+  auto coronalsliceNavigator = vtkSmartPointer<SliceNavigator>::New();
+  coronalsliceNavigator->setReferenceImage(mImageData, StandardPlane::Coronal);
+  auto plane = coronalsliceNavigator->getCurrentPlaneGeometry();
+
+  ASSERT_TRUE(plane != nullptr);
+  coronalsliceNavigator->nextSlice();
+  auto plane1 = coronalsliceNavigator->getCurrentPlaneGeometry();
+  ASSERT_TRUE(plane1 != nullptr);
+  auto* planeTransform = plane->getIndexToWorldTransform();
+  auto* plane1Transform = plane->getIndexToWorldTransform();
+  auto* planeMatrix = planeTransform->GetMatrix();
+  auto* plane1Matrix = plane1Transform->GetMatrix();
+  ASSERT_TRUE(plane != plane1);
+  for (size_t i = 0; i < 3; i++)
+  {
+    for (size_t j = 0; j < 3; j++)
+    {
+      ASSERT_TRUE(std::abs(planeMatrix->GetElement(i, j) - plane1Matrix->GetElement(i, j)) < 1e-6);
+    }
+  }
+  double planeOrigin[3]{};
+  double plane1Origin[3]{};
+  double planeSpacing[3]{};
+  double plane1Spacing[3]{};
+  plane->getOrigin(planeOrigin);
+  plane1->getOrigin(plane1Origin);
+  plane->getSpacing(planeSpacing);
+  plane1->getSpacing(plane1Spacing);
+  for (size_t i = 0; i < 3; i++)
+  {
+    ASSERT_TRUE(std::abs(planeSpacing[i] - plane1Spacing[i]) < 1e-6);
+  }
+  auto planeNormal = plane->getNormal();
+  planeNormal.Normalize();
+  for (size_t i = 0; i < 3; i++)
+  {
+    EXPECT_EQ(planeOrigin[i] + planeNormal.GetData()[i] * planeSpacing[i], plane1Origin[i])
+      << "plane1 origin: " << plane1Origin[0] << " " << plane1Origin[1] << " " << plane1Origin[2]
+      << "\n"
+      << "plane Origin: " << planeOrigin[0] << " " << planeOrigin[1] << " " << planeOrigin[2];
+  }
+
+  coronalsliceNavigator->previousSlice();
+  auto plane2 = coronalsliceNavigator->getCurrentPlaneGeometry();
+  EXPECT_EQ(plane, plane2);
 }

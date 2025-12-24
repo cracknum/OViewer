@@ -113,6 +113,7 @@ PlaneGeometry* SlicedGeometry::getPlaneGeometry(int sliceNumber)
   {
     return nullptr;
   }
+
   auto planeGeometry = mPrivate->mPlaneGeometryVector[sliceNumber];
   if (!planeGeometry)
   {
@@ -129,8 +130,7 @@ unsigned int SlicedGeometry::getNumberOfSlices() const
 
 bool SlicedGeometry::isValidSlice(int sliceNumber) const
 {
-  if (sliceNumber > mPrivate->mPlaneGeometryVector.size() ||
-    !mPrivate->mPlaneGeometryVector[sliceNumber])
+  if (sliceNumber > mPrivate->mPlaneGeometryVector.size())
   {
     return false;
   }
@@ -161,16 +161,15 @@ bool SlicedGeometry::setPlaneGeometry(int sliceNumber)
     if (!plane)
     {
       createPlane(sliceNumber);
-      return true;
       this->Modified();
     }
+	return true;
   }
   else
   {
     SPDLOG_WARN("slice number is incorrect");
+	return false;
   }
-
-  return false;
 }
 
 SlicedGeometry::SlicedGeometry()
