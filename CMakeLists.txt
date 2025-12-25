@@ -38,6 +38,7 @@ add_subdirectory(App)
 add_subdirectory(Common)
 add_subdirectory(UI)
 add_subdirectory(MultiPlanarReconstruct)
+add_subdirectory(Grinding)
 
 option(enable_testing OFF)
 

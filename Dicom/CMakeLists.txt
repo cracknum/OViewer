@@ -21,4 +21,4 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     VTK::CommonDataModel VTK::CommonExecutionModel VTK::IOImage
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-export_model(${export_config_file_path} ${PROJECT_NAME})
+export_model(${export_config_file_path} ${PROJECT_NAME} ${PROJECT_NAME})

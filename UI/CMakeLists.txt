@@ -22,6 +22,11 @@ if (NOT TARGET glm::glm)
     find_package(glm CONFIG REQUIRED)
 endif()
 
+if(NOT TARGET VTK::GUISupportQt)
+    find_package(VTK REQUIRED COMPONENTS GUISupportQt FiltersSources RenderingCore RenderingOpenGL2)
+endif()
+
+
 set(vtk_libs VTK::GUISupportQt VTK::FiltersSources VTK::RenderingCore VTK::RenderingOpenGL2)
 if (NOT "${Source_files}")
     add_library(${PROJECT_NAME} SHARED ${Header_files} ${Source_files} ${CMAKE_CURRENT_SOURCE_DIR}/resource.qrc)
@@ -37,7 +42,7 @@ if (NOT "${Source_files}")
             PUBLIC include
             PRIVATE ${SARibbonBar_INCLUDE_DIR})
             
-    export_model(${export_config_file_path} ${PROJECT_NAME})
+    export_model(${export_config_file_path} ${PROJECT_NAME} ${PROJECT_NAME})
     group_sources_by_directory(${PROJECT_NAME})
 
     vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${vtk_libs})
