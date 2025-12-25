@@ -1,10 +1,10 @@
-function(export_model config_file_path project_name)
-    string(TOUPPER ${project_name} MODULE_NAME)
-    set(export_file ${CMAKE_CURRENT_SOURCE_DIR}/include/${project_name}Export.h)
+function(export_model config_file_path export_file_name project_name)
+    string(TOUPPER ${export_file_name} MODULE_NAME)
+    set(export_file ${CMAKE_CURRENT_SOURCE_DIR}/include/${export_file_name}Export.h)
     if (NOT EXISTS ${export_file})
         configure_file(
                 ${export_config_file_path}
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/${project_name}Export.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/${export_file_name}Export.h
         )
     endif ()
     if (NOT TARGET ${project_name})
