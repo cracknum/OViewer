@@ -4,8 +4,9 @@ function(export_model config_file_path export_file_name project_name)
 
     if(NOT EXISTS ${export_file})
         configure_file(
-            ${export_config_file_path}
+            ${config_file_path}
             ${CMAKE_CURRENT_SOURCE_DIR}/include/${export_file_name}Export.h
+            @ONLY
         )
     endif()
 
