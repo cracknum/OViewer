@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19...4.0)
 
-project(SDFShaders)
+project(Shaders)
 
 file(GLOB vertex_shader_files "Vertex/*.vert")
 file(GLOB geometry_shader_files "Geometry/*.geom")
