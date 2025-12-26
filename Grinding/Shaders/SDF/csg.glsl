@@ -3,8 +3,7 @@
 // Author: Based on Inigo Quilez & Community Best Practices
 // =============================================================================
 
-#ifndef CSG_GLSL
-#define CSG_GLSL
+#pragma once
 
 // ----------------------------------------------------------------------------
 // 🔷 基础 CSG 布尔操作（精确）
@@ -164,5 +163,3 @@ float distPointToSegment(vec3 p, vec3 a, vec3 b) {
 float safeClamp(float x, float a, float b) {
     return clamp(x, min(a, b), max(a, b));
 }
-
-#endif // CSG_GLSL

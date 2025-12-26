@@ -13,7 +13,7 @@ if (NOT TARGET VTK::CommonDataModel)
     find_package(VTK REQUIRED COMPONENTS CommonDataModel CommonExecutionModel)
 endif ()
 
-set(library_name ${MODULE_NAME}.${PROJECT_NAME})
+set(library_name ${MODULE_NAME}${PROJECT_NAME})
 
 add_library(${library_name} SHARED ${Header_files} ${Source_files})
 target_link_libraries(${library_name} PUBLIC
@@ -35,7 +35,7 @@ export_model(${export_config_file_path} ${PROJECT_NAME} ${library_name})
 
 # --------- enable testing ----------
 message(STATUS "${MODULE_NAME}_${PROJECT_NAME}_TESTING checking")
-if (${MODULE_NAME}_${PROJECT_NAME}_TESTING)
+if (${library_name}_TESTING)
     message(STATUS "Enable test: ${MODULE_NAME}_${PROJECT_NAME}_TESTING")
     if (NOT TARGET gtest_main)
         find_package(Gtest CONFIG REQUIRED)

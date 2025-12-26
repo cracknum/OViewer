@@ -1,5 +1,4 @@
-#ifndef SHAPE_SDF_GLSL
-#define SHAPE_SDF_GLSL
+#pragma once
 // 所有的sdf函数的中心或者原点都在(0,0,0)
 
 float dot2(in vec2 v)
@@ -483,5 +482,3 @@ float sdU(in vec3 p, in float r, in float le, vec2 w)
   vec2 q = vec2((k < 0.0) ? -k : length(max(p.xy, 0.0)), abs(p.z)) - w;
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
 }
-
-#endif // SHAPE_SDF_GLSL
