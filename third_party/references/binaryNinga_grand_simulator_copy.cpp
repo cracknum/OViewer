@@ -2119,9 +2119,9 @@ int64_t j_sub_180014af0(int64_t *arg1) {
   return sub_180014af0(arg1);
 }
 
-int64_t *j_sub_180029770(int64_t *arg1, char *arg2) {
+int64_t *j_appendStr(int64_t *arg1, char *arg2) {
   /* tailcall */
-  return sub_180029770(arg1, arg2);
+  return appendStr(arg1, arg2);
 }
 
 int64_t j_sub_18001d4d0(void *arg1, int64_t arg2 @zmm1) {
@@ -13157,7 +13157,7 @@ int64_t sub_18001dc80(vtkObject *arg1, class vtkRenderState *arg2) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_250);
   void var_228;
   j_sub_18002af80(&var_228, 2, 1);
-  j_sub_180029770(&var_228, "vtkGrindSimulatePass::Render");
+  j_appendStr(&var_228, "vtkGrindSimulatePass::Render");
   class vtkRenderWindow *__ptr64 rax_3 =
       vtkRenderer::GetRenderWindow(vtkRenderState::GetRenderer(arg2));
   vtkRenderTimerLog *rax_6 = (*(*rax_3 + 0x248))(rax_3);
@@ -13173,13 +13173,13 @@ int64_t sub_18001dc80(vtkObject *arg1, class vtkRenderState *arg2) {
   if (*__GLEW_VERSION_4_3) {
     if (j_sub_18001ebe0(arg1, arg2)) {
       vtkOpenGLRenderPass::PreRender(arg1, arg2);
-      j_sub_18001ed30(arg1, arg2); // vtkGrindSimulatePass::Initialize
-      j_sub_180021700(arg1); // vtkGrindSimulatePass::MergeTools
-      j_sub_180021dc0(arg1); // vtkGrindSimulatePass::UpdateToolGrid
-      j_sub_180020c80(arg1); // vtkGrindSimulatePass::Prepare
-      j_sub_180021330(arg1); // vtkGrindSimulatePass::UpdateABuffer
-      j_sub_180022a00(arg1); // vtkGrindSimulatePass::CompositeSDF
-      j_sub_1800236e0(arg1); // vtkGrindSimulatePass::Finalize
+      j_sub_18001ed30(arg1, arg2);
+      j_sub_180021700(arg1);
+      j_sub_180021dc0(arg1);
+      j_sub_180020c80(arg1);
+      j_sub_180021330(arg1);
+      j_sub_180022a00(arg1);
+      j_sub_1800236e0(arg1);
       vtkOpenGLRenderPass::PostRender(arg1, arg2);
       vtkRenderTimerLog::ScopedEventLogger::~ScopedEventLogger(&var_250);
     } else
@@ -13528,7 +13528,7 @@ int64_t sub_18001ed30(vtkObject *arg1, vtkRenderState *arg2) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_1c0);
   void var_198;
   j_sub_18002af80(&var_198, 2, 1);
-  j_sub_180029770(&var_198, "vtkGrindSimulatePass::Initialize");
+  j_appendStr(&var_198, "vtkGrindSimulatePass::Initialize");
   vtkRenderTimerLog *rax_13 = *(arg1 + 0x68);
   void var_a0;
   int64_t *var_38_1 = j_sub_180030000(&var_198, &var_a0);
@@ -14075,7 +14075,7 @@ int64_t sub_180020c80(vtkObject *arg1) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_540);
   void var_518;
   j_sub_18002af80(&var_518, 2, 1);
-  j_sub_180029770(&var_518, "vtkGrindSimulatePass::Prepare");
+  j_appendStr(&var_518, "vtkGrindSimulatePass::Prepare");
   vtkRenderTimerLog *rax_3 = *(arg1 + 0x68);
   void var_420;
   int64_t *var_d0_1 = j_sub_180030000(&var_518, &var_420);
@@ -14187,7 +14187,7 @@ int64_t sub_180021330(void *arg1) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_1e0);
   void var_1b8;
   j_sub_18002af80(&var_1b8, 2, 1);
-  j_sub_180029770(&var_1b8, "vtkGrindSimulatePass::UpdateABuffer");
+  j_appendStr(&var_1b8, "vtkGrindSimulatePass::UpdateABuffer");
   vtkRenderTimerLog *rax_3 = *(arg1 + 0x68);
   void var_c0;
   int64_t *var_68_1 = j_sub_180030000(&var_1b8, &var_c0);
@@ -14210,7 +14210,7 @@ int64_t sub_180021330(void *arg1) {
   (*__glewBindImageTexture)(0, *(arg1 + 0xa0), 0, 0, 0, 0x88ba, var_208);
   (*__glewBindBufferBase)(0x90d2, 0, *(arg1 + 0xa4));
   (*__glewBindBufferBase)(0x92c0, 0, *(arg1 + 0xa8));
-  j_sub_180023870(arg1, 2);  // vtkGrindSimulatePass::RenderOpaquePass
+  j_sub_180023870(arg1, 2);
   j_sub_180023ba0(arg1);
   var_208 = 0x8236;
   (*__glewBindImageTexture)(0, 0, 0, 0, 0, 0x88ba, var_208);
@@ -14370,7 +14370,7 @@ int64_t sub_180021dc0(void *arg1) {
     vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_580);
     void var_558;
     j_sub_18002af80(&var_558, 2, 1);
-    j_sub_180029770(&var_558, "vtkGrindSimulatePass::UpdateToolGrid");
+    j_appendStr(&var_558, "vtkGrindSimulatePass::UpdateToolGrid");
     vtkRenderTimerLog *rax_6 = *(arg1 + 0x68);
     void var_460;
     int64_t *var_128_1 = j_sub_180030000(&var_558, &var_460);
@@ -14584,7 +14584,7 @@ int64_t sub_180022a00(void *arg1) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_630);
   void var_608;
   j_sub_18002af80(&var_608, 2, 1);
-  j_sub_180029770(&var_608, "vtkGrindSimulatePass::CompositeSDF");
+  j_appendStr(&var_608, "vtkGrindSimulatePass::CompositeSDF");
   vtkRenderTimerLog *rax_3 = *(arg1 + 0x68);
   void var_510;
   int64_t *var_160_1 = j_sub_180030000(&var_608, &var_510);
@@ -14778,7 +14778,7 @@ int64_t sub_1800236e0(void *arg1) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_1a0);
   void var_178;
   j_sub_18002af80(&var_178, 2, 1);
-  j_sub_180029770(&var_178, "vtkGrindSimulatePass::Finalize");
+  j_appendStr(&var_178, "vtkGrindSimulatePass::Finalize");
   vtkRenderTimerLog *rax_3 = *(arg1 + 0x68);
   void var_80;
   int64_t *var_28_1 = j_sub_180030000(&var_178, &var_80);
@@ -14876,7 +14876,7 @@ int64_t sub_180023ba0(void *arg1) {
   vtkRenderTimerLog::ScopedEventLogger::ScopedEventLogger(&var_1b0);
   void var_188;
   j_sub_18002af80(&var_188, 2, 1);
-  j_sub_180029770(&var_188, "vtkGrindSimulatePass::RenderOpaquePass");
+  j_appendStr(&var_188, "vtkGrindSimulatePass::RenderOpaquePass");
   vtkRenderTimerLog *rax_3 = *(arg1 + 0x68);
   void var_90;
   int64_t *var_38_1 = j_sub_180030000(&var_188, &var_90);
@@ -14956,12 +14956,12 @@ int64_t sub_180023f00(void *arg1, class std::string &__ptr64 arg2) {
 
   while (var_278 < j_sub_18001c200(rax_3)) {
     void var_378;
-    j_sub_180029770(
+    j_appendStr(
         std::ostream::operator<<(
-            j_sub_180029770(
-                j_sub_180029770(
+            j_appendStr(
+                j_appendStr(
                     std::ostream::operator<<(
-                        j_sub_180029770(&var_378, "uniform float expandLen"),
+                        j_appendStr(&var_378, "uniform float expandLen"),
                         var_278),
                     ";\n"),
                 "uniform vec3 expandClr"),
@@ -15008,14 +15008,14 @@ int64_t sub_180023f00(void *arg1, class std::string &__ptr64 arg2) {
 
       while (var_f4_1 < j_sub_18001c200(rax_3)) {
         void var_1e8;
-        j_sub_180029770(
-            j_sub_180029770(
-                j_sub_180029770(
+        j_appendStr(
+            j_appendStr(
+                j_appendStr(
                     std::ostream::operator<<(
-                        j_sub_180029770(
-                            j_sub_180029770(
+                        j_appendStr(
+                            j_appendStr(
                                 std::ostream::operator<<(
-                                    j_sub_180029770(
+                                    j_appendStr(
                                         &var_1e8,
                                         "            if (dist <= expandLen"),
                                     var_f4_1),
@@ -15219,7 +15219,7 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
     vtkShaderProgram::Substitute(arg4, &var_408, &var_430, true);
     j_sub_18002bb60(&var_408);
     j_sub_18002bb60(&var_430);
-    j_sub_180029770(
+    j_appendStr(
         &var_578,
         "  float df = max(0.0,normal.z);\n  float sf = pow(df, "
         "specularPower);\n  vec3 diffuse = df "
@@ -15241,11 +15241,11 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
     j_sub_18002bb60(&var_390);
 
     for (int32_t i = 0; i < arg3; i += 1)
-      j_sub_180029770(
+      j_appendStr(
           std::ostream::operator<<(
-              j_sub_180029770(
+              j_appendStr(
                   std::ostream::operator<<(
-                      j_sub_180029770(&var_578, "uniform vec3 lightColor"), i),
+                      j_appendStr(&var_578, "uniform vec3 lightColor"), i),
                   ";\n  uniform vec3 lightDirectionVC"),
               i),
           "; // normalized\n");
@@ -15262,20 +15262,20 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
     j_sub_18002b1f0(&var_310, &data_18004fa56);
     j_sub_18002ffa0(&var_578, &var_310);
     j_sub_18002bb60(&var_310);
-    j_sub_180029770(&var_578, "  vec3 diffuse = vec3(0,0,0);\n  vec3 specular "
+    j_appendStr(&var_578, "  vec3 diffuse = vec3(0,0,0);\n  vec3 specular "
                               "= vec3(0,0,0);\n  float df;\n  float sf;\n");
 
     for (int32_t i_1 = 0; i_1 < arg3; i_1 += 1)
-      j_sub_180029770(
+      j_appendStr(
           std::ostream::operator<<(
-              j_sub_180029770(
+              j_appendStr(
                   std::ostream::operator<<(
-                      j_sub_180029770(
-                          j_sub_180029770(
+                      j_appendStr(
+                          j_appendStr(
                               std::ostream::operator<<(
-                                  j_sub_180029770(
+                                  j_appendStr(
                                       std::ostream::operator<<(
-                                          j_sub_180029770(
+                                          j_appendStr(
                                               &var_578,
                                               "    df = max(0.0, dot(normal, "
                                               "-lightDirectionVC"),
@@ -15291,7 +15291,7 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
               i_1),
           ");\n");
 
-    j_sub_180029770(
+    j_appendStr(
         &var_578,
         "  diffuse = diffuse * diffuseColor;\n  specular = specular * "
         "specularColor;\n  "
@@ -15311,17 +15311,17 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
     j_sub_18002bb60(&var_290);
 
     for (int32_t i_2 = 0; i_2 < arg3; i_2 += 1) {
-      int64_t *rax_53 = j_sub_180029770(
+      int64_t *rax_53 = j_appendStr(
           std::ostream::operator<<(
-              j_sub_180029770(
+              j_appendStr(
                   std::ostream::operator<<(
-                      j_sub_180029770(
+                      j_appendStr(
                           std::ostream::operator<<(
-                              j_sub_180029770(
+                              j_appendStr(
                                   std::ostream::operator<<(
-                                      j_sub_180029770(
+                                      j_appendStr(
                                           std::ostream::operator<<(
-                                              j_sub_180029770(
+                                              j_appendStr(
                                                   &var_578,
                                                   "uniform vec3 lightColor"),
                                               i_2),
@@ -15335,8 +15335,8 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
                   ";\nuniform float lightConeAngle"),
               i_2),
           ";\nuniform float lightExponent");
-      j_sub_180029770(std::ostream::operator<<(
-                          j_sub_180029770(std::ostream::operator<<(rax_53, i_2),
+      j_appendStr(std::ostream::operator<<(
+                          j_appendStr(std::ostream::operator<<(rax_53, i_2),
                                           ";\nuniform int lightPositional"),
                           i_2),
                       ";\n\n");
@@ -15354,23 +15354,23 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
     j_sub_18002b1f0(&var_210, &data_18004fa5b);
     j_sub_18002ffa0(&var_578, &var_210);
     j_sub_18002bb60(&var_210);
-    j_sub_180029770(&var_578,
+    j_appendStr(&var_578,
                     "  vec3 diffuse = vec3(0,0,0);\n  vec3 specular = "
                     "vec3(0,0,0);\n  vec3 vertLightDirectionVC;"
                     "  float attenuation;\n  float df;\n  float sf;\n");
 
     for (int32_t i_3 = 0; i_3 < arg3; i_3 += 1) {
-      int64_t *rax_76 = j_sub_180029770(
+      int64_t *rax_76 = j_appendStr(
           std::ostream::operator<<(
-              j_sub_180029770(
+              j_appendStr(
                   std::ostream::operator<<(
-                      j_sub_180029770(
+                      j_appendStr(
                           std::ostream::operator<<(
-                              j_sub_180029770(
+                              j_appendStr(
                                   std::ostream::operator<<(
-                                      j_sub_180029770(
+                                      j_appendStr(
                                           std::ostream::operator<<(
-                                              j_sub_180029770(
+                                              j_appendStr(
                                                   &var_578,
                                                   "    attenuation = 1.0;\n    "
                                                   "if (lightPositional"),
@@ -15392,16 +15392,16 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
                   ".x\n         + lightAttenuation"),
               i_3),
           ".y * distanceVC\n         + lightAttenuation");
-      int64_t *rax_87 = j_sub_180029770(
-          j_sub_180029770(
+      int64_t *rax_87 = j_appendStr(
+          j_appendStr(
               std::ostream::operator<<(
-                  j_sub_180029770(
+                  j_appendStr(
                       std::ostream::operator<<(
-                          j_sub_180029770(
+                          j_appendStr(
                               std::ostream::operator<<(
-                                  j_sub_180029770(
+                                  j_appendStr(
                                       std::ostream::operator<<(
-                                          j_sub_180029770(
+                                          j_appendStr(
                                               std::ostream::operator<<(rax_76,
                                                                        i_3),
                                               ".z * distanceVC * "
@@ -15426,9 +15426,9 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
           "    df = max(0.0,attenuation*dot(normal, -vertLightDirectionVC));\n "
           "   diffuse += (df * "
           "lightColor");
-      j_sub_180029770(
+      j_appendStr(
           std::ostream::operator<<(
-              j_sub_180029770(std::ostream::operator<<(rax_87, i_3),
+              j_appendStr(std::ostream::operator<<(rax_87, i_3),
                               ");\n    sf = sign(df)*attenuation*pow( max(0.0, "
                               "dot( reflect(vertLightDirectionVC, "
                               "normal), normalize(-vertexVC.xyz))), "
@@ -15438,7 +15438,7 @@ int64_t sub_1800246d0(int64_t arg1, int32_t arg2, int32_t arg3,
           ");\n");
     }
 
-    j_sub_180029770(
+    j_appendStr(
         &var_578,
         "  diffuse = diffuse * diffuseColor;\n  specular = specular * "
         "specularColor;\n  "
@@ -15488,7 +15488,7 @@ int64_t sub_1800252a0(void *arg1) {
     void *var_4a8;
     j_sub_18002b380(&var_4a8, 3, 1);
     void var_498;
-    std::ostream::operator<<(j_sub_180029770(&var_498, "expandLen"), var_4f8);
+    std::ostream::operator<<(j_appendStr(&var_498, "expandLen"), var_4f8);
     float zmm0_1 = *j_sub_18002bfa0(&var_4e0);
     void var_3a0;
     vtkShaderProgram::SetUniformf(
@@ -15497,7 +15497,7 @@ int64_t sub_1800252a0(void *arg1) {
     void *var_368;
     j_sub_18002b380(&var_368, 3, 1);
     void var_358;
-    std::ostream::operator<<(j_sub_180029770(&var_358, "expandClr"), var_4f8);
+    std::ostream::operator<<(j_appendStr(&var_358, "expandClr"), var_4f8);
     float *rax_25 = j_sub_18002ec50(j_sub_18002bfa0(&var_4e0) + 8);
     void var_260;
     vtkShaderProgram::SetUniform3f(
@@ -16042,7 +16042,7 @@ int64_t *sub_1800296d0(int64_t *arg1, int64_t arg2) {
   return arg1;
 }
 
-int64_t *sub_180029770(int64_t *arg1, char *arg2) {
+int64_t *appendStr(int64_t *arg1, char *arg2) {
   void var_108;
   __builtin_memset(&var_108, 0xcccccccc, 0x100);
   int64_t var_88 = -2;
@@ -18297,7 +18297,7 @@ int32_t sub_1800307c0(std::ostream *arg1, int32_t arg2, int32_t arg3,
                       int64_t arg4, int64_t arg5) {
   void var_78;
   __builtin_memset(&var_78, 0xcccccccc, 0x70);
-  std::ostream::operator<<(j_sub_180029770(std::ostream::operator<<(arg1, arg3),
+  std::ostream::operator<<(j_appendStr(std::ostream::operator<<(arg1, arg3),
                                            " OpenGL errors detected"),
                            j_sub_18002abd0);
 
@@ -18306,11 +18306,11 @@ int32_t sub_1800307c0(std::ostream *arg1, int32_t arg2, int32_t arg3,
       break;
 
     std::ostream::operator<<(
-        j_sub_180029770(
-            j_sub_180029770(
+        j_appendStr(
+            j_appendStr(
                 std::ostream::operator<<(
-                    j_sub_180029770(std::ostream::operator<<(
-                                        j_sub_180029770(arg1, "  "), i),
+                    j_appendStr(std::ostream::operator<<(
+                                        j_appendStr(arg1, "  "), i),
                                     " : ("),
                     *(arg4 + (i << 2))),
                 ") "),
@@ -18322,8 +18322,8 @@ int32_t sub_1800307c0(std::ostream *arg1, int32_t arg2, int32_t arg3,
     return arg2;
 
   return std::ostream::operator<<(
-      j_sub_180029770(
-          std::ostream::operator<<(j_sub_180029770(arg1, "More than "), arg2),
+      j_appendStr(
+          std::ostream::operator<<(j_appendStr(arg1, "More than "), arg2),
           " detected! The remainder are not reported"),
       j_sub_18002abd0);
 }
@@ -18886,10 +18886,10 @@ int64_t sub_180032570(void *arg1, int64_t *arg2, void *arg3, void *arg4,
     void *var_248;
     j_sub_18002b380(&var_248, 3, 1);
     void var_238;
-    j_sub_180029770(
+    j_appendStr(
         std::ostream::operator<<(
-            j_sub_180029770(
-                j_sub_180029770(j_sub_180029770(&var_238, "D:/Test/"), arg6),
+            j_appendStr(
+                j_appendStr(j_appendStr(&var_238, "D:/Test/"), arg6),
                 "_"),
             *(arg1 + 0x20)),
         ".vti");

@@ -104,8 +104,67 @@ def get_image_bounds(image):
     return bounds
 
 
-binary_volume = sitk.ReadImage(r"D:\Workspace\gitProject\build\bin\Release\data\1\coarsePredict\17"
-                                   r"\mask_tooth_crop.nii.gz")
+binary_volume = sitk.ReadImage(r"F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz")
 tsdf_image = binary_to_tsdf(binary_volume)
 tsdf_image = np.transpose(tsdf_image, (2, 1, 0))
-bounds = get_image_bounds(binary_volume)
+vtk_image = vtk.vtkImageData()
+vtk_image.SetDimensions(tsdf_image.shape)
+vtk_image.SetSpacing(binary_volume.GetSpacing())
+vtk_image.SetOrigin(binary_volume.GetOrigin())
+
+# 转换为 VTK 数组
+vtk_array = numpy_support.numpy_to_vtk(tsdf_image.ravel(order='F'), deep=True, array_type=vtk.VTK_FLOAT)
+vtk_image.GetPointData().SetScalars(vtk_array)
+
+resized_vtk_image_filter = vtk.vtkImageReslice()
+resized_vtk_image_filter.SetInputData(vtk_image)
+resized_vtk_image_filter.SetOutputSpacing(binary_volume.GetSpacing()[0] * 0.5, binary_volume.GetSpacing()[1] * 0.5, binary_volume.GetSpacing()[2] * 0.5)
+resized_vtk_image_filter.SetOutputExtent(0, tsdf_image.shape[0] * 2 - 1, 0, tsdf_image.shape[1] * 2 - 1, 0, tsdf_image.shape[2] * 2 - 1)
+resized_vtk_image_filter.SetInterpolationModeToLinear()
+resized_vtk_image_filter.Update()
+# 2. 创建 Volume Mapper（GPU Ray Casting）
+volume_mapper = vtk.vtkGPUVolumeRayCastMapper()
+volume_mapper.SetInputData(resized_vtk_image_filter.GetOutput())
+volume_mapper.SetBlendModeToComposite()  # 或 SetBlendModeToMaximumIntensity()
+
+# 3. 创建 Transfer Functions（颜色 & 不透明度）
+color_tf = vtk.vtkColorTransferFunction()
+opacity_tf = vtk.vtkPiecewiseFunction()
+
+# 关键：在 TSDF=0 处设置高不透明度（等值面）
+iso_value = 0.0
+surface_opacity = 1.0
+color_tf.AddRGBPoint(iso_value, 0.8, 0.8, 1.0)  # 蓝色
+opacity_tf.AddPoint(iso_value - 0.1, 0.0)
+opacity_tf.AddPoint(iso_value, surface_opacity)
+opacity_tf.AddPoint(iso_value + 0.1, 0.0)
+
+# 4. Volume Property
+volume_property = vtk.vtkVolumeProperty()
+volume_property.SetColor(color_tf)
+volume_property.SetScalarOpacity(opacity_tf)
+volume_property.ShadeOn()          # 启用 Phong 光照
+volume_property.SetInterpolationTypeToLinear()
+
+# 5. Volume Actor
+volume = vtk.vtkVolume()
+volume.SetMapper(volume_mapper)
+volume.SetProperty(volume_property)
+
+# 6. Renderer
+renderer = vtk.vtkRenderer()
+render_window = vtk.vtkRenderWindow()
+render_window.AddRenderer(renderer)
+render_window_interactor = vtk.vtkRenderWindowInteractor()
+render_window_interactor.SetRenderWindow(render_window)
+
+renderer.AddVolume(volume)
+renderer.SetBackground(0.1, 0.1, 0.1)
+
+# 启用深度测试（重要！）
+render_window.SetMultiSamples(0)  # 提升性能
+renderer.UseDepthPeelingOn()
+
+# 7. 启动交互
+render_window.Render()
+render_window_interactor.Start()
