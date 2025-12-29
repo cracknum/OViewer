@@ -14671,7 +14671,7 @@ int64_t sub_180022a00(void *arg1) {
     int64_t rax_46 = *(*rax_43 + 0xa0);
     void *rax_49 = j_sub_18002eab0(
         vtkOpenGLRenderUtilities::GetFullScreenQuadGeometryShader());
-    void *rax_50 = j_sub_18002eab0(&var_3d0);
+    void *rax_50 = j_f(&var_3d0);
     *(arg1 + 0xe0) =
         rax_46(rax_43,
                j_sub_18002eab0(

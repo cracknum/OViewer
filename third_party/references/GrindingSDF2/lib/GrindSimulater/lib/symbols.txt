@@ -1,0 +1,40 @@
+Microsoft (R) COFF/PE Dumper Version 14.29.30154.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file GrindSimulaterd.lib
+
+File Type: LIBRARY
+
+COFF SYMBOL TABLE
+000 010169AB ABS    notype       Static       | @comp.id
+001 00000000 SECT2  notype       External     | __IMPORT_DESCRIPTOR_GrindSimulaterd
+002 C0000040 SECT2  notype       Section      | .idata$2
+003 00000000 SECT3  notype       Static       | .idata$6
+004 C0000040 UNDEF  notype       Section      | .idata$4
+005 C0000040 UNDEF  notype       Section      | .idata$5
+006 00000000 UNDEF  notype       External     | __NULL_IMPORT_DESCRIPTOR
+007 00000000 UNDEF  notype       External     | GrindSimulaterd_NULL_THUNK_DATA
+
+String Table Size = 0x62 bytes
+
+COFF SYMBOL TABLE
+000 010169AB ABS    notype       Static       | @comp.id
+001 00000000 SECT2  notype       External     | __NULL_IMPORT_DESCRIPTOR
+
+String Table Size = 0x1D bytes
+
+COFF SYMBOL TABLE
+000 010169AB ABS    notype       Static       | @comp.id
+001 00000000 SECT2  notype       External     | GrindSimulaterd_NULL_THUNK_DATA
+
+String Table Size = 0x25 bytes
+
+  Summary
+
+          DB .debug$S
+          14 .idata$2
+          14 .idata$3
+           8 .idata$4
+           8 .idata$5
+          14 .idata$6
