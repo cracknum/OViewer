@@ -11,6 +11,9 @@
 #include <vtkTextureObject.h>
 #include <vtkPNGWriter.h>
 #include <vtkUnsignedCharArray.h>
+#include <vtkShaderProgram.h>
+#include <spdlog/spdlog.h>
+#include <vtkShader.h>
 
 struct ColorChangePass::Private
 {
@@ -39,10 +42,10 @@ void ColorChangePass::Render(const vtkRenderState* s)
 
   if (!mPrivate->mColorTexture)
   {
-      mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
-      mPrivate->mColorTexture->SetContext(renderWindow);
-      mPrivate->mColorTexture->Allocate2D(viewportSize[0], viewportSize[1], 4, VTK_UNSIGNED_CHAR, 0);
-      mPrivate->mColorTexture->SetContext(renderWindow);
+    mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
+    mPrivate->mColorTexture->SetContext(renderWindow);
+    mPrivate->mColorTexture->Allocate2D(viewportSize[0], viewportSize[1], 4, VTK_UNSIGNED_CHAR, 0);
+    mPrivate->mColorTexture->SetContext(renderWindow);
   }
   else
   {
@@ -62,11 +65,13 @@ void ColorChangePass::Render(const vtkRenderState* s)
       auto dbit = renderWindow->GetDepthBufferSize();
       if (dbit == 32)
       {
-        mPrivate->mDepthTexture->AllocateDepth(viewportSize[0], viewportSize[1], vtkTextureObject::Fixed32);
+        mPrivate->mDepthTexture->AllocateDepth(
+          viewportSize[0], viewportSize[1], vtkTextureObject::Fixed32);
       }
       else
       {
-        mPrivate->mDepthTexture->AllocateDepth(viewportSize[0], viewportSize[1], vtkTextureObject::Fixed24);
+        mPrivate->mDepthTexture->AllocateDepth(
+          viewportSize[0], viewportSize[1], vtkTextureObject::Fixed24);
       }
     }
   }
@@ -79,12 +84,14 @@ void ColorChangePass::Render(const vtkRenderState* s)
   {
     mPrivate->mFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
     mPrivate->mFrameBuffer->SetContext(renderWindow);
-	state->PushFramebufferBindings();
+    state->PushFramebufferBindings();
     mPrivate->mFrameBuffer->Bind();
-	mPrivate->mFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
-	mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
+    mPrivate->mFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
+    mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
     state->PopFramebufferBindings();
   }
+  // 只有执行PreRender时才能调用替换shader
+  this->PreRender(s);
   state->PushFramebufferBindings();
   mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
   mPrivate->mFrameBuffer->ActivateDrawBuffer(0);
@@ -101,17 +108,50 @@ void ColorChangePass::Render(const vtkRenderState* s)
   this->UpdateLights(renderer);
   this->UpdateGeometry(renderer);
 
-  // 调整绘制的非背景图像的颜色
-
   mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
   renderWindow->GetRenderFramebuffer()->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
-  state->vtkglBlitFramebuffer(
-	0, 0, viewportSize[0], viewportSize[1],
-	0, 0, viewportSize[0], viewportSize[1],
-	GL_COLOR_BUFFER_BIT,
-	GL_LINEAR
-  );
+  state->vtkglBlitFramebuffer(0, 0, viewportSize[0], viewportSize[1], 0, 0, viewportSize[0],
+    viewportSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
   state->PopFramebufferBindings();
+  this->PostRender(s);
+}
+/**
+ *
+ * PreReplaceShaderValues会在所有的mapper执行之前替换指定的shader代码，
+ * 但是，即使在PreReplaceShaderValues中替换了变量也无法在PreReplaceShaderValues中设置变量，
+ * 变量的设置要在重写的SetShaderParameters中完成
+ *
+ * 所有这一切的发生都要在Render方法中调用PreRender才能执行，否则就不会被执行
+ *
+ */
+bool ColorChangePass::PreReplaceShaderValues(std::string& vertexShader, std::string& geometryShader,
+  std::string& fragmentShader, vtkAbstractMapper* mapper, vtkProp* prop)
+{
+  // 否则，注入自定义代码
+  bool replaced = vtkShaderProgram::Substitute(
+    fragmentShader, "//VTK::CustomUniforms::Dec",
+    "uniform vec3 uGlowColor;"
+    "//VTK::CustomUniforms::Dec",
+    false);
+  SPDLOG_INFO("//VTK::Uniforms::Dec replaced:{}", replaced);
+
+  replaced = vtkShaderProgram::Substitute(fragmentShader, "//VTK::TCoord::Impl",
+    "fragOutput0.rgb += uGlowColor;"
+    "//VTK::TCoord::Impl",
+    false);
+  SPDLOG_INFO("//VTK::TCoord::Impl, replaced: {}", replaced);
+  return true;
+}
+bool ColorChangePass::SetShaderParameters(vtkShaderProgram* program, vtkAbstractMapper* mapper,
+  vtkProp* prop, vtkOpenGLVertexArrayObject* VAO)
+{
+  if (program->IsUniformUsed("uGlowColor"))
+  {
+    constexpr float color[3] = { -0.5, 0.5, 0.5 };
+    program->SetUniform3f("uGlowColor", color);
+    return true;
+  }
+  return true;
 }
 void ColorChangePass::ReleaseGraphicsResources(vtkWindow* w)
 {

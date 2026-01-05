@@ -16,7 +16,10 @@ public:
    * \pre s_exists: s!=0
    */
   void Render(const vtkRenderState* s) override;
-
+  bool PreReplaceShaderValues(std::string& vertexShader, std::string& geometryShader,
+      std::string& fragmentShader, vtkAbstractMapper* mapper, vtkProp* prop) override;
+  bool SetShaderParameters(vtkShaderProgram* program, vtkAbstractMapper* mapper,
+    vtkProp* prop, vtkOpenGLVertexArrayObject* VAO = nullptr) override;
   /**
    * Release graphics resources and ask components to release their own
    * resources.
