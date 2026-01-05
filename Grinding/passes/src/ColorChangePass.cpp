@@ -1,12 +1,16 @@
 #include "ColorChangePass.h"
+
+#include <vtkImageData.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
 #include <vtkTextureObject.h>
-#include <vtkOpenGLState.h>
+#include <vtkPNGWriter.h>
+#include <vtkUnsignedCharArray.h>
 
 struct ColorChangePass::Private
 {
@@ -35,13 +39,10 @@ void ColorChangePass::Render(const vtkRenderState* s)
 
   if (!mPrivate->mColorTexture)
   {
-    mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
-    mPrivate->mColorTexture->SetInternalFormat(GL_RGBA8);
-    mPrivate->mColorTexture->SetFormat(GL_RGBA);
-    mPrivate->mColorTexture->SetDataType(GL_UNSIGNED_BYTE);
-    mPrivate->mColorTexture->SetContext(renderWindow);
-    mPrivate->mColorTexture->Allocate2D(viewportSize[0], viewportSize[1], 4, GL_UNSIGNED_BYTE, 0);
-    mPrivate->mColorTexture->SetContext(renderWindow);
+      mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
+      mPrivate->mColorTexture->SetContext(renderWindow);
+      mPrivate->mColorTexture->Allocate2D(viewportSize[0], viewportSize[1], 4, VTK_UNSIGNED_CHAR, 0);
+      mPrivate->mColorTexture->SetContext(renderWindow);
   }
   else
   {
@@ -51,11 +52,23 @@ void ColorChangePass::Render(const vtkRenderState* s)
   if (!mPrivate->mDepthTexture)
   {
     mPrivate->mDepthTexture = vtkSmartPointer<vtkTextureObject>::New();
+    mPrivate->mDepthTexture->SetContext(renderWindow);
     if (renderWindow->GetStencilCapable())
     {
       mPrivate->mDepthTexture->AllocateDepthStencil(viewportSize[0], viewportSize[1]);
     }
-    mPrivate->mDepthTexture->SetContext(renderWindow);
+    else
+    {
+      auto dbit = renderWindow->GetDepthBufferSize();
+      if (dbit == 32)
+      {
+        mPrivate->mDepthTexture->AllocateDepth(viewportSize[0], viewportSize[1], vtkTextureObject::Fixed32);
+      }
+      else
+      {
+        mPrivate->mDepthTexture->AllocateDepth(viewportSize[0], viewportSize[1], vtkTextureObject::Fixed24);
+      }
+    }
   }
   else
   {
@@ -75,10 +88,20 @@ void ColorChangePass::Render(const vtkRenderState* s)
   state->PushFramebufferBindings();
   mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
   mPrivate->mFrameBuffer->ActivateDrawBuffer(0);
+  // 清空 FBO（否则可能看到垃圾）
+  state->vtkglViewport(0, 0, viewportSize[0], viewportSize[1]);
+
+  state->vtkglClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 黑色背景
+  state->vtkglClearDepth(1.0);
+  state->vtkglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  vtkOpenGLState::ScopedglEnableDisable depthSaver(state, GL_DEPTH_TEST);
+  state->vtkglEnable(GL_DEPTH_TEST);
   this->UpdateCamera(renderer);
   this->UpdateLightGeometry(renderer);
   this->UpdateLights(renderer);
-  this->UpdateGeometry(renderer, mPrivate->mFrameBuffer);
+  this->UpdateGeometry(renderer);
+
+  // 调整绘制的非背景图像的颜色
 
   mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
   renderWindow->GetRenderFramebuffer()->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
