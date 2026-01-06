@@ -1,4 +1,5 @@
 #include "OpaqueDepthRenderPass.h"
+#include "vtk_glad.h"
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <vtkCamera.h>
@@ -8,6 +9,7 @@
 #include <vtkOpenGLQuadHelper.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLShaderCache.h>
 #include <vtkOpenGLState.h>
 #include <vtkPolyData.h>
 #include <vtkRenderState.h>
@@ -15,8 +17,6 @@
 #include <vtkShaderProgram.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
-#include <vtk_glew.h>
-
 
 struct HidePropsRAII
 {
@@ -59,7 +59,7 @@ struct OpaqueDepthRenderPass::Private
   vtkSmartPointer<vtkOpenGLActor> mWorkpiece;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mDepthFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mDepthTexture;
-  vtkSmartPointer<vtkOpenGLQuadHelper> mHelperQuad;
+  std::unique_ptr<vtkOpenGLQuadHelper> mHelperQuad;
 };
 
 vtkStandardNewMacro(OpaqueDepthRenderPass);
@@ -86,6 +86,7 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
   }
 
   auto renderWindow = vtkOpenGLRenderWindow::SafeDownCast(renderer->GetRenderWindow());
+  renderWindow->MakeCurrent();
   double viewportSize[4]{};
   renderer->GetViewport(viewportSize);
   int* windowSize = renderWindow->GetSize();
@@ -115,9 +116,11 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
   {
     mPrivate->mDepthTexture->Resize(windowSize[0], windowSize[1]);
   }
+
   if (!mPrivate->mDepthFrameBuffer)
   {
     mPrivate->mDepthFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
+    mPrivate->mDepthFrameBuffer->SetContext(renderWindow);
     ostate->PushFramebufferBindings();
     mPrivate->mDepthFrameBuffer->Bind();
     mPrivate->mDepthFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
@@ -149,15 +152,21 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
     this->UpdateLightGeometry(renderer);
     this->UpdateLights(renderer);
     renderer->DeviceRenderOpaqueGeometry();
-    ostate->PopFramebufferBindings();	
+    ostate->PopFramebufferBindings();
   }
 
   {
-	ostate->PushFramebufferBindings();
-	auto renderFrameBuffer = renderWindow->GetRenderFramebuffer();
-	renderFrameBuffer->Bind();
-	this->RenderDepthTextureToColorTexture(renderer);
-	ostate->PopFramebufferBindings();
+    ostate->PushFramebufferBindings();
+    renderWindow->GetRenderFramebuffer()->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
+    vtkOpenGLState::ScopedglEnableDisable stencialSaver(ostate, GL_STENCIL_TEST);
+    vtkOpenGLState::ScopedglEnableDisable depthSaver(ostate, GL_DEPTH_TEST);
+
+    ostate->vtkglDisable(GL_STENCIL_TEST);
+    ostate->vtkglDisable(GL_DEPTH_TEST);
+
+    this->RenderDepthTextureToColorTexture(renderer);
+
+    ostate->PopFramebufferBindings();
   }
 }
 
@@ -174,6 +183,15 @@ void OpaqueDepthRenderPass::RenderDepthTextureToColorTexture(vtkRenderer* render
 {
   auto renderWindow = vtkOpenGLRenderWindow::SafeDownCast(renderer->GetRenderWindow());
   constexpr const char* fs = R"(
+		#version 150
+		#ifndef GL_ES
+		#define highp
+		#define mediump
+		#define lowp
+		#define texelFetchBuffer texelFetch
+		#endif // GL_ES
+		#define attribute in
+		#define varying out
 		uniform sampler2D depthTexture;
 		uniform float nearZ;
 		uniform float farZ;
@@ -197,7 +215,8 @@ void OpaqueDepthRenderPass::RenderDepthTextureToColorTexture(vtkRenderer* render
 	)";
   if (!mPrivate->mHelperQuad)
   {
-    mPrivate->mHelperQuad = new vtkOpenGLQuadHelper(renderWindow, nullptr, fs, nullptr);
+    mPrivate->mHelperQuad =
+      std::make_unique<vtkOpenGLQuadHelper>(renderWindow, nullptr, fs, nullptr);
     if (!mPrivate->mHelperQuad->Program)
     {
       SPDLOG_ERROR("failed to compiled depth visualization shader");
@@ -208,6 +227,7 @@ void OpaqueDepthRenderPass::RenderDepthTextureToColorTexture(vtkRenderer* render
   auto camera = renderer->GetActiveCamera();
   double clipRange[2]{};
   camera->GetClippingRange(clipRange);
+  renderWindow->GetShaderCache()->ReadyShaderProgram(mPrivate->mHelperQuad->Program);
   mPrivate->mHelperQuad->Program->SetUniformf("nearZ", clipRange[0]);
   mPrivate->mHelperQuad->Program->SetUniformf("farZ", clipRange[1]);
   mPrivate->mHelperQuad->Program->SetUniformi("depthTexture", 0);

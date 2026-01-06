@@ -14,6 +14,7 @@
 #include <vtkActor.h>
 #include <vtkProperty.h>
 #include "ColorChangePass.h"
+#include "OpaqueDepthRenderPass.h"
 
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
@@ -30,7 +31,7 @@ int main()
   renderWindowInteractor->SetInteractorStyle(renderWindowStyle);
   renderWindowInteractor->Initialize();
 
-  reader->SetFileName(R"(D:\Workspace\gitProject\build\bin\Release\data\1\coarsePredict\17\mask_tooth_crop.nii.gz)");
+  reader->SetFileName(R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -39,18 +40,19 @@ int main()
   workpieceData->GetSpacing(spacing);
   
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
+  toolReader->SetFileName(R"(F:\Workspace\Data\Yarn_Needle.STL)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
   auto toolActor = vtkSmartPointer<vtkActor>::New();
   toolActor->SetMapper(toolMapper);
-  toolActor->GetProperty()->SetRepresentationToWireframe();
+  // toolActor->GetProperty()->SetRepresentationToWireframe();
   renderer->AddActor(toolActor);
-  
 
-  auto colorChangePass = vtkSmartPointer<ColorChangePass>::New();
-  renderer->SetPass(colorChangePass);
+  //auto colorChangePass = vtkSmartPointer<ColorChangePass>::New();
+  auto opaqueRenderPass = vtkSmartPointer<OpaqueDepthRenderPass>::New();
+  opaqueRenderPass->SetWorkpiece(toolActor);
+  renderer->SetPass(opaqueRenderPass);
 
   renderWindowInteractor->Start();
 }

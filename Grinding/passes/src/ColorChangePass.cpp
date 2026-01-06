@@ -45,7 +45,6 @@ void ColorChangePass::Render(const vtkRenderState* s)
     mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
     mPrivate->mColorTexture->SetContext(renderWindow);
     mPrivate->mColorTexture->Allocate2D(viewportSize[0], viewportSize[1], 4, VTK_UNSIGNED_CHAR, 0);
-    mPrivate->mColorTexture->SetContext(renderWindow);
   }
   else
   {

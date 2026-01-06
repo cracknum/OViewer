@@ -2,11 +2,12 @@
 #define OPAQUE_DEPTH_RENDER_PASS
 #include <vtkOpenGLRenderPass.h>
 #include <memory>
+#include "PassesExport.h"
 
 class vtkActor;
 class vtkRenderer;
 
-class OpaqueDepthRenderPass : public vtkOpenGLRenderPass
+class PASSES_API OpaqueDepthRenderPass : public vtkOpenGLRenderPass
 {
 public:
   static OpaqueDepthRenderPass* New();
