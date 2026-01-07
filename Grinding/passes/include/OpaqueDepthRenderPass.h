@@ -6,6 +6,7 @@
 
 class vtkActor;
 class vtkRenderer;
+class vtkActorCollection;
 
 class PASSES_API OpaqueDepthRenderPass : public vtkOpenGLRenderPass
 {
@@ -15,7 +16,7 @@ public:
   void Render(const vtkRenderState* s) override;
   void ReleaseGraphicsResources(vtkWindow* w) override;
 
-  void SetWorkpiece(vtkActor* workpiece);
+  void SetOpaqueActors(vtkActorCollection* actors);
 
 protected:
   OpaqueDepthRenderPass();

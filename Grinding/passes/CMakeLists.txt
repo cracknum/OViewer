@@ -20,6 +20,10 @@ target_link_libraries(${library_name} PUBLIC
 add_library(${MODULE_NAME}::${PROJECT_NAME} ALIAS ${library_name})
 
 target_include_directories(${library_name} PUBLIC include)
+option(GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG "enable debug OpaqueDepthRenderPass class" OFF)
+if(GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG)
+    target_compile_definitions(${library_name} PRIVATE "GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG")
+endif()
 
 export_model(${export_config_file_path} ${PROJECT_NAME} ${library_name})
 

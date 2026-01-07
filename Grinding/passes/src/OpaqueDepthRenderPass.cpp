@@ -1,5 +1,5 @@
 #include "OpaqueDepthRenderPass.h"
-#include "vtk_glad.h"
+#include <vtk_glew.h>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <vtkCamera.h>
@@ -18,45 +18,9 @@
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
 
-struct HidePropsRAII
-{
-  vtkSmartPointer<vtkProp> mWorkpiece;
-  vtkSmartPointer<vtkRenderer> mRenderer;
-  std::unordered_map<vtkProp*, vtkTypeBool> mPropStates;
-  HidePropsRAII(vtkRenderer* renderer, vtkProp* workpiece)
-  {
-    auto props = renderer->GetViewProps();
-    props->InitTraversal();
-    for (size_t i = 0; i < props->GetNumberOfItems(); i++)
-    {
-      auto prop = props->GetNextProp();
-      mPropStates[prop] = prop->GetVisibility();
-      if (prop != workpiece)
-      {
-        prop->VisibilityOff();
-      }
-    }
-    mWorkpiece = workpiece;
-    mRenderer = renderer;
-  }
-  ~HidePropsRAII()
-  {
-    auto props = mRenderer->GetViewProps();
-    props->InitTraversal();
-    for (size_t i = 0; i < props->GetNumberOfItems(); i++)
-    {
-      auto prop = props->GetNextProp();
-      if (prop != mWorkpiece)
-      {
-        prop->SetVisibility(mPropStates[prop]);
-      }
-    }
-  }
-};
-
 struct OpaqueDepthRenderPass::Private
 {
-  vtkSmartPointer<vtkOpenGLActor> mWorkpiece;
+  vtkSmartPointer<vtkActorCollection> mOpaqueActors;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mDepthFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mDepthTexture;
   std::unique_ptr<vtkOpenGLQuadHelper> mHelperQuad;
@@ -79,7 +43,7 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
     return;
   }
 
-  if (!mPrivate->mWorkpiece)
+  if (!mPrivate->mOpaqueActors)
   {
     SPDLOG_ERROR("setting workpiece before");
     return;
@@ -147,34 +111,63 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
     ostate->vtkglDepthMask(GL_TRUE);
     ostate->vtkglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-    HidePropsRAII hideProps(renderer, mPrivate->mWorkpiece);
     this->UpdateCamera(renderer);
     this->UpdateLightGeometry(renderer);
     this->UpdateLights(renderer);
-    renderer->DeviceRenderOpaqueGeometry();
+	vtkActor* opaqueActor = nullptr;
+	mPrivate->mOpaqueActors->InitTraversal();
+	while (opaqueActor = mPrivate->mOpaqueActors->GetNextActor())
+	{
+		opaqueActor->Render(renderer, opaqueActor->GetMapper());
+	}
+	
     ostate->PopFramebufferBindings();
   }
 
+#ifdef GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG
   {
     ostate->PushFramebufferBindings();
     renderWindow->GetRenderFramebuffer()->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
     vtkOpenGLState::ScopedglEnableDisable stencialSaver(ostate, GL_STENCIL_TEST);
     vtkOpenGLState::ScopedglEnableDisable depthSaver(ostate, GL_DEPTH_TEST);
-
+	vtkOpenGLState::ScopedglDepthMask depthMaskSaver(ostate);
     ostate->vtkglDisable(GL_STENCIL_TEST);
     ostate->vtkglDisable(GL_DEPTH_TEST);
+	ostate->vtkglDepthMask(GL_FALSE);
 
     this->RenderDepthTextureToColorTexture(renderer);
 
     ostate->PopFramebufferBindings();
   }
+#endif // GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG
+
+{
+	ostate->PushFramebufferBindings();
+	auto renderFrameBuffer = renderWindow->GetRenderFramebuffer();
+	renderFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
+	mPrivate->mDepthFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
+	vtkOpenGLState::ScopedglDepthMask depthMaskSaver(ostate);
+	vtkOpenGLState::ScopedglEnableDisable depthTestSaver(ostate, GL_DEPTH_TEST);
+	vtkOpenGLState::ScopedglColorMask colorMaskSaver(ostate);
+	ostate->vtkglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	ostate->vtkglDepthMask(GL_TRUE);
+	ostate->vtkglClearDepth(1.0f);
+	ostate->vtkglClear(GL_DEPTH_BUFFER_BIT);
+	ostate->vtkglBlitFramebuffer(
+		0, 0, windowSize[0], windowSize[1],
+		0, 0, windowSize[0], windowSize[1],
+		GL_DEPTH_BUFFER_BIT,
+		GL_NEAREST
+	);
+	ostate->PopFramebufferBindings();
+}
 }
 
 void OpaqueDepthRenderPass::ReleaseGraphicsResources(vtkWindow* w) {}
 
-void OpaqueDepthRenderPass::SetWorkpiece(vtkActor* workpiece)
+void OpaqueDepthRenderPass::SetOpaqueActors(vtkActorCollection* actors)
 {
-  mPrivate->mWorkpiece = vtkOpenGLActor::SafeDownCast(workpiece);
+  mPrivate->mOpaqueActors = actors;
 }
 
 OpaqueDepthRenderPass::~OpaqueDepthRenderPass() {}
