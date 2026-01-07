@@ -1,27 +1,29 @@
 #include "ColorChangePass.h"
+#include "GrindingRenderPass.h"
 #include "OpaqueDepthRenderPass.h"
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <vtkActor.h>
 #include <vtkFlyingEdges3D.h>
 #include <vtkImageData.h>
+#include <vtkInformation.h>
+#include <vtkInformationStringKey.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkNIFTIImageReader.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLState.h>
+#include <vtkOpenGLTexture.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkRenderer.h>
 #include <vtkRenderPassCollection.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-#include <vtkSTLReader.h>
 #include <vtkSequencePass.h>
 #include <vtkSmartPointer.h>
+#include <vtkSTLReader.h>
 #include <vtkTextureObject.h>
 #include <vtkTextureUnitManager.h>
 #include <vtkWindowedSincPolyDataFilter.h>
-#include <vtkOpenGLTexture.h>
-#include <vtkInformationStringKey.h>
-#include <spdlog/spdlog.h>
 
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
@@ -64,9 +66,16 @@ int main()
   reader->SetFileName(
     R"(D:\Workspace\gitProject\build\bin\Release\data\1\coarsePredict\17\mask_tooth_crop.nii.gz)");
   reader->Update();
+  auto workpieceData = reader->GetOutput();
+  int dimensions[3]{};
+  workpieceData->GetDimensions(dimensions);
 
   auto workpieceActor = reconstructWorkpiece(reader->GetOutput());
   renderer->AddActor(workpieceActor);
+  auto information = vtkInformation::New();
+  workpieceActor->SetPropertyKeys(information);
+  information->FastDelete();
+  information->Set(GrindingRenderPass::DimensionsInfo(), dimensions, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
   toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
@@ -77,16 +86,12 @@ int main()
   toolActor->SetMapper(toolMapper);
   // toolActor->GetProperty()->SetRepresentationToWireframe();
   renderer->AddActor(toolActor);
-  auto sequencePass = vtkSmartPointer<vtkSequencePass>::New();
-  auto renderPassCollections = vtkSmartPointer<vtkRenderPassCollection>::New();
-  sequencePass->SetPasses(renderPassCollections);
   // auto colorChangePass = vtkSmartPointer<ColorChangePass>::New();
-  auto opaqueRenderPass = vtkSmartPointer<OpaqueDepthRenderPass>::New();
-  renderPassCollections->AddItem(opaqueRenderPass);
+  auto grindingRenderPass = vtkSmartPointer<GrindingRenderPass>::New();
   auto actorCollections = vtkSmartPointer<vtkActorCollection>::New();
   actorCollections->AddItem(workpieceActor);
-  opaqueRenderPass->SetOpaqueActors(actorCollections);
-  renderer->SetPass(opaqueRenderPass);
+  grindingRenderPass->SetWorkpieceActors(actorCollections);
+  renderer->SetPass(grindingRenderPass);
 
   renderWindowInteractor->Start();
 }

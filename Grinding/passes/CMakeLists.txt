@@ -13,6 +13,7 @@ set(library_name ${MODULE_NAME}${PROJECT_NAME})
 add_library(${library_name} SHARED ${Header_files} ${Source_files})
 target_link_libraries(${library_name} PUBLIC
         Common
+        Grinding::Base
         VTK::RenderingCore
         VTK::RenderingOpenGL2
 )

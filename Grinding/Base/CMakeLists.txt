@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19...4.0)
 
 project(Base LANGUAGES CXX)
 
-file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp")
+file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp" "include/*.h" )
 file(GLOB_RECURSE Source_files "src/*.cpp")
 
 if (NOT TARGET VTK::RenderingCore)

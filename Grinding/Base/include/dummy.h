@@ -1,7 +1,7 @@
 #ifndef GRINDING_DUMMY_H
 #define GRINDING_DUMMY_H
-
-class Dummy
+#include "BaseExport.h"
+class BASE_API Dummy
 {
 public:
   Dummy();
