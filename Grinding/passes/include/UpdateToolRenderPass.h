@@ -16,9 +16,12 @@ public:
   void ReleaseGraphicsResources(vtkWindow* w) override;
   void SetTool(Grinding::GrindingTool grindingTool, vtkTextureObject* toolTex);
   void UpdateToolMatrix(vtkMatrix4x4* matrix);
+  void SetWorkpieceParams(double* origin, double* spacing, int* dimensions);
 protected:
   UpdateToolRenderPass();
   ~UpdateToolRenderPass() override;
+
+  static void GetFloatMatrix4x4(const vtkMatrix4x4* matrix, float fMatrix[16]);
 
 private:
   struct Private;

@@ -14,13 +14,14 @@ add_library(${library_name} SHARED ${Header_files} ${Source_files})
 target_link_libraries(${library_name} PUBLIC
         Common
         Grinding::Base
+        Grinding::Shaders
         VTK::RenderingCore
         VTK::RenderingOpenGL2
 )
 
 add_library(${MODULE_NAME}::${PROJECT_NAME} ALIAS ${library_name})
 
-target_include_directories(${library_name} PUBLIC include)
+target_include_directories(${library_name} PUBLIC include PRIVATE shader)
 option(GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG "enable debug OpaqueDepthRenderPass class" OFF)
 if(GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG)
     target_compile_definitions(${library_name} PRIVATE "GRINDING_OPAQUE_DEPTH_RENDER_PASS_DEBUG")

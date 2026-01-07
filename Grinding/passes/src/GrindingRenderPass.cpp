@@ -1,7 +1,8 @@
 #include "GrindingRenderPass.h"
 #include "OpaqueDepthRenderPass.h"
 #include <spdlog/spdlog.h>
-#include <vtk_glew.h>
+// #include <vtk_glew.h>
+#include <vtk_glad.h>
 #include <vtkActorCollection.h>
 #include <vtkInformation.h>
 #include <vtkInformationDoubleVectorKey.h>
