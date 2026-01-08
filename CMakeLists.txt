@@ -14,7 +14,7 @@ find_package(Qt5 COMPONENTS Widgets Core Gui OpenGL)
 find_package(CUDAToolkit REQUIRED) # image process
 find_package(ITK CONFIG REQUIRED) # read dicom files
 find_package(spdlog CONFIG REQUIRED) # for log info
-find_package(VTK REQUIRED)
+find_package(VTK 9.5 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 

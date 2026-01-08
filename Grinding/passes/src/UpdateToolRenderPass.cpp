@@ -1,6 +1,7 @@
-#include "UpdateToolRenderPass.h"
 #include "preprocess.h"
+#include "UpdateToolRenderPass.h"
 #include <spdlog/spdlog.h>
+#include <vtk_glad.h>
 #include <vtkMatrix4x4.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLFramebufferObject.h>
@@ -9,9 +10,9 @@
 #include <vtkShaderProgram.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
-#include <vtk_glad.h>
 
 #include <algorithm>
+#include <vtkOpenGLError.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLShaderCache.h>
 #include <vtkRenderState.h>
@@ -47,6 +48,8 @@ struct UpdateToolRenderPass::Private
     : mGrindingTool(Grinding::GrindingTool::None)
     , mToolSize{ 0.5, 0.5, 0.5 }
   {
+	mToolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+	mToolMatrix->Identity();
   }
 };
 
@@ -54,6 +57,7 @@ vtkStandardNewMacro(UpdateToolRenderPass);
 
 void UpdateToolRenderPass::Render(const vtkRenderState* s)
 {
+  vtkOpenGLClearErrorMacro();
   auto renderer = vtkOpenGLRenderer::SafeDownCast(s->GetRenderer());
   auto renderWindow = vtkOpenGLRenderWindow::SafeDownCast(renderer->GetRenderWindow());
   if (!mPrivate->mToolTex)
@@ -61,7 +65,7 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
     SPDLOG_ERROR("no tool texture set");
     return;
   }
-  if (!mPrivate->mGrindingTool == Grinding::GrindingTool::None)
+  if (mPrivate->mGrindingTool == Grinding::GrindingTool::None)
   {
     SPDLOG_ERROR("no tool type set");
     return;
@@ -77,12 +81,13 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
     mPrivate->mToolUpdateProgram = vtkSmartPointer<vtkShaderProgram>::New();
     auto computeShader = vtkSmartPointer<vtkShader>::New();
     auto shaderPreProcessor = glsl::Preprocessor();
-    auto computeSource = shaderPreProcessor.preprocess("../shader/UpdateToolComputeShader.comp");
-    computeShader->SetSource(computeSource);
+    auto computeSource = shaderPreProcessor.preprocess(R"(D:\Workspace\github\OViewer\Grinding\passes\shader\UpdateToolComputeShader.comp)");
+	computeShader->SetSource(computeSource);
     mPrivate->mToolUpdateProgram->SetComputeShader(computeShader);
   }
 
   renderWindow->GetShaderCache()->ReadyShaderProgram(mPrivate->mToolUpdateProgram);
+  
   mPrivate->mToolUpdateProgram->SetUniformi("toolType", mPrivate->mGrindingTool);
   float toolInverseMatrix[16]{};
   GetFloatMatrix4x4(mPrivate->mToolInverseMatrix, toolInverseMatrix);

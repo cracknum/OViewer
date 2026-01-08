@@ -1,6 +1,6 @@
 #version 440 core
 
-layout(local_size_x=8, local_size_y=8, local_size_z=8) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 layout(r32f, binding = 0) uniform image3D toolTex;
 
 uniform int toolType;
@@ -10,36 +10,37 @@ uniform vec3 gridOrigin;
 uniform vec3 gridSpacing;
 uniform vec3 gridDims;
 
-
 float sdSphere(vec3 p, float s)
 {
-    return length(p) - s;
+  return length(p) - s;
 }
-
 
 vec3 texIndexToWorld(vec3 texIndex)
 {
-    return gridOrigin + (texIndex - 0.5) * gridSpacing;
+  return gridOrigin + (texIndex - 0.5) * gridSpacing;
 }
-void main() {
-    ivec3 threadIdx = ivec3(gl_GlobalInvocationID.xyz);
+void main()
+{
+  if (toolType != 1)
+  {
+    return;
+  }
+  ivec3 threadIdx = ivec3(gl_GlobalInvocationID.xyz);
 
-    if (any(greaterThanEqual(threadIdx, ivec3(gridDims))))
-    {
-        return;
-    }
+  if (any(greaterThanEqual(threadIdx, ivec3(gridDims))))
+  {
+    return;
+  }
 
-    float odist = imageLoad(toolTex, threadIdx).x;
+  float odist = imageLoad(toolTex, threadIdx).x;
 
-    vec3 texWorld = texIndexToWorld(threadIdx);
-    vec4 toolLocalCoord = toolInverseMatrix * vec4(texWorld, 1.0);
-    if(toolType == 1)
-    {
-        float ndist = sdSphere(toolLocalCoord, toolSize.x);
-    }
+  vec3 texWorld = texIndexToWorld(threadIdx);
+  vec4 toolLocalCoord = toolInverseMatrix * vec4(texWorld, 1.0);
 
-    if(odist > ndist)
-    {
-        imageStore(toolTex, threadIdx, vec4(ndist));
-    }
+  float ndist = sdSphere(vec3(toolLocalCoord.xyz) / toolLocalCoord.w, toolSize.x);
+
+  if (odist > ndist)
+  {
+    imageStore(toolTex, threadIdx, vec4(ndist));
+  }
 }

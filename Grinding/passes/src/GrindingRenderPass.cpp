@@ -1,20 +1,23 @@
 #include "GrindingRenderPass.h"
 #include "OpaqueDepthRenderPass.h"
+#include "UpdateToolRenderPass.h"
 #include <spdlog/spdlog.h>
-// #include <vtk_glew.h>
-#include <vtk_glad.h>
 #include <vtkActorCollection.h>
+#include <vtkImageData.h>
 #include <vtkInformation.h>
 #include <vtkInformationDoubleVectorKey.h>
 #include <vtkInformationIntegerVectorKey.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLFramebufferObject.h>
-#include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
+#include <vtk_glad.h>
+#include <vtkMatrix4x4.h>
+
 
 vtkInformationKeyMacro(GrindingRenderPass, SpacingInfo, DoubleVector);
 vtkInformationKeyMacro(GrindingRenderPass, DimensionsInfo, IntegerVector);
@@ -23,6 +26,7 @@ vtkInformationKeyMacro(GrindingRenderPass, OriginInfo, DoubleVector);
 struct GrindingRenderPass::Private
 {
   vtkSmartPointer<OpaqueDepthRenderPass> mOpaqueDepthRenderPass;
+  vtkSmartPointer<UpdateToolRenderPass> mUpdateToolRenderPass;
   Grinding::GrindingTool mGrindingTool;
   vtkSmartPointer<vtkActorCollection> mWorkpieceActors;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mRenderFrameBuffer;
@@ -110,7 +114,38 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
     }
 
     auto* dimensions = informations->Get(GrindingRenderPass::DimensionsInfo());
-    mPrivate->mToolTex->Allocate3D(dimensions[0], dimensions[1], dimensions[2], 1, VTK_FLOAT);
+
+    std::unique_ptr<float[]> rawData(new float[dimensions[0] * dimensions[1] * dimensions[2]]);
+    std::fill_n(rawData.get(), dimensions[0] * dimensions[1] * dimensions[2],
+      std::numeric_limits<float>::max());
+
+    mPrivate->mToolTex->Create3DFromRaw(
+      dimensions[0], dimensions[1], dimensions[2], 1, VTK_FLOAT, static_cast<void*>(rawData.get()));
+  }
+
+  if (!mPrivate->mUpdateToolRenderPass)
+  {
+    mPrivate->mUpdateToolRenderPass = vtkSmartPointer<UpdateToolRenderPass>::New();
+    mPrivate->mWorkpieceActors->InitTraversal();
+    auto workpiece = mPrivate->mWorkpieceActors->GetNextActor();
+    auto information = workpiece->GetPropertyKeys();
+
+    auto hasOriginInfo = information->Has(GrindingRenderPass::OriginInfo());
+    auto hasSpacingInfo = information->Has(GrindingRenderPass::SpacingInfo());
+    auto hasDimsInfo = information->Has(GrindingRenderPass::DimensionsInfo());
+    if (!hasOriginInfo || !hasSpacingInfo || !hasDimsInfo)
+    {
+      SPDLOG_ERROR(
+        "workpiece information is incomplete, originInfo: {}, spacingInfo: {}, dimensionsInfo: {}",
+        hasOriginInfo, hasSpacingInfo, hasDimsInfo);
+	  return;
+    }
+    auto origin = information->Get(GrindingRenderPass::OriginInfo());
+	auto spacing = information->Get(GrindingRenderPass::SpacingInfo());
+	auto dimensions = information->Get(GrindingRenderPass::DimensionsInfo());
+
+	mPrivate->mUpdateToolRenderPass->SetWorkpieceParams(origin, spacing, dimensions);
+	mPrivate->mUpdateToolRenderPass->SetTool(Grinding::GrindingTool::Sphere, mPrivate->mToolTex);
   }
 
   if (!mPrivate->mRenderFrameBuffer)
@@ -120,7 +155,6 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
     ostate->PushFramebufferBindings();
     mPrivate->mRenderFrameBuffer->Bind();
     mPrivate->mRenderFrameBuffer->AddColorAttachment(0, mPrivate->mColorAttachment);
-    // mPrivate->mRenderFrameBuffer->AddColorAttachment(1, mPrivate->mToolTex);
     mPrivate->mRenderFrameBuffer->AddDepthAttachment(mPrivate->mDepthAttachment);
     ostate->PopFramebufferBindings();
   }
@@ -138,7 +172,7 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
 
   {
     ostate->PushFramebufferBindings();
-	mPrivate->mRenderFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
+    mPrivate->mRenderFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
     vtkOpenGLState::ScopedglEnableDisable stencialSaver(ostate, GL_STENCIL_TEST);
     vtkOpenGLState::ScopedglEnableDisable depthSaver(ostate, GL_DEPTH_TEST);
     vtkOpenGLState::ScopedglDepthMask depthMaskSaver(ostate);
@@ -146,18 +180,10 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
     ostate->vtkglDisable(GL_DEPTH_TEST);
     ostate->vtkglDepthMask(GL_FALSE);
 
-	ostate->vtkglBlitFramebuffer(
-		0, 0, windowSize[0], windowSize[1],
-		0, 0, windowSize[0], windowSize[1],
-		GL_COLOR_BUFFER_BIT,
-		GL_LINEAR
-	);
-	ostate->vtkglBlitFramebuffer(
-		0, 0, windowSize[0], windowSize[1],
-		0, 0, windowSize[0], windowSize[1],
-		GL_DEPTH_BUFFER_BIT,
-		GL_NEAREST
-	);
+    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     ostate->PopFramebufferBindings();
   }
 }

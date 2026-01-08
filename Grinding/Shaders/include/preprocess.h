@@ -1,11 +1,11 @@
 #pragma once
 
-#include <string>
-#include <unordered_set>
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_set>
 
 namespace glsl {
 

@@ -1,7 +1,6 @@
 #include "OpaqueDepthRenderPass.h"
 #include <spdlog/spdlog.h>
 #include <unordered_map>
-// #include <vtk_glew.h>
 #include <vtkCamera.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLActor.h>

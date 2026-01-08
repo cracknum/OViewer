@@ -3,10 +3,11 @@
 #include <memory>
 #include <vtkOpenGLRenderPass.h>
 #include "GrindingTool.h"
+#include "PassesExport.h"
 
 class vtkTextureObject;
 class vtkMatrix4x4;
-class UpdateToolRenderPass : public vtkOpenGLRenderPass
+class PASSES_API UpdateToolRenderPass : public vtkOpenGLRenderPass
 {
 public:
   static UpdateToolRenderPass* New();

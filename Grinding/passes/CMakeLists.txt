@@ -6,8 +6,10 @@ file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp")
 file(GLOB_RECURSE Source_files "src/*.cpp")
 
 if (NOT TARGET VTK::RenderingCore)
-    find_package(VTK REQUIRED COMPONENTS RenderingCore RenderingOpenGL2)
+    find_package(VTK 9.5 REQUIRED COMPONENTS RenderingCore RenderingOpenGL2)
 endif ()
+message(STATUS "find vtk ${VTK_VERSION}")
+
 
 set(library_name ${MODULE_NAME}${PROJECT_NAME})
 add_library(${library_name} SHARED ${Header_files} ${Source_files})
