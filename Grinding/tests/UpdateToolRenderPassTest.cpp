@@ -68,7 +68,7 @@ int main()
   renderWindowInteractor->Initialize();
 
   reader->SetFileName(
-    R"(D:\Workspace\gitProject\build\bin\Release\data\1\coarsePredict\17\mask_tooth_crop.nii.gz)");
+    R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -86,7 +86,7 @@ int main()
   information->Set(GrindingRenderPass::DimensionsInfo(), dimensions, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
+  toolReader->SetFileName(R"(F:\Workspace\Data\Yarn_Needle.STL)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
@@ -94,7 +94,7 @@ int main()
   toolActor->SetMapper(toolMapper);
   renderer->AddActor(toolActor);
 
-  renderWindow->Render();
+  renderWindow->Initialize();
 
   auto toolTex = vtkSmartPointer<vtkTextureObject>::New();
   toolTex->SetContext(vtkOpenGLRenderWindow::SafeDownCast(renderWindow));

@@ -39,7 +39,7 @@ private:
         std::ostringstream out;
         int lineNumber = 0;
 
-        out << "#line 1 \"" << canonical << "\"\n";
+        // out << "#line 1 \"" << canonical << "\"\n";
 
         while (std::getline(file, line)) {
             lineNumber++;
