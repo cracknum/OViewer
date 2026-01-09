@@ -14,10 +14,11 @@
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
+#include <vtkImageData.h>
 
-#if defined(UPDATE_TOOL_RENDER_PASS_DEBUG)
+#if defined(GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG)
 #include <vtkNIFTIImageWriter.h>
-#endif //UPDATE_TOOL_RENDER_PASS_DEBUG
+#endif //GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG
 
 namespace
 {
@@ -123,8 +124,8 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
     mPrivate->mToolUpdateProgram = glCreateProgram();
     auto shaderPreProcessor = glsl::Preprocessor();
     const auto computeShader = glCreateShader(GL_COMPUTE_SHADER);
-    const auto computeShaderSource = shaderPreProcessor.preprocess(
-      R"(F:\Workspace\Projects\OViewer\Grinding\passes\shader\UpdateToolComputeShader.comp)");
+	const auto computeShaderPath = std::string(ASSERT_PATH) + "UpdateToolComputeShader.comp";
+    const auto computeShaderSource = shaderPreProcessor.preprocess(computeShaderPath);
     const auto computeShaderSourceStr = computeShaderSource.c_str();
     glShaderSource(computeShader, 1, &computeShaderSourceStr, nullptr);
     glCompileShader(computeShader);
@@ -172,7 +173,7 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
   glDispatchCompute(blockSize[0], blockSize[1], blockSize[2]);
   glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
   glUseProgram(0);
-#if defined(UPDATE_TOOL_RENDER_PASS_DEBUG)
+#if defined(GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG)
 
   auto texSize = mPrivate->mToolTex->GetWidth() *
     mPrivate->mToolTex->GetHeight() * mPrivate->mToolTex->GetDepth();
@@ -189,7 +190,7 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
   writer->SetInputData(texImageData);
   writer->SetFileName("texImageData.nii.gz");
   writer->Write();
-#endif // UPDATE_TOOL_RENDER_PASS_DEBUG
+#endif // GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG
 }
 
 void UpdateToolRenderPass::ReleaseGraphicsResources(vtkWindow* w)

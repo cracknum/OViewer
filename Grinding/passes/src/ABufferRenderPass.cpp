@@ -1,0 +1,242 @@
+#include "ABufferRenderPass.h"
+#include <spdlog/spdlog.h>
+#include <vtkAbstractMapper.h>
+#include <vtkObjectFactory.h>
+#include <vtkOpenGLError.h>
+#include <vtkOpenGLFramebufferObject.h>
+#include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLState.h>
+#include <vtkRenderState.h>
+#include <vtkShader.h>
+#include <vtkShaderProgram.h>
+#include <vtkSmartPointer.h>
+#include <vtkTextureObject.h>
+
+namespace Grinding
+{
+struct ABufferNode
+{
+  float color[4];
+  float pos[4];
+  unsigned int next;
+};
+
+static_assert(sizeof(ABufferNode) == 36, "ABufferNode size not equal to 36");
+}
+
+struct ABufferRenderPass::Private
+{
+  // head pointer image texture
+  vtkSmartPointer<vtkTextureObject> mHeadPointerTex;
+  // link list atomic counter buffer
+  unsigned int mAtomicCounterBuffer;
+  // shader storage buffer object nodes
+  unsigned int mSSBONodes;
+  int mMaxNodes;
+
+  // render frameBuffer
+  vtkSmartPointer<vtkOpenGLFramebufferObject> mFrameBuffer;
+  vtkSmartPointer<vtkTextureObject> mColorTexture;
+
+  Private()
+    : mAtomicCounterBuffer(0)
+    , mSSBONodes(0)
+    , mMaxNodes(0)
+  {
+  }
+};
+
+vtkStandardNewMacro(ABufferRenderPass);
+
+void ABufferRenderPass::Render(const vtkRenderState* s)
+{
+  auto renderer = vtkOpenGLRenderer::SafeDownCast(s->GetRenderer());
+  auto renderWindow = vtkOpenGLRenderWindow::SafeDownCast(renderer->GetRenderWindow());
+  auto ostate = renderWindow->GetState();
+
+  int* windowSize = renderWindow->GetSize();
+
+  if (!mPrivate->mColorTexture)
+  {
+    mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
+    mPrivate->mColorTexture->SetContext(renderWindow);
+    mPrivate->mColorTexture->Allocate2D(windowSize[0], windowSize[1], 4, VTK_UNSIGNED_CHAR, 0);
+  }
+  else if (mPrivate->mColorTexture->GetWidth() != windowSize[0] ||
+    mPrivate->mColorTexture->GetHeight() != windowSize[1])
+  {
+    mPrivate->mColorTexture->Resize(windowSize[0], windowSize[1]);
+  }
+
+  if (!mPrivate->mFrameBuffer)
+  {
+    mPrivate->mFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
+    mPrivate->mFrameBuffer->SetContext(renderWindow);
+    ostate->PushFramebufferBindings();
+    mPrivate->mFrameBuffer->Bind();
+    mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
+    ostate->PopDrawFramebufferBinding();
+  }
+
+  bool windowResized = false;
+
+  if (!mPrivate->mHeadPointerTex)
+  {
+    mPrivate->mHeadPointerTex = vtkSmartPointer<vtkTextureObject>::New();
+    mPrivate->mHeadPointerTex->SetContext(renderWindow);
+    mPrivate->mHeadPointerTex->Allocate2D(windowSize[0], windowSize[1], 1, VTK_UNSIGNED_INT, 0);
+    unsigned int null = 0xffffff;
+    mPrivate->mHeadPointerTex->Bind();
+    auto handle = mPrivate->mHeadPointerTex->GetHandle();
+    glClearTexImage(handle, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
+  }
+  else if (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
+    mPrivate->mHeadPointerTex->GetHeight() != windowSize[1])
+  {
+    windowResized = true;
+    mPrivate->mHeadPointerTex->Resize(windowSize[0], windowSize[1]);
+    unsigned int null = 0xffffff;
+    mPrivate->mHeadPointerTex->Activate();
+    auto handle = mPrivate->mHeadPointerTex->GetHandle();
+    glClearTexImage(handle, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
+    mPrivate->mHeadPointerTex->Deactivate();
+  }
+
+  if (!mPrivate->mAtomicCounterBuffer)
+  {
+    glGenBuffers(1, &mPrivate->mAtomicCounterBuffer);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mPrivate->mAtomicCounterBuffer);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
+
+    uint32_t zero = 0;
+    glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &zero);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mPrivate->mAtomicCounterBuffer);
+  }
+
+  if (!mPrivate->mSSBONodes || windowResized)
+  {
+    mPrivate->mMaxNodes = windowSize[0] * windowSize[1] * 4 * 2;
+    glGenBuffers(1, &mPrivate->mSSBONodes);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mPrivate->mSSBONodes);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, mPrivate->mMaxNodes * sizeof(Grinding::ABufferNode),
+      nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mPrivate->mSSBONodes);
+  }
+
+  {
+    ostate->PushFramebufferBindings();
+    mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
+    vtkOpenGLState::ScopedglColorMask saveColorMask(ostate);
+    vtkOpenGLState::ScopedglDepthMask saveDepthMask(ostate);
+
+    // ostate->vtkglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    ostate->vtkglDepthMask(GL_FALSE);
+
+    this->PreRender(s);
+    this->UpdateCamera(renderer);
+    this->UpdateLightGeometry(renderer);
+    this->UpdateLights(renderer);
+    this->UpdateGeometry(renderer);
+    this->PostRender(s);
+
+    ostate->PopFramebufferBindings();
+  }
+
+#if defined(GRINDING_ABUFFER_RENDER_PASS_DEBUG)
+  {
+    ostate->PushFramebufferBindings();
+    mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
+    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    ostate->PopFramebufferBindings();
+  }
+#endif // GRINDING_ABUFFER_RENDER_PASS_DEBUG
+}
+
+void ABufferRenderPass::ReleaseGraphicsResources(vtkWindow* w)
+{
+  this->ReleaseGraphicsResources(w);
+  if (mPrivate->mHeadPointerTex)
+  {
+    mPrivate->mHeadPointerTex->ReleaseGraphicsResources(w);
+  }
+  if (mPrivate->mAtomicCounterBuffer)
+  {
+    glDeleteBuffers(1, &mPrivate->mAtomicCounterBuffer);
+    mPrivate->mAtomicCounterBuffer = 0;
+  }
+  if (mPrivate->mSSBONodes)
+  {
+    glDeleteBuffers(1, &mPrivate->mSSBONodes);
+    mPrivate->mSSBONodes = 0;
+  }
+}
+
+bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
+  std::string& geometryShader, std::string& fragmentShader, vtkAbstractMapper* mapper,
+  vtkProp* prop)
+{
+  vtkShaderProgram::Substitute(fragmentShader, "//VTK::System::Dec", "#version 440 core", false);
+  vtkShaderProgram::Substitute(vertexShader, "//VTK::System::Dec", "#version 440 core", false);
+  vtkShaderProgram::Substitute(fragmentShader, "//VTK::CustomUniforms::Dec",
+    R"(
+		//VTK::CustomUniforms::Dec
+		struct ABufferNode
+		{
+			vec4 color;
+			vec4 position;
+			unsigned int next;
+		};
+
+		layout(std430, binding = 0) buffer ABufferStorage
+		{
+			ABufferNode nodes[];
+		};
+
+		layout(binding = 0, offset = 0) uniform atomic_uint nodeCounter;
+		layout(r32ui, binding = 0) uniform uimage2D headPointerImage;
+
+		uniform uint maxNodes;
+	)",
+    false);
+  vtkShaderProgram::Substitute(fragmentShader, "//VTK::Coincident::Impl",
+    R"(
+	 	//VTK::Coincident::Impl
+		ivec2 pos = ivec2(gl_FragCoord.xy);
+  		uint newNodeIndex = atomicCounterIncrement(nodeCounter);
+  		if (newNodeIndex >= maxNodes)
+  		{
+  		  return;
+  		}
+		
+  		nodes[newNodeIndex].color = fragOutput0;
+  		nodes[newNodeIndex].position = gl_FragCoord;
+		
+  		// insert new node in head
+  		uint prevNodeIndex = imageAtomicExchange(headPointerImage, pos, newNodeIndex);
+  		nodes[newNodeIndex].next = prevNodeIndex;
+	 )",
+    false);
+  // SPDLOG_INFO(fragmentShader);
+  SPDLOG_INFO("1");
+
+  return true;
+}
+
+bool ABufferRenderPass::SetShaderParameters(vtkShaderProgram* program, vtkAbstractMapper* mapper,
+  vtkProp* prop, vtkOpenGLVertexArrayObject* VAO)
+{
+  glUniform1ui(glGetUniformLocation(program->GetHandle(), "maxNodes"), mPrivate->mMaxNodes);
+
+  return true;
+}
+
+ABufferRenderPass::ABufferRenderPass()
+{
+  mPrivate = std::make_unique<Private>();
+}
+
+ABufferRenderPass::~ABufferRenderPass() = default;

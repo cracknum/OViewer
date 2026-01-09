@@ -23,7 +23,6 @@ macro(create_test test_name test_file_list)
     vtk_module_autoinit(TARGETS ${test_name} MODULES ${VTK_DEPENDS})
 endmacro()
 
-
 # ------------- Assembly Test-------------------
 message(STATUS "${MODULE_NAME}_TESTING checking")
 
@@ -58,6 +57,12 @@ if(${MODULE_NAME}_TESTING)
     create_test(
         ${MODULE_NAME}_UpdateTool_TESTING 
         tests/UpdateToolRenderPassTest.cpp 
+        ${MODULE_NAME}::Passes ${VTK_DEPENDS}
+    )
+
+    create_test(
+        ${MODULE_NAME}_ABuffer_TESTING
+        tests/ABufferRenderPassTest.cpp
         ${MODULE_NAME}::Passes ${VTK_DEPENDS}
     )
 endif()

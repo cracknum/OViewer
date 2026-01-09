@@ -1,6 +1,3 @@
-#include "ColorChangePass.h"
-#include "GrindingRenderPass.h"
-#include "OpaqueDepthRenderPass.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <vtkActor.h>
@@ -24,10 +21,10 @@
 #include <vtkTextureObject.h>
 #include <vtkTextureUnitManager.h>
 #include <vtkWindowedSincPolyDataFilter.h>
-#include "UpdateToolRenderPass.h"
 #include <vtkTextureObject.h>
 #include <memory>
 #include <vtkMatrix4x4.h>
+#include "ABufferRenderPass.h"
 
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
@@ -80,10 +77,6 @@ int main()
 
   auto workpieceActor = reconstructWorkpiece(reader->GetOutput());
   renderer->AddActor(workpieceActor);
-  auto information = vtkInformation::New();
-  workpieceActor->SetPropertyKeys(information);
-  information->FastDelete();
-  information->Set(GrindingRenderPass::DimensionsInfo(), dimensions, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
   toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
@@ -96,20 +89,9 @@ int main()
 
   renderWindow->Initialize();
 
-  auto toolTex = vtkSmartPointer<vtkTextureObject>::New();
-  toolTex->SetContext(vtkOpenGLRenderWindow::SafeDownCast(renderWindow));
-  std::unique_ptr<float[]> rawData(new float[dimensions[0] * dimensions[1] * dimensions[2]]);
-  std::fill_n(rawData.get(), dimensions[0] * dimensions[1] * dimensions[2], std::numeric_limits<float>::max());
-  toolTex->Create3DFromRaw(dimensions[0], dimensions[1], dimensions[2], 1, VTK_FLOAT, static_cast<void*>(rawData.get()));
-  auto toolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  toolMatrix->Identity();
+  auto renderPass = vtkSmartPointer<ABufferRenderPass>::New();
 
-  auto updateToolRenderPass = vtkSmartPointer<UpdateToolRenderPass>::New();
-  updateToolRenderPass->SetWorkpieceParams(origin, spacing, dimensions);
-  updateToolRenderPass->SetTool(Grinding::GrindingTool::Sphere, toolTex);
-  updateToolRenderPass->UpdateToolMatrix(toolMatrix);
-
-  renderer->SetPass(updateToolRenderPass);
+  renderer->SetPass(renderPass);
 
   renderWindowInteractor->Start();
 }

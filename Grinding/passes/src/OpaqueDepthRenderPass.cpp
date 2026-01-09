@@ -76,7 +76,7 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
         windowSize[0], windowSize[1], vtkTextureObject::Fixed24);
     }
   }
-  else
+  else if (mPrivate->mDepthTexture->GetWidth() != windowSize[0] || mPrivate->mDepthTexture->GetHeight() != windowSize[1])
   {
     mPrivate->mDepthTexture->Resize(windowSize[0], windowSize[1]);
   }
