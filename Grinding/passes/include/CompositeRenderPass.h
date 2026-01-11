@@ -1,14 +1,14 @@
-#ifndef COMPOSIT_RENDER_PASS_H
-#define COMPOSIT_RENDER_PASS_H
+#ifndef COMPOSITE_RENDER_PASS_H
+#define COMPOSITE_RENDER_PASS_H
 #include <memory>
 #include <vtkOpenGLRenderPass.h>
 
 class vtkTextureObject;
-class CompositRenderPass : public vtkOpenGLRenderPass
+class CompositeRenderPass final : public vtkOpenGLRenderPass
 {
 public:
-  static CompositRenderPass* New();
-  vtkTypeMacro(CompositRenderPass, vtkOpenGLRenderPass);
+  static CompositeRenderPass* New();
+  vtkTypeMacro(CompositeRenderPass, vtkOpenGLRenderPass);
   void Render(const vtkRenderState* s) override;
   void ReleaseGraphicsResources(vtkWindow* w) override;
 
@@ -16,12 +16,12 @@ public:
   void SetToolTexture(vtkTextureObject* toolTexture);
   
 protected:
-  CompositRenderPass();
-  ~CompositRenderPass() override;
+  CompositeRenderPass();
+  ~CompositeRenderPass() override;
 
 private:
   struct Private;
   std::unique_ptr<Private> mPrivate;
 };
 
-#endif // COMPOSIT_RENDER_PASS_H
+#endif // COMPOSITE_RENDER_PASS_H
