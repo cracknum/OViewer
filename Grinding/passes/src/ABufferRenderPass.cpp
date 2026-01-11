@@ -56,6 +56,7 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
   auto ostate = renderWindow->GetState();
 
   int* windowSize = renderWindow->GetSize();
+  renderWindow->MakeCurrent();
 
   if (!mPrivate->mColorTexture)
   {
@@ -80,28 +81,36 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
   }
 
   bool windowResized = false;
-
   if (!mPrivate->mHeadPointerTex)
   {
     mPrivate->mHeadPointerTex = vtkSmartPointer<vtkTextureObject>::New();
     mPrivate->mHeadPointerTex->SetContext(renderWindow);
+    // TODO: head pointer分配可能有错误，需要检查，通过glGetTexLevelParameteriv无法获取对应尺寸
     mPrivate->mHeadPointerTex->Allocate2D(windowSize[0], windowSize[1], 1, VTK_UNSIGNED_INT, 0);
-    unsigned int null = 0xffffff;
-    mPrivate->mHeadPointerTex->Bind();
+    auto err = glGetError();
+    SPDLOG_INFO("window size: {} x {}, error: {}", windowSize[0], windowSize[1], err);
+    int width = 0;
     auto handle = mPrivate->mHeadPointerTex->GetHandle();
-    glClearTexImage(handle, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
+    glBindTexture(GL_TEXTURE_2D, handle);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    SPDLOG_INFO("headPointer texture width: {}", width);
   }
   else if (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
     mPrivate->mHeadPointerTex->GetHeight() != windowSize[1])
   {
     windowResized = true;
     mPrivate->mHeadPointerTex->Resize(windowSize[0], windowSize[1]);
-    unsigned int null = 0xffffff;
+    mPrivate->mHeadPointerTex->Activate();
+    mPrivate->mHeadPointerTex->Deactivate();
+  }
+  {
     mPrivate->mHeadPointerTex->Activate();
     auto handle = mPrivate->mHeadPointerTex->GetHandle();
+    unsigned int null = 0xffffffff;
     glClearTexImage(handle, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
     mPrivate->mHeadPointerTex->Deactivate();
   }
+
 
   if (!mPrivate->mAtomicCounterBuffer)
   {
@@ -220,8 +229,6 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		nodes[newNodeIndex].next = prevNodeIndex;
 	 )",
     false);
-  // SPDLOG_INFO(fragmentShader);
-  SPDLOG_INFO("1");
 
   return true;
 }

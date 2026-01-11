@@ -229,3 +229,8 @@ void OpaqueDepthRenderPass::RenderDepthTextureToColorTexture(vtkRenderer* render
 
   mPrivate->mDepthTexture->Deactivate();
 }
+
+vtkTextureObject* OpaqueDepthRenderPass::GetOpaqueDepthTexture() const
+{
+  return mPrivate->mDepthTexture;
+}

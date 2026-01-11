@@ -2,9 +2,10 @@
 #define COMPOSITE_RENDER_PASS_H
 #include <memory>
 #include <vtkOpenGLRenderPass.h>
+#include "PassesExport.h"
 
 class vtkTextureObject;
-class CompositeRenderPass final : public vtkOpenGLRenderPass
+class PASSES_API CompositeRenderPass final : public vtkOpenGLRenderPass
 {
 public:
   static CompositeRenderPass* New();

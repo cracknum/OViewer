@@ -2,6 +2,8 @@
 
 #include "ABufferRenderPass.h"
 #include "OpaqueDepthRenderPass.h"
+#include "UpdateToolRenderPass.h"
+
 #include <iostream>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -94,17 +96,32 @@ int main()
 
   renderWindow->Initialize();
 
+  auto toolTex = vtkSmartPointer<vtkTextureObject>::New();
+  toolTex->SetContext(vtkOpenGLRenderWindow::SafeDownCast(renderWindow));
+  std::unique_ptr<float[]> rawData(new float[dimensions[0] * dimensions[1] * dimensions[2]]);
+  std::fill_n(rawData.get(), dimensions[0] * dimensions[1] * dimensions[2], std::numeric_limits<float>::max());
+  toolTex->Create3DFromRaw(dimensions[0], dimensions[1], dimensions[2], 1, VTK_FLOAT, static_cast<void*>(rawData.get()));
+  auto toolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+  toolMatrix->Identity();
+
   auto renderPass = vtkSmartPointer<ABufferRenderPass>::New();
   auto sequenceRenderPass = vtkSmartPointer<vtkSequencePass>::New();
   auto compositeRenderPass = vtkSmartPointer<CompositeRenderPass>::New();
   auto opaqueRenderPass = vtkSmartPointer<OpaqueDepthRenderPass>::New();
+  auto updateToolRenderPass = vtkSmartPointer<UpdateToolRenderPass>::New();
   auto renderPassCollection = vtkSmartPointer<vtkRenderPassCollection>::New();
 
   opaqueRenderPass->SetOpaqueActors(actorCollection);
+  updateToolRenderPass->SetTool(Grinding::Sphere, toolTex);
+  updateToolRenderPass->SetWorkpieceParams(origin, spacing, dimensions);
+  updateToolRenderPass->UpdateToolMatrix(toolMatrix);
+  compositeRenderPass->SetOpaqueDepthTexture(opaqueRenderPass->GetOpaqueDepthTexture());
+  compositeRenderPass->SetToolTexture(toolTex);
 
   renderPassCollection->AddItem(opaqueRenderPass);
+  renderPassCollection->AddItem(updateToolRenderPass);
   renderPassCollection->AddItem(renderPass);
-  renderPassCollection->AddItem(compositeRenderPass);
+  // renderPassCollection->AddItem(compositeRenderPass);
   sequenceRenderPass->SetPasses(renderPassCollection);
   renderer->SetPass(sequenceRenderPass);
 

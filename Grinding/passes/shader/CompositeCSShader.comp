@@ -1,5 +1,6 @@
 #version 440 core
 
+layout(local_size_x = 8, local_size_y = 8) in;
 layout(r32ui, binding=0) uniform uimage2D headPointerTexImage;
 
 struct ABufferNode
@@ -18,11 +19,11 @@ uniform sampler3D opaqueDepthTex;
 uniform sampler3D toolOldTex;
 uniform sampler3D toolNewTex;
 
-uniform vec2 windowSize;
-uniform int masLayer;
+uniform ivec2 windowSize;
+uniform int maxLayer;
 
-layout(rgba16f, binding = 2) image2D outputColor;
-layout(r16f, binding = 3) image2D outputDepth;
+layout(rgba16f, binding = 2) uniform image2D outputColor;
+// layout(r16f, binding = 3) image2D outputDepth;
 
 void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
@@ -36,17 +37,20 @@ void main() {
     int fragmentCount = 0;
     uint currentNode = imageLoad(headPointerTexImage, coord).r;
 
-    while(currentNode != 0xffffff && fragmentCount < maxLayer)
+    while(currentNode != 0xffffffff && fragmentCount < maxLayer)
     {
         fragments[fragmentCount] = nodes[currentNode];
-        currentNode = nodes[currentNode];
+        currentNode = nodes[currentNode].next;
         fragmentCount++;
     }
+    int color = 0;
+    color << (fragmentCount != 0 ? 1 : 0);
+    imageStore(outputColor, coord, vec4(0, 0, color, 1));
 
     if(fragmentCount == 0)
     {
-        imageStore(outputColor, coord, vec4(0, 0, 0, 1));
-        imageStore(outputDepth, coord, vec4(0));
+        imageStore(outputColor, coord, vec4(1, 0, 0, 1));
+        // imageStore(outputDepth, coord, vec4(0));
     }
 
     if (fragmentCount == 1)

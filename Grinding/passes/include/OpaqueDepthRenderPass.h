@@ -7,6 +7,7 @@
 class vtkActor;
 class vtkRenderer;
 class vtkActorCollection;
+class vtkTextureObject;
 
 class PASSES_API OpaqueDepthRenderPass : public vtkOpenGLRenderPass
 {
@@ -17,6 +18,7 @@ public:
   void ReleaseGraphicsResources(vtkWindow* w) override;
 
   void SetOpaqueActors(vtkActorCollection* actors);
+  vtkTextureObject* GetOpaqueDepthTexture() const;
 
 protected:
   OpaqueDepthRenderPass();
