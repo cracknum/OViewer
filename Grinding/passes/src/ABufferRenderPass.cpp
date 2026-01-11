@@ -88,7 +88,7 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     // TODO: head pointer分配可能有错误，需要检查，通过glGetTexLevelParameteriv无法获取对应尺寸
     // 原因是在vtkTextureObject::GetDefaultFormat()时使用硬编码无法获取GL_RED_INTEGER，只能返回GL_RED
     // 从而导致出现无效枚举的错误，只能将这里改为原始的opengl代码
-    mPrivate->mHeadPointerTex->Allocate2D(100, 100, 1, VTK_UNSIGNED_CHAR, 0);
+    mPrivate->mHeadPointerTex->Allocate2D(100, 100, 1, VTK_UNSIGNED_INT, 0);
     auto err = glGetError();
     SPDLOG_INFO("window size: {} x {}, error: {}", windowSize[0], windowSize[1], err);
     int width = 0;
