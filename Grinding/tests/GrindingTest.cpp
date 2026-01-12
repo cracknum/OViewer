@@ -64,7 +64,7 @@ int main()
   renderWindowInteractor->Initialize();
 
   reader->SetFileName(
-    R"(D:\Workspace\gitProject\build\bin\Release\data\1\coarsePredict\17\mask_tooth_crop.nii.gz)");
+    R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -84,7 +84,7 @@ int main()
   information->Set(GrindingRenderPass::SpacingInfo(), spacing, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(D:\Workspace\github\OViewer\Grinding\tests\Handpiece.stl)");
+  toolReader->SetFileName(R"(F:\Workspace\Projects\OViewer\Grinding\tests\Handpiece.stl)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());

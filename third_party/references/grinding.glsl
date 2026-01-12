@@ -928,7 +928,7 @@ bool raymarch(sampler3D tex, vec3 ro, vec3 rd, int starts, float startd, float m
     return false;
 
 }
-
+// raymarch_all(toolOldTex,toolNowTex, true, start, rd, maxd, hitp, hitn, hitd, face)
 bool raymarch_all(sampler3D texA, sampler3D texB, bool oface, vec3 ro, vec3 rd, float maxd, out vec3 hitp, out vec3 hitn, out float hitd, out bool face) {
 
     face = oface;

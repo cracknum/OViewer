@@ -15,6 +15,7 @@ layout(std430, binding=0) buffer ABufferStorage
     ABufferNode nodes[];
 };
 
+// 假设工具的纹理是不透明纹理
 uniform sampler3D opaqueDepthTex;
 uniform sampler3D toolOldTex;
 uniform sampler3D toolNewTex;
@@ -25,13 +26,31 @@ uniform int maxLayer;
 layout(rgba16f, binding = 4) uniform image2D outputColor;
 // layout(r16f, binding = 3) image2D outputDepth;
 
-void sortFragments(inout ABufferNode[64], int fragmentCount)
+void swapBufferNode(in bufferNode[64], int firstIndex, int secondIndex)
+{
+    ABufferNode node = bufferNode[firstIndex];
+    bufferNode[firstIndex].color = bufferNode[secondIndex].color;
+    bufferNode[firstIndex].position = bufferNode[secondIndex].position;
+    bufferNode[firstIndex].next = bufferNode[secondIndex].next;
+
+    bufferNode[secondIndex].color = node.color;
+    bufferNode[secondIndex].position = node.position;
+    bufferNode[secondIndex].next = node.next;
+}
+void sortFragments(inout bufferNode[64], int fragmentCount)
 {
     for(int i = fragmentCount - 1; i > 0; i--){
-        ABufferNode node = ABufferNode[i];
         bool swaped = false;
         for(int j = 0; j < i; j++){
-            
+            if(bufferNode[j].next > bufferNode[j+1].next)
+            {
+                swapBufferNode(bufferNode, j, j+1);
+                swaped = true;
+            }
+        }
+        if (!swaped)
+        {
+            return;
         }
     }
 }
@@ -54,6 +73,13 @@ void main() {
         currentNode = nodes[currentNode].next;
         fragmentCount++;
     }
+
+    if (fragmentCount == 0)
+    {
+        return;
+    }
+
+    sortFragments(fragments, fragmentCount);
 
     if(fragmentCount == 0)
     {
