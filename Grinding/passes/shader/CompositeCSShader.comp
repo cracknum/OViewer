@@ -25,6 +25,17 @@ uniform int maxLayer;
 layout(rgba16f, binding = 4) uniform image2D outputColor;
 // layout(r16f, binding = 3) image2D outputDepth;
 
+void sortFragments(inout ABufferNode[64], int fragmentCount)
+{
+    for(int i = fragmentCount - 1; i > 0; i--){
+        ABufferNode node = ABufferNode[i];
+        bool swaped = false;
+        for(int j = 0; j < i; j++){
+            
+        }
+    }
+}
+
 void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
 
