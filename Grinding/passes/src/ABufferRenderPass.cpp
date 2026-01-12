@@ -4,8 +4,10 @@
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
-#include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLQuadHelper.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLShaderCache.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
 #include <vtkShader.h>
@@ -29,6 +31,9 @@ struct ABufferRenderPass::Private
 {
   // head pointer image texture
   vtkSmartPointer<vtkTextureObject> mHeadPointerTex;
+  // manage resource self
+  GLuint mHeadPointerId;
+
   // link list atomic counter buffer
   unsigned int mAtomicCounterBuffer;
   // shader storage buffer object nodes
@@ -38,11 +43,15 @@ struct ABufferRenderPass::Private
   // render frameBuffer
   vtkSmartPointer<vtkOpenGLFramebufferObject> mFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mColorTexture;
+#if defined(GRINDING_ABUFFER_RENDER_PASS_DEBUG)
+  std::unique_ptr<vtkOpenGLQuadHelper> mDrawHelper;
+#endif
 
   Private()
     : mAtomicCounterBuffer(0)
     , mSSBONodes(0)
     , mMaxNodes(0)
+    , mHeadPointerId(0)
   {
   }
 };
@@ -88,14 +97,26 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     // TODO: head pointer分配可能有错误，需要检查，通过glGetTexLevelParameteriv无法获取对应尺寸
     // 原因是在vtkTextureObject::GetDefaultFormat()时使用硬编码无法获取GL_RED_INTEGER，只能返回GL_RED
     // 从而导致出现无效枚举的错误，只能将这里改为原始的opengl代码
-    mPrivate->mHeadPointerTex->Allocate2D(100, 100, 1, VTK_UNSIGNED_INT, 0);
-    auto err = glGetError();
-    SPDLOG_INFO("window size: {} x {}, error: {}", windowSize[0], windowSize[1], err);
-    int width = 0;
-    auto handle = mPrivate->mHeadPointerTex->GetHandle();
-    glBindTexture(GL_TEXTURE_2D, handle);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-    SPDLOG_INFO("headPointer texture width: {}", width);
+
+    glGenTextures(1, &mPrivate->mHeadPointerId);
+    glBindTexture(GL_TEXTURE_2D, mPrivate->mHeadPointerId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, windowSize[0], windowSize[1], 0, GL_RED_INTEGER,
+      GL_UNSIGNED_INT, nullptr);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    mPrivate->mHeadPointerTex->AssignToExistingTexture(mPrivate->mHeadPointerId, GL_TEXTURE_2D);
+    mPrivate->mHeadPointerTex->SetDataType(GL_UNSIGNED_INT);
+    mPrivate->mHeadPointerTex->SetFormat(GL_RED);
+    mPrivate->mHeadPointerTex->SetInternalFormat(GL_R32UI);
+    mPrivate->mHeadPointerTex->SetMagnificationFilter(GL_LINEAR);
+    mPrivate->mHeadPointerTex->SetMinificationFilter(GL_LINEAR);
+    mPrivate->mHeadPointerTex->SetWrapS(GL_CLAMP_TO_BORDER);
+    mPrivate->mHeadPointerTex->SetWrapT(GL_CLAMP_TO_BORDER);
+    mPrivate->mHeadPointerTex->Activate();
   }
   else if (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
     mPrivate->mHeadPointerTex->GetHeight() != windowSize[1])
@@ -113,17 +134,18 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     mPrivate->mHeadPointerTex->Deactivate();
   }
 
-
   if (!mPrivate->mAtomicCounterBuffer)
   {
     glGenBuffers(1, &mPrivate->mAtomicCounterBuffer);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mPrivate->mAtomicCounterBuffer);
     glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
 
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, mPrivate->mAtomicCounterBuffer);
+  }
+  {
     uint32_t zero = 0;
     glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &zero);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mPrivate->mAtomicCounterBuffer);
   }
 
   if (!mPrivate->mSSBONodes || windowResized)
@@ -135,6 +157,10 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
       nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mPrivate->mSSBONodes);
+  }
+  {
+    uint32_t zero = 0;
+    glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &zero);
   }
 
   {
@@ -153,6 +179,10 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     this->UpdateGeometry(renderer);
     this->PostRender(s);
 
+    GLuint counterVal;
+    glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &counterVal);
+    std::cout << "Total nodes written: " << counterVal << std::endl;
+
     ostate->PopFramebufferBindings();
   }
 
@@ -169,7 +199,7 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
 
 void ABufferRenderPass::ReleaseGraphicsResources(vtkWindow* w)
 {
-  this->ReleaseGraphicsResources(w);
+  // this->ReleaseGraphicsResources(w);
   if (mPrivate->mHeadPointerTex)
   {
     mPrivate->mHeadPointerTex->ReleaseGraphicsResources(w);
@@ -183,6 +213,12 @@ void ABufferRenderPass::ReleaseGraphicsResources(vtkWindow* w)
   {
     glDeleteBuffers(1, &mPrivate->mSSBONodes);
     mPrivate->mSSBONodes = 0;
+  }
+
+  if (mPrivate->mHeadPointerId)
+  {
+    glDeleteTextures(1, &mPrivate->mHeadPointerId);
+    mPrivate->mHeadPointerId = 0;
   }
 }
 
@@ -207,8 +243,8 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
 			ABufferNode nodes[];
 		};
 
-		layout(binding = 0, offset = 0) uniform atomic_uint nodeCounter;
-		layout(r32ui, binding = 0) uniform uimage2D headPointerImage;
+		layout(binding = 1, offset = 0) uniform atomic_uint nodeCounter;
+		layout(r32ui, binding = 2) uniform uimage2D headPointerImage;
 
 		uniform uint maxNodes;
 	)",
@@ -224,7 +260,7 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		}
 		
   		nodes[newNodeIndex].color = fragOutput0;
-  		nodes[newNodeIndex].position = gl_FragCoord;
+  		nodes[newNodeIndex].position = vertexVC;
 		
   		// insert new node in head
   		uint prevNodeIndex = imageAtomicExchange(headPointerImage, pos, newNodeIndex);
@@ -239,6 +275,7 @@ bool ABufferRenderPass::SetShaderParameters(vtkShaderProgram* program, vtkAbstra
   vtkProp* prop, vtkOpenGLVertexArrayObject* VAO)
 {
   glUniform1ui(glGetUniformLocation(program->GetHandle(), "maxNodes"), mPrivate->mMaxNodes);
+  glBindImageTexture(2, mPrivate->mHeadPointerId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
 
   return true;
 }

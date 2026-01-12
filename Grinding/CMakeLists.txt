@@ -24,6 +24,7 @@ macro(create_test test_name test_file_list)
 endmacro()
 
 # ------------- Assembly Test-------------------
+option(${MODULE_NAME}_TESTING "open grinding testing" OFF)
 message(STATUS "${MODULE_NAME}_TESTING checking")
 
 if (${MODULE_NAME}_TESTING)

@@ -45,7 +45,7 @@ vtkSmartPointer<vtkActor> reconstructWorkpiece(vtkImageData* imageData)
   smoothPolyDataFilter->NormalizeCoordinatesOn();
   
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputConnection(smoothPolyDataFilter->GetOutputPort());
+  mapper->SetInputConnection(flyingEdgesAlgo->GetOutputPort());
   auto actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
   
@@ -65,7 +65,7 @@ int main()
   renderWindowInteractor->Initialize();
 
   reader->SetFileName(
-    R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
+    R"(D:\Workspace\github\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -79,7 +79,7 @@ int main()
   renderer->AddActor(workpieceActor);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(F:\Workspace\Data\Yarn_Needle.STL)");
+  toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
