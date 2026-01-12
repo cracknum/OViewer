@@ -1,22 +1,24 @@
+#include "ABufferRenderPass.h"
+#include "CompositeRenderPass.h"
 #include "GrindingRenderPass.h"
 #include "OpaqueDepthRenderPass.h"
 #include "UpdateToolRenderPass.h"
 #include <spdlog/spdlog.h>
+#include <vtk_glad.h>
 #include <vtkActorCollection.h>
 #include <vtkImageData.h>
 #include <vtkInformation.h>
 #include <vtkInformationDoubleVectorKey.h>
 #include <vtkInformationIntegerVectorKey.h>
+#include <vtkMatrix4x4.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLFramebufferObject.h>
-#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
-#include <vtk_glad.h>
-#include <vtkMatrix4x4.h>
 
 
 vtkInformationKeyMacro(GrindingRenderPass, SpacingInfo, DoubleVector);
@@ -27,6 +29,8 @@ struct GrindingRenderPass::Private
 {
   vtkSmartPointer<OpaqueDepthRenderPass> mOpaqueDepthRenderPass;
   vtkSmartPointer<UpdateToolRenderPass> mUpdateToolRenderPass;
+  vtkSmartPointer<ABufferRenderPass> mABufferRenderPass;
+  vtkSmartPointer<CompositeRenderPass> mCompositeRenderPass;
   Grinding::GrindingTool mGrindingTool;
   vtkSmartPointer<vtkActorCollection> mWorkpieceActors;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mRenderFrameBuffer;
@@ -148,6 +152,16 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
 	mPrivate->mUpdateToolRenderPass->SetTool(Grinding::GrindingTool::Sphere, mPrivate->mToolTex);
   }
 
+  if (!mPrivate->mABufferRenderPass)
+  {
+    mPrivate->mABufferRenderPass = vtkSmartPointer<ABufferRenderPass>::New();
+  }
+  if (!mPrivate->mCompositeRenderPass)
+  {
+    mPrivate->mCompositeRenderPass = vtkSmartPointer<CompositeRenderPass>::New();
+    mPrivate->mCompositeRenderPass->SetToolTexture(mPrivate->mToolTex);
+  }
+
   if (!mPrivate->mRenderFrameBuffer)
   {
     mPrivate->mRenderFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
@@ -167,6 +181,25 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
     mPrivate->mRenderFrameBuffer->Bind();
 
     mPrivate->mOpaqueDepthRenderPass->Render(s);
+    mPrivate->mUpdateToolRenderPass->Render(s);
+    mPrivate->mABufferRenderPass->Render(s);
+
+	if (!mPrivate->mCompositeRenderPass->HasHeadPointerImage())
+    {
+          mPrivate->mCompositeRenderPass->SetHeadPointerImage(
+            mPrivate->mABufferRenderPass->GetHeadPointerImage());
+    }
+    if (!mPrivate->mCompositeRenderPass->HasToolTexture())
+    {
+      mPrivate->mCompositeRenderPass->SetToolTexture(mPrivate->mToolTex);
+    }
+    if (!mPrivate->mCompositeRenderPass->HasOpaqueDepthTexture())
+    {
+      mPrivate->mCompositeRenderPass->SetOpaqueDepthTexture(
+        mPrivate->mOpaqueDepthRenderPass->GetOpaqueDepthTexture());
+    }
+    mPrivate->mCompositeRenderPass->Render(s);
+
     ostate->PopFramebufferBindings();
   }
 

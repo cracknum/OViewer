@@ -1,20 +1,20 @@
-#include "UpdateToolRenderPass.h"
 #include "preprocess.h"
+#include "UpdateToolRenderPass.h"
 #include <spdlog/spdlog.h>
+#include <vtk_glad.h>
 #include <vtkMatrix4x4.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
-#include <vtk_glad.h>
 
 #include <algorithm>
+#include <vtkImageData.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
-#include <vtkImageData.h>
 
 #if defined(GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG)
 #include <vtkNIFTIImageWriter.h>
@@ -84,6 +84,8 @@ struct UpdateToolRenderPass::Private
   {
     mToolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
     mToolMatrix->Identity();
+    mToolInverseMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+    vtkMatrix4x4::Invert(mToolMatrix, mToolInverseMatrix);
   }
 
   ~Private()

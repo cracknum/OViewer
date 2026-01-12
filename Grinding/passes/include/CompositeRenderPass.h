@@ -1,8 +1,8 @@
 #ifndef COMPOSITE_RENDER_PASS_H
 #define COMPOSITE_RENDER_PASS_H
+#include "PassesExport.h"
 #include <memory>
 #include <vtkOpenGLRenderPass.h>
-#include "PassesExport.h"
 
 class vtkTextureObject;
 class PASSES_API CompositeRenderPass final : public vtkOpenGLRenderPass
@@ -14,7 +14,11 @@ public:
   void ReleaseGraphicsResources(vtkWindow* w) override;
 
   void SetOpaqueDepthTexture(vtkTextureObject* opaqueDepthTexture);
+  void SetHeadPointerImage(vtkTextureObject* headPointerImage);
   void SetToolTexture(vtkTextureObject* toolTexture);
+  bool HasOpaqueDepthTexture() const;
+  bool HasHeadPointerImage() const;
+  bool HasToolTexture() const;
   
 protected:
   CompositeRenderPass();

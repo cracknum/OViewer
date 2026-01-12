@@ -68,7 +68,11 @@ int main()
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
+  double origin[3]{};
+  double spacing[3]{};
   workpieceData->GetDimensions(dimensions);
+  workpieceData->GetOrigin(origin);
+  workpieceData->GetSpacing(spacing);
 
   auto workpieceActor = reconstructWorkpiece(reader->GetOutput());
   renderer->AddActor(workpieceActor);
@@ -76,6 +80,8 @@ int main()
   workpieceActor->SetPropertyKeys(information);
   information->FastDelete();
   information->Set(GrindingRenderPass::DimensionsInfo(), dimensions, 3);
+  information->Set(GrindingRenderPass::OriginInfo(), origin, 3);
+  information->Set(GrindingRenderPass::SpacingInfo(), spacing, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
   toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");

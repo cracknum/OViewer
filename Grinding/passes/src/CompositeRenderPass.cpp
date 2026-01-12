@@ -4,8 +4,8 @@
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLQuadHelper.h>
-#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLState.h>
 #include <vtkRenderState.h>
 #include <vtkShaderProgram.h>
@@ -47,10 +47,14 @@ void PrintProgramLog(const unsigned int program)
 
 struct CompositeRenderPass::Private
 {
+  // outside inject
   vtkSmartPointer<vtkTextureObject> mOpaqueDepthTexture;
+  // outside inject
   vtkSmartPointer<vtkTextureObject> mToolTexture;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mColorTexture;
+  // outside inject
+  vtkSmartPointer<vtkTextureObject> mHeadPointerImageTexture;
   GLuint mCProgram;
 
   Private()
@@ -68,6 +72,15 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
   auto ostate = renderWindow->GetState();
   int* windowSize = renderWindow->GetSize();
 
+  if (!mPrivate->mToolTexture || !mPrivate->mOpaqueDepthTexture || !mPrivate->mHeadPointerImageTexture)
+  {
+    SPDLOG_ERROR("param set is not completed: tool texture: {}, opaque depth texture: {}, head "
+                 "pointer image texture: {}",
+      mPrivate->mToolTexture != nullptr, mPrivate->mOpaqueDepthTexture != nullptr,
+      mPrivate->mHeadPointerImageTexture != nullptr);
+    return;
+  }
+
   if (!mPrivate->mColorTexture)
   {
     mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
@@ -80,7 +93,7 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     mPrivate->mColorTexture->Resize(windowSize[0], windowSize[1]);
   }
 
-  /*if (!mPrivate->mFrameBuffer)
+  if (!mPrivate->mFrameBuffer)
   {
     mPrivate->mFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
     mPrivate->mFrameBuffer->SetContext(renderWindow);
@@ -88,12 +101,11 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     mPrivate->mFrameBuffer->Bind();
     mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
     ostate->PopFramebufferBindings();
-  }*/
+  }
 
   if (!mPrivate->mCProgram)
   {
-    const auto* shaderPath =
-      (std::string(ASSERT_PATH) + "CompositeCSShader.comp").c_str();
+    const auto* shaderPath = (std::string(ASSERT_PATH) + "CompositeCSShader.comp").c_str();
     glsl::Preprocessor shaderPreprocessor;
     const auto shaderSourceStr = shaderPreprocessor.preprocess(shaderPath);
     const auto shaderSource = shaderSourceStr.c_str();
@@ -122,11 +134,13 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
   {
     ostate->PushFramebufferBindings();
     glUseProgram(mPrivate->mCProgram);
-    SPDLOG_INFO("use program: {}", mPrivate->mCProgram);
-    glUniform2i(glGetUniformLocation(mPrivate->mCProgram,"windowSize"), windowSize[0], windowSize[1]);
-    glUniform1i(glGetUniformLocation(mPrivate->mCProgram,"maxLayer"), 16);
+    glUniform2i(
+      glGetUniformLocation(mPrivate->mCProgram, "windowSize"), windowSize[0], windowSize[1]);
+    glUniform1i(glGetUniformLocation(mPrivate->mCProgram, "maxLayer"), 16);
     auto colorTexId = mPrivate->mColorTexture->GetHandle();
-    glBindImageTexture(2, colorTexId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
+    glBindImageTexture(
+      2, mPrivate->mHeadPointerImageTexture->GetHandle(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32UI);
+    glBindImageTexture(4, colorTexId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
     int xUnit = (windowSize[0] + 7) / 8;
     int yUnit = (windowSize[1] + 7) / 8;
     glDispatchCompute(xUnit, yUnit, 1);
@@ -135,17 +149,13 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     ostate->PopFramebufferBindings();
   }
 
-  /*{
+  {
     ostate->PushFramebufferBindings();
     mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
-    ostate->vtkglBlitFramebuffer(
-      0, 0, windowSize[0], windowSize[1],
-      0, 0, windowSize[0], windowSize[1],
-      GL_COLOR_BUFFER_BIT,
-      GL_LINEAR
-      );
+    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
     ostate->PopFramebufferBindings();
-  }*/
+  }
 }
 
 void CompositeRenderPass::ReleaseGraphicsResources(vtkWindow* w)
@@ -169,3 +179,23 @@ CompositeRenderPass::CompositeRenderPass()
 }
 
 CompositeRenderPass::~CompositeRenderPass() = default;
+
+void CompositeRenderPass::SetHeadPointerImage(vtkTextureObject* headPointerImage)
+{
+  mPrivate->mHeadPointerImageTexture = headPointerImage;
+}
+
+bool CompositeRenderPass::HasOpaqueDepthTexture() const
+{
+  return mPrivate->mOpaqueDepthTexture != nullptr;
+}
+
+bool CompositeRenderPass::HasHeadPointerImage() const
+{
+  return mPrivate->mHeadPointerImageTexture != nullptr;
+}
+
+bool CompositeRenderPass::HasToolTexture() const
+{
+  return mPrivate->mToolTexture != nullptr;
+}

@@ -1,22 +1,22 @@
 #include "OpaqueDepthRenderPass.h"
 #include <spdlog/spdlog.h>
 #include <unordered_map>
+#include <vtk_glad.h>
 #include <vtkCamera.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLActor.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLQuadHelper.h>
-#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLRenderer.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLShaderCache.h>
 #include <vtkOpenGLState.h>
 #include <vtkPolyData.h>
-#include <vtkRenderState.h>
 #include <vtkRenderer.h>
+#include <vtkRenderState.h>
 #include <vtkShaderProgram.h>
 #include <vtkSmartPointer.h>
 #include <vtkTextureObject.h>
-#include <vtk_glad.h>
 
 struct OpaqueDepthRenderPass::Private
 {
@@ -159,9 +159,18 @@ void OpaqueDepthRenderPass::Render(const vtkRenderState* s)
 void OpaqueDepthRenderPass::ReleaseGraphicsResources(vtkWindow* w)
 {
   Superclass::ReleaseGraphicsResources(w);
-  mPrivate->mDepthFrameBuffer->ReleaseGraphicsResources(w);
-  mPrivate->mDepthTexture->ReleaseGraphicsResources(w);
-  mPrivate->mHelperQuad->ReleaseGraphicsResources(w);
+  if (mPrivate->mDepthFrameBuffer)
+  {
+    mPrivate->mDepthFrameBuffer->ReleaseGraphicsResources(w);
+  }
+  if (mPrivate->mDepthTexture)
+  {
+    mPrivate->mDepthTexture->ReleaseGraphicsResources(w);
+  }
+  if (mPrivate->mHelperQuad)
+  {
+    mPrivate->mHelperQuad->ReleaseGraphicsResources(w);
+  }
   mPrivate->mOpaqueActors = nullptr;
 }
 

@@ -1,10 +1,10 @@
 #ifndef A_BUFFER_RENDER_PASS_H
 #define A_BUFFER_RENDER_PASS_H
+#include "PassesExport.h"
 #include <memory>
 #include <vtkOpenGLRenderPass.h>
-#include "PassesExport.h"
 
-
+class vtkTextureObject;
 class PASSES_API ABufferRenderPass : public vtkOpenGLRenderPass
 {
 public:
@@ -16,6 +16,7 @@ public:
     std::string& fragmentShader, vtkAbstractMapper* mapper, vtkProp* prop) override;
   bool SetShaderParameters(vtkShaderProgram* program, vtkAbstractMapper* mapper, vtkProp* prop,
     vtkOpenGLVertexArrayObject* VAO = nullptr) override;
+  vtkTextureObject* GetHeadPointerImage() const;
 
 protected:
   ABufferRenderPass();

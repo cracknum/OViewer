@@ -286,3 +286,7 @@ ABufferRenderPass::ABufferRenderPass()
 }
 
 ABufferRenderPass::~ABufferRenderPass() = default;
+vtkTextureObject* ABufferRenderPass::GetHeadPointerImage() const
+{
+  return mPrivate->mHeadPointerTex;
+}

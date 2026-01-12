@@ -4,6 +4,7 @@
 #include "OpaqueDepthRenderPass.h"
 #include "UpdateToolRenderPass.h"
 
+#include "ABufferRenderPass.h"
 #include <iostream>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -20,12 +21,12 @@
 #include <vtkOpenGLTexture.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkRenderer.h>
 #include <vtkRenderPassCollection.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-#include <vtkSTLReader.h>
 #include <vtkSequencePass.h>
 #include <vtkSmartPointer.h>
+#include <vtkSTLReader.h>
 #include <vtkTextureObject.h>
 #include <vtkTextureUnitManager.h>
 #include <vtkWindowedSincPolyDataFilter.h>
@@ -69,7 +70,7 @@ int main()
   renderWindowInteractor->Initialize();
 
   reader->SetFileName(
-    R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
+    R"(D:\Workspace\github\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -83,7 +84,7 @@ int main()
   renderer->AddActor(workpieceActor);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(F:\Workspace\Data\Yarn_Needle.STL)");
+  toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
@@ -111,17 +112,19 @@ int main()
   auto updateToolRenderPass = vtkSmartPointer<UpdateToolRenderPass>::New();
   auto renderPassCollection = vtkSmartPointer<vtkRenderPassCollection>::New();
 
+  // TODO: 将所有的pass移动到GrindingPass中，外部测试无法正确获取工具纹理
   opaqueRenderPass->SetOpaqueActors(actorCollection);
   updateToolRenderPass->SetTool(Grinding::Sphere, toolTex);
   updateToolRenderPass->SetWorkpieceParams(origin, spacing, dimensions);
   updateToolRenderPass->UpdateToolMatrix(toolMatrix);
   compositeRenderPass->SetOpaqueDepthTexture(opaqueRenderPass->GetOpaqueDepthTexture());
   compositeRenderPass->SetToolTexture(toolTex);
+  compositeRenderPass->SetHeadPointerImage(renderPass->GetHeadPointerImage());
 
   renderPassCollection->AddItem(opaqueRenderPass);
   renderPassCollection->AddItem(updateToolRenderPass);
   renderPassCollection->AddItem(renderPass);
-  // renderPassCollection->AddItem(compositeRenderPass);
+  renderPassCollection->AddItem(compositeRenderPass);
   sequenceRenderPass->SetPasses(renderPassCollection);
   renderer->SetPass(sequenceRenderPass);
 

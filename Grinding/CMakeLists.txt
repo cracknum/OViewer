@@ -56,6 +56,12 @@ if (${MODULE_NAME}_TESTING)
     vtk_module_autoinit(TARGETS ${MODULE_NAME}_TESTING MODULES ${VTK_DEPENDS})
 
     create_test(
+            ${MODULE_NAME}_Grinding_TESTING
+            tests/GrindingTest.cpp
+            ${MODULE_NAME}::Passes ${VTK_DEPENDS}
+    )
+
+    create_test(
             ${MODULE_NAME}_UpdateTool_TESTING
             tests/UpdateToolRenderPassTest.cpp
             ${MODULE_NAME}::Passes ${VTK_DEPENDS}
