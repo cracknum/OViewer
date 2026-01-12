@@ -84,7 +84,7 @@ int main()
   renderer->AddActor(workpieceActor);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(D:\Workspace\gitProject\StomatologyRobot\res\Handpiece.stl)");
+  toolReader->SetFileName(R"(D:\Workspace\github\OViewer\Grinding\tests\Handpiece.stl)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
