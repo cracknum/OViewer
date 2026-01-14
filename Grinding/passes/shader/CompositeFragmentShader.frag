@@ -1,6 +1,5 @@
 #version 440 core
 
-layout(local_size_x = 8, local_size_y = 8) in;
 layout(r32ui, binding = 2) uniform uimage2D headPointerTexImage;
 
 struct ABufferNode
@@ -27,13 +26,15 @@ uniform vec3 gridOrigin;
 uniform vec3 gridSize;
 uniform vec3 gridSpacing;
 
+in vec2 texCoord;
+
 #define RAY_MARCH_MAX_STEP 1024
 #define REFINE_ITEMS 5
-//#ifndef USE_FEATURE_X
-//#define DEPTH_DEBUG 1
-//#endif
-layout(rgba16f, binding = 4) uniform image2D outputColor;
-layout(r32f, binding = 3) uniform image2D outputDepth;
+#ifndef USE_FEATURE_X
+#define DEPTH_DEBUG 1
+#endif
+
+out vec4 fragColor;
 
 void swapBufferNode(in ABufferNode bufferNode[64], int firstIndex, int secondIndex)
 {
@@ -199,79 +200,74 @@ bool rayMarch(in sampler3D tex, vec3 ro, vec3 rd, in float maxd, in int startSte
 
 void main()
 {  
-  ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+  ivec2 coord = ivec2(texCoord.xy);
+  vec2 normalizedCoord = coord / windowSize;
+  fragColor = vec4(normalizedCoord.x, normalizedCoord.y, 0.5, 1.0);
+//   ABufferNode fragments[64];
+//   int fragmentCount = 0;
+//   uint currentNode = imageLoad(headPointerTexImage, coord).r;
 
-  if (coord.x >= windowSize.x || coord.y >= windowSize.y)
-  {
-    return;
-  }
+//   while (currentNode != 0xffffffff && fragmentCount < maxLayer)
+//   {
+//     fragments[fragmentCount] = nodes[currentNode];
+//     currentNode = nodes[currentNode].next;
+//     fragmentCount++;
+//   }
 
-  ABufferNode fragments[64];
-  int fragmentCount = 0;
-  uint currentNode = imageLoad(headPointerTexImage, coord).r;
+// #if DEPTH_DEBUG
+//   if (fragmentCount == 0)
+//   {
+//     fragColor = vec4(1, 1, 0, 1);
+//     gl_FragDepth = 0;
+//   }
+//   else
+//   {
+//     fragColor = vec4(fragmentCount * 1.0 / 10, 0.0, 0.0, 1.0);
+//     gl_FragDepth = fragments[0].position.z;
+//   }
+// #endif
 
-  while (currentNode != 0xffffffff && fragmentCount < maxLayer)
-  {
-    fragments[fragmentCount] = nodes[currentNode];
-    currentNode = nodes[currentNode].next;
-    fragmentCount++;
-  }
+//   if (fragmentCount == 0)
+//   {
+//     fragColor = vec4(0, 0, 0, 1);
+//     gl_FragDepth = 0;
+//     return;
+//   }
 
-#if DEPTH_DEBUG
-  if (fragmentCount == 0)
-  {
-    imageStore(outputColor, coord, vec4(1, 1, 0, 1));
-    imageStore(outputDepth, coord, vec4(0));
-  }
-  else
-  {
-    imageStore(outputColor, coord, vec4(fragmentCount * 1.0 / 10, 0.0, 0.0, 1.0));
-    imageStore(outputDepth, coord, vec4(fragments[0].position.z));
-  }
-#endif
+//   sortFragments(fragments, fragmentCount);
 
-  if (fragmentCount == 0)
-  {
-    imageStore(outputColor, coord, vec4(0));
-    imageStore(outputDepth, coord, vec4(0));
-    return;
-  }
+//   for(int i = 0; i < fragmentCount; i += 2){
+//     vec3 start = vec3(fragments[i].position.xyz);
+//     vec3 end = vec3(fragments[i+1].position.xyz);
+//     vec3 rayOrigin = start;
+//     vec3 rayDirection = normalize(end - start);
 
-  sortFragments(fragments, fragmentCount);
+//     float sdfValue = sampleSDF(toolTex, start);
 
-  for(int i = 0; i < fragmentCount; i += 2){
-    vec3 start = vec3(fragments[i].position.xyz);
-    vec3 end = vec3(fragments[i+1].position.xyz);
-    vec3 rayOrigin = start;
-    vec3 rayDirection = normalize(end - start);
+//     if (sdfValue > 0)
+//     {
+//         fragColor = fragments[i].color;
+//         gl_FragDepth = start.z;
+//         return;
+//     }
 
-    float sdfValue = sampleSDF(toolTex, start);
+//     float maxDist = distance(end, start);
+//     vec3 hitp, hitn;
+//     float hitDist;
+//     int hitStep;
+//     bool face = false;
 
-    if (sdfValue > 0)
-    {
-        imageStore(outputColor, coord, fragments[i].color);
-        imageStore(outputDepth, coord, vec4(start.z));
+//     if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
+//     {
+//         continue;
+//     }
 
-        return;
-    }
+//     float sdepth = fragments[i].position.z;
+//     float tdepth = fragments[i+1].position.z - sdepth;
+//     float ndepth = sdepth + tdepth * hitDist / maxDist;
 
-    float maxDist = distance(end, start);
-    vec3 hitp, hitn;
-    float hitDist;
-    int hitStep;
-    bool face = false;
-
-    if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
-    {
-        continue;
-    }
-
-    float sdepth = fragments[i].position.z;
-    float tdepth = fragments[i+1].position.z - sdepth;
-    float ndepth = sdepth + tdepth * hitDist / maxDist;
-
-    imageStore(outputColor, coord, vec4(0.0, 1.0, 0.0, 1.0));
-    imageStore(outputDepth, coord, vec4(ndepth));
-    break;
-  }
-}
+//     fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+//     gl_FragDepth = ndepth;
+//     break;
+//   }
+ }

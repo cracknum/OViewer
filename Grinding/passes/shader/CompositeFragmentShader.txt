@@ -1,6 +1,5 @@
 #version 440 core
 
-layout(local_size_x = 8, local_size_y = 8) in;
 layout(r32ui, binding = 2) uniform uimage2D headPointerTexImage;
 
 struct ABufferNode
@@ -27,13 +26,15 @@ uniform vec3 gridOrigin;
 uniform vec3 gridSize;
 uniform vec3 gridSpacing;
 
+in vec2 texCoord;
+
 #define RAY_MARCH_MAX_STEP 1024
 #define REFINE_ITEMS 5
-//#ifndef USE_FEATURE_X
-//#define DEPTH_DEBUG 1
-//#endif
-layout(rgba16f, binding = 4) uniform image2D outputColor;
-layout(r32f, binding = 3) uniform image2D outputDepth;
+#ifndef USE_FEATURE_X
+#define DEPTH_DEBUG 1
+#endif
+
+out vec4 fragColor;
 
 void swapBufferNode(in ABufferNode bufferNode[64], int firstIndex, int secondIndex)
 {
@@ -199,7 +200,7 @@ bool rayMarch(in sampler3D tex, vec3 ro, vec3 rd, in float maxd, in int startSte
 
 void main()
 {  
-  ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+  ivec2 coord = ivec2(texCoord.xy);
 
   if (coord.x >= windowSize.x || coord.y >= windowSize.y)
   {
@@ -220,20 +221,20 @@ void main()
 #if DEPTH_DEBUG
   if (fragmentCount == 0)
   {
-    imageStore(outputColor, coord, vec4(1, 1, 0, 1));
-    imageStore(outputDepth, coord, vec4(0));
+    fragColor = vec4(1, 1, 0, 1);
+    gl_FragDepth = 0;
   }
   else
   {
-    imageStore(outputColor, coord, vec4(fragmentCount * 1.0 / 10, 0.0, 0.0, 1.0));
-    imageStore(outputDepth, coord, vec4(fragments[0].position.z));
+    fragColor = vec4(fragmentCount * 1.0 / 10, 0.0, 0.0, 1.0);
+    gl_FragDepth = fragments[0].position.z;
   }
 #endif
 
   if (fragmentCount == 0)
   {
-    imageStore(outputColor, coord, vec4(0));
-    imageStore(outputDepth, coord, vec4(0));
+    fragColor = vec4(0, 0, 0, 1);
+    gl_FragDepth = 0;
     return;
   }
 
@@ -249,9 +250,8 @@ void main()
 
     if (sdfValue > 0)
     {
-        imageStore(outputColor, coord, fragments[i].color);
-        imageStore(outputDepth, coord, vec4(start.z));
-
+        fragColor = fragments[i].color;
+        gl_FragDepth = start.z;
         return;
     }
 
@@ -270,8 +270,8 @@ void main()
     float tdepth = fragments[i+1].position.z - sdepth;
     float ndepth = sdepth + tdepth * hitDist / maxDist;
 
-    imageStore(outputColor, coord, vec4(0.0, 1.0, 0.0, 1.0));
-    imageStore(outputDepth, coord, vec4(ndepth));
+    fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    gl_FragDepth = ndepth;
     break;
   }
 }

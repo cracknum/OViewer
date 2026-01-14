@@ -4,6 +4,7 @@
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLQuadHelper.h>
+#include <vtkOpenGLQuadHelper.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLState.h>
@@ -53,12 +54,19 @@ struct CompositeRenderPass::Private
   vtkSmartPointer<vtkTextureObject> mToolTexture;
   vtkSmartPointer<vtkOpenGLFramebufferObject> mFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mColorTexture;
+  vtkSmartPointer<vtkTextureObject> mDepthTexture;
   // outside inject
   vtkSmartPointer<vtkTextureObject> mHeadPointerImageTexture;
-  GLuint mCProgram;
+  std::unique_ptr<vtkOpenGLQuadHelper> mDrawHelper;
+
+  double mWorkpieceOrigin[3];
+  double mWorkpieceSpacing[3];
+  float mWorkpieceDimensions[3];
 
   Private()
-    : mCProgram(0)
+    : mWorkpieceOrigin{}
+    , mWorkpieceSpacing{}
+    , mWorkpieceDimensions{}
   {
   }
 };
@@ -67,12 +75,14 @@ vtkStandardNewMacro(CompositeRenderPass);
 
 void CompositeRenderPass::Render(const vtkRenderState* s)
 {
+  vtkOpenGLClearErrorMacro();
+
   auto renderer = vtkOpenGLRenderer::SafeDownCast(s->GetRenderer());
   auto renderWindow = vtkOpenGLRenderWindow::SafeDownCast(renderer->GetRenderWindow());
   auto ostate = renderWindow->GetState();
   int* windowSize = renderWindow->GetSize();
 
-  if (!mPrivate->mToolTexture || !mPrivate->mOpaqueDepthTexture || !mPrivate->mHeadPointerImageTexture)
+  if (!mPrivate->mToolTexture || !mPrivate->mOpaqueDepthTexture)
   {
     SPDLOG_ERROR("param set is not completed: tool texture: {}, opaque depth texture: {}, head "
                  "pointer image texture: {}",
@@ -93,6 +103,22 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     mPrivate->mColorTexture->Resize(windowSize[0], windowSize[1]);
   }
 
+  if (!mPrivate->mDepthTexture)
+  {
+    mPrivate->mDepthTexture = vtkSmartPointer<vtkTextureObject>::New();
+    mPrivate->mDepthTexture->SetContext(renderWindow);
+    mPrivate->mDepthTexture->SetWrapS(vtkTextureObject::Nearest);
+    mPrivate->mDepthTexture->SetWrapT(vtkTextureObject::Nearest);
+    mPrivate->mDepthTexture->SetMinificationFilter(vtkTextureObject::ClampToEdge);
+    mPrivate->mDepthTexture->SetMagnificationFilter(vtkTextureObject::ClampToEdge);
+    mPrivate->mDepthTexture->AllocateDepth(windowSize[0], windowSize[1], vtkTextureObject::Fixed24);
+  }
+  else if (mPrivate->mDepthTexture->GetWidth() != windowSize[0] ||
+    mPrivate->mDepthTexture->GetHeight() != windowSize[1])
+  {
+    mPrivate->mDepthTexture->Resize(windowSize[0], windowSize[1]);
+  }
+
   if (!mPrivate->mFrameBuffer)
   {
     mPrivate->mFrameBuffer = vtkSmartPointer<vtkOpenGLFramebufferObject>::New();
@@ -100,52 +126,39 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     ostate->PushFramebufferBindings();
     mPrivate->mFrameBuffer->Bind();
     mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
+    mPrivate->mFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
     ostate->PopFramebufferBindings();
   }
 
-  if (!mPrivate->mCProgram)
+  if (!mPrivate->mDrawHelper)
   {
-    const auto* shaderPath = (std::string(ASSERT_PATH) + "CompositeCSShader.comp").c_str();
     glsl::Preprocessor shaderPreprocessor;
-    const auto shaderSourceStr = shaderPreprocessor.preprocess(shaderPath);
+    const auto shaderSourceStr =
+      shaderPreprocessor.preprocess((std::string(ASSERT_PATH) + "CompositeFragmentShader.frag"));
     const auto shaderSource = shaderSourceStr.c_str();
-    GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(computeShader, 1, &shaderSource, nullptr);
-    glCompileShader(computeShader);
-    GLint status = -1;
-    glGetShaderiv(computeShader, GL_COMPILE_STATUS, &status);
-    if (status != GL_TRUE)
-    {
-      PrintShaderLog(computeShader);
-      SPDLOG_ERROR(shaderSourceStr);
-      return;
-    }
-    mPrivate->mCProgram = glCreateProgram();
-    glAttachShader(mPrivate->mCProgram, computeShader);
-    glLinkProgram(mPrivate->mCProgram);
-    glGetProgramiv(mPrivate->mCProgram, GL_LINK_STATUS, &status);
-    if (status != GL_TRUE)
-    {
-      PrintProgramLog(mPrivate->mCProgram);
-      return;
-    }
+    mPrivate->mDrawHelper =
+      std::make_unique<vtkOpenGLQuadHelper>(renderWindow, nullptr, shaderSource, nullptr);
   }
 
   {
     ostate->PushFramebufferBindings();
-    glUseProgram(mPrivate->mCProgram);
-    glUniform2i(
-      glGetUniformLocation(mPrivate->mCProgram, "windowSize"), windowSize[0], windowSize[1]);
-    glUniform1i(glGetUniformLocation(mPrivate->mCProgram, "maxLayer"), 16);
+    mPrivate->mFrameBuffer->Bind();
+    auto program = mPrivate->mDrawHelper->Program;
+    renderWindow->GetShaderCache()->ReadyShaderProgram(program);
+    program->SetUniform2i("windowSize", windowSize);
+    program->SetUniformi("maxLayer", 16);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_3D, mPrivate->mToolTexture->GetHandle());
+    program->SetUniformi("toolTex", 0);
+    program->SetUniform3f("gridOrigin", mPrivate->mWorkpieceOrigin);
+    program->SetUniform3f("gridSize", mPrivate->mWorkpieceDimensions);
+    program->SetUniform3f("gridSpacing", mPrivate->mWorkpieceSpacing);
+
     auto colorTexId = mPrivate->mColorTexture->GetHandle();
-    glBindImageTexture(
-      2, mPrivate->mHeadPointerImageTexture->GetHandle(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32UI);
-    glBindImageTexture(4, colorTexId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
-    int xUnit = (windowSize[0] + 7) / 8;
-    int yUnit = (windowSize[1] + 7) / 8;
-    glDispatchCompute(xUnit, yUnit, 1);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    glUseProgram(0);
+    /*glBindImageTexture(
+      2, mPrivate->mHeadPointerImageTexture->GetHandle(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32UI);*/
+    mPrivate->mDrawHelper->Render();
     ostate->PopFramebufferBindings();
   }
 
@@ -154,6 +167,8 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
     ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
       windowSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     ostate->PopFramebufferBindings();
   }
 }
@@ -198,4 +213,13 @@ bool CompositeRenderPass::HasHeadPointerImage() const
 bool CompositeRenderPass::HasToolTexture() const
 {
   return mPrivate->mToolTexture != nullptr;
+}
+
+void CompositeRenderPass::SetWorkpieceParms(double* origin, double* spacing, int* dimensions)
+{
+  std::copy_n(origin, 3, mPrivate->mWorkpieceOrigin);
+  std::copy_n(spacing, 3, mPrivate->mWorkpieceSpacing);
+  mPrivate->mWorkpieceDimensions[0] = dimensions[0];
+  mPrivate->mWorkpieceDimensions[1] = dimensions[1];
+  mPrivate->mWorkpieceDimensions[2] = dimensions[2];
 }

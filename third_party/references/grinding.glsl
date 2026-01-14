@@ -1254,7 +1254,7 @@ void main()
        } else { 
 
       
-[2025-12-30 08:08:22.394] [26936] [INFO ] [d:\project\csurgery\master\apps\ntsurgerysystem\src\ntigniter.cpp:112|NTIgniter::OnReadProcessStandardOutput]      if (raymarch_all(toolNowTex, toolOldTex, false, start, rd, maxd, hitp, hitn, hitd, face)) {
+if (raymarch_all(toolNowTex, toolOldTex, false, start, rd, maxd, hitp, hitn, hitd, face)) {
 
                float ndepth = sdepth + tdepth * hitd / maxd;
 

@@ -14,6 +14,7 @@
 #include <vtkOpenGLState.h>
 #include <vtkOpenGLTexture.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
 #include <vtkRenderer.h>
 #include <vtkRenderPassCollection.h>
@@ -25,6 +26,7 @@
 #include <vtkTextureUnitManager.h>
 #include <vtkWindowedSincPolyDataFilter.h>
 
+
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
 
@@ -33,8 +35,13 @@ vtkSmartPointer<vtkActor> reconstructWorkpiece(vtkImageData* imageData)
   auto flyingEdgesAlgo = vtkSmartPointer<vtkFlyingEdges3D>::New();
   flyingEdgesAlgo->SetInputData(imageData);
   flyingEdgesAlgo->SetValue(0, 17);
+  auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
+  normals->SetInputConnection(flyingEdgesAlgo->GetOutputPort());
+  normals->SetComputePointNormals(true); // 计算点法线（用于平滑着色）
+  normals->SetComputeCellNormals(false); // 通常不需要面法线
+  normals->SetSplitting(false);          // 避免在尖锐边缘分裂（可选）
   auto smoothPolyDataFilter = vtkSmartPointer<vtkWindowedSincPolyDataFilter>::New();
-  smoothPolyDataFilter->SetInputConnection(flyingEdgesAlgo->GetOutputPort());
+  smoothPolyDataFilter->SetInputConnection(normals->GetOutputPort());
   smoothPolyDataFilter->SetNumberOfIterations(15);
   smoothPolyDataFilter->BoundarySmoothingOff();
   smoothPolyDataFilter->FeatureEdgeSmoothingOff();
@@ -42,12 +49,14 @@ vtkSmartPointer<vtkActor> reconstructWorkpiece(vtkImageData* imageData)
   smoothPolyDataFilter->SetPassBand(.001);
   smoothPolyDataFilter->NonManifoldSmoothingOn();
   smoothPolyDataFilter->NormalizeCoordinatesOn();
-  
+
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(smoothPolyDataFilter->GetOutputPort());
+  mapper->SetScalarVisibility(0);
   auto actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
-  
+  actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+
   return actor;
 }
 int main()
@@ -63,8 +72,7 @@ int main()
   renderWindowInteractor->SetInteractorStyle(renderWindowStyle);
   renderWindowInteractor->Initialize();
 
-  reader->SetFileName(
-    R"(F:\Workspace\Projects\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
+  reader->SetFileName(R"(D:\Workspace\github\OViewer\Grinding\tests\mask_tooth_crop.nii.gz)");
   reader->Update();
   auto workpieceData = reader->GetOutput();
   int dimensions[3]{};
@@ -75,6 +83,8 @@ int main()
   workpieceData->GetSpacing(spacing);
 
   auto workpieceActor = reconstructWorkpiece(reader->GetOutput());
+  // workpieceActor->GetProperty()->SetRepresentationToWireframe();
+
   renderer->AddActor(workpieceActor);
   auto information = vtkInformation::New();
   workpieceActor->SetPropertyKeys(information);
@@ -84,15 +94,14 @@ int main()
   information->Set(GrindingRenderPass::SpacingInfo(), spacing, 3);
 
   auto toolReader = vtkSmartPointer<vtkSTLReader>::New();
-  toolReader->SetFileName(R"(F:\Workspace\Projects\OViewer\Grinding\tests\Handpiece.stl)");
+  toolReader->SetFileName(R"(D:\Workspace\github\OViewer\Grinding\tests\Handpiece.stl)");
   toolReader->Update();
   auto toolMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   toolMapper->SetInputData(toolReader->GetOutput());
   auto toolActor = vtkSmartPointer<vtkActor>::New();
   toolActor->SetMapper(toolMapper);
-  // toolActor->GetProperty()->SetRepresentationToWireframe();
+  toolActor->GetProperty()->SetRepresentationToWireframe();
   renderer->AddActor(toolActor);
-  // auto colorChangePass = vtkSmartPointer<ColorChangePass>::New();
   auto grindingRenderPass = vtkSmartPointer<GrindingRenderPass>::New();
   auto actorCollections = vtkSmartPointer<vtkActorCollection>::New();
   actorCollections->AddItem(workpieceActor);
