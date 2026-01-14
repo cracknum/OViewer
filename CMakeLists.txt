@@ -40,6 +40,13 @@ add_subdirectory(UI)
 add_subdirectory(MultiPlanarReconstruct)
 add_subdirectory(Grinding)
 
+option(Enable_Simulation "enalbe simulation module" OFF)
+
+if(Enable_Simulation)
+    add_subdirectory(Simulation)
+endif()
+
+
 option(enable_testing OFF)
 
 if (enable_testing)
