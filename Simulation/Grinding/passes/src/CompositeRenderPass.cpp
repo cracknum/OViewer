@@ -155,9 +155,6 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     program->SetUniform3f("gridSize", mPrivate->mWorkpieceDimensions);
     program->SetUniform3f("gridSpacing", mPrivate->mWorkpieceSpacing);
 
-    auto colorTexId = mPrivate->mColorTexture->GetHandle();
-    /*glBindImageTexture(
-      2, mPrivate->mHeadPointerImageTexture->GetHandle(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32UI);*/
     mPrivate->mDrawHelper->Render();
     ostate->PopFramebufferBindings();
   }

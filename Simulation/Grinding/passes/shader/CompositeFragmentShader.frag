@@ -202,7 +202,7 @@ void main()
 {  
   ivec2 coord = ivec2(texCoord.xy);
   vec2 normalizedCoord = coord / windowSize;
-  fragColor = vec4(normalizedCoord.x, normalizedCoord.y, 0.5, 1.0);
+  fragColor = vec4(normalizedCoord.x, 1.0, 0.5, 1.0);
 //   ABufferNode fragments[64];
 //   int fragmentCount = 0;
 //   uint currentNode = imageLoad(headPointerTexImage, coord).r;

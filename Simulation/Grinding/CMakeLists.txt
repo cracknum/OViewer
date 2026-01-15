@@ -34,13 +34,13 @@ if (${MODULE_NAME}_TESTING)
                 COMPONENTS
                 IOImage IOGeometry RenderingOpenGL2
                 CommonCore InteractionStyle RenderingFreeType InteractionWidgets
-                ImagingSources
+                ImagingSources IOXML
         )
     endif ()
     set(VTK_DEPENDS
             VTK::IOImage VTK::IOGeometry VTK::RenderingOpenGL2 VTK::CommonCore
             VTK::InteractionStyle VTK::RenderingFreeType VTK::InteractionWidgets
-            VTK::ImagingSources
+            VTK::ImagingSources VTK::IOXML
     )
     message(STATUS "Enable test: ${MODULE_NAME}_TESTING")
 
@@ -76,5 +76,10 @@ if (${MODULE_NAME}_TESTING)
             ${MODULE_NAME}_Composite_TESTING
             tests/CompositeRenderPassTest.cpp
             ${MODULE_NAME}::Passes ${VTK_DEPENDS}
+    )
+    create_test(
+        ${MODULE_NAME}_Teeth_Grinding_TESTING
+        tests/TeethGrindingTest.cpp
+        ${MODULE_NAME}::Passes ${VTK_DEPENDS}
     )
 endif ()

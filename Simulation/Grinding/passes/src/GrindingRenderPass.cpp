@@ -156,6 +156,7 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
   if (!mPrivate->mABufferRenderPass)
   {
     mPrivate->mABufferRenderPass = vtkSmartPointer<ABufferRenderPass>::New();
+    mPrivate->mABufferRenderPass->SetRenderActorCollection(mPrivate->mWorkpieceActors);
   }
   if (!mPrivate->mCompositeRenderPass)
   {
@@ -184,7 +185,7 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
 
     mPrivate->mOpaqueDepthRenderPass->Render(s);
     mPrivate->mUpdateToolRenderPass->Render(s);
-    // mPrivate->mABufferRenderPass->Render(s);
+    mPrivate->mABufferRenderPass->Render(s);
 
     if (!mPrivate->mCompositeRenderPass->HasHeadPointerImage())
     {

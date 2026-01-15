@@ -5,15 +5,16 @@ project(SpringMass LANGUAGES CXX)
 file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp" "include/*.h")
 file(GLOB_RECURSE Source_files "src/*.cpp")
 
-if(NOT TARGET VTK::RenderingCore)
-    find_package(VTK REQUIRED COMPONENTS RenderingCore)
+if(NOT TARGET glm::glm)
+    find_package(glm COMPONENTS glm::glm)
 endif()
+
 
 set(library_name ${MODULE_NAME}${PROJECT_NAME})
 add_library(${library_name} SHARED ${Header_files} ${Source_files})
 target_link_libraries(${library_name} PUBLIC
     Common
-    VTK::RenderingCore
+    glm::glm
 )
 
 add_library(${MODULE_NAME}::${PROJECT_NAME} ALIAS ${library_name})

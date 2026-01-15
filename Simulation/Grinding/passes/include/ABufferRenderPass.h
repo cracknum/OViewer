@@ -5,6 +5,7 @@
 #include <vtkOpenGLRenderPass.h>
 
 class vtkTextureObject;
+class vtkActorCollection;
 class PASSES_API ABufferRenderPass : public vtkOpenGLRenderPass
 {
 public:
@@ -17,6 +18,8 @@ public:
   bool SetShaderParameters(vtkShaderProgram* program, vtkAbstractMapper* mapper, vtkProp* prop,
     vtkOpenGLVertexArrayObject* VAO = nullptr) override;
   vtkTextureObject* GetHeadPointerImage() const;
+
+  void SetRenderActorCollection(vtkActorCollection* collection);
 
 protected:
   ABufferRenderPass();

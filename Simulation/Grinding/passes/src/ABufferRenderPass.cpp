@@ -1,6 +1,7 @@
 #include "ABufferRenderPass.h"
 #include <spdlog/spdlog.h>
 #include <vtkAbstractMapper.h>
+#include <vtkActorCollection.h>
 #include <vtkObjectFactory.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
@@ -40,6 +41,8 @@ struct ABufferRenderPass::Private
   unsigned int mSSBONodes;
   int mMaxNodes;
 
+  vtkSmartPointer<vtkActorCollection> mRenderCollections;
+
   // render frameBuffer
   vtkSmartPointer<vtkOpenGLFramebufferObject> mFrameBuffer;
   vtkSmartPointer<vtkTextureObject> mColorTexture;
@@ -66,6 +69,11 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
 
   int* windowSize = renderWindow->GetSize();
   renderWindow->MakeCurrent();
+  if (!mPrivate->mRenderCollections)
+  {
+    SPDLOG_ERROR("using SetRenderActorCollection set abuffer relative collections first");
+    return;
+  }
 
   if (!mPrivate->mColorTexture)
   {
@@ -176,7 +184,12 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     this->UpdateCamera(renderer);
     this->UpdateLightGeometry(renderer);
     this->UpdateLights(renderer);
-    this->UpdateGeometry(renderer);
+    mPrivate->mRenderCollections->InitTraversal();
+    vtkActor* actor = nullptr;
+    while ((actor = mPrivate->mRenderCollections->GetNextActor()))
+    {
+      actor->Render(renderer, actor->GetMapper());
+    }
     this->PostRender(s);
 
     GLuint counterVal;
@@ -265,6 +278,8 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		// insert new node in head
   		uint prevNodeIndex = imageAtomicExchange(headPointerImage, pos, newNodeIndex);
   		nodes[newNodeIndex].next = prevNodeIndex;
+
+		discard;
 	 )",
     false);
 
@@ -289,4 +304,9 @@ ABufferRenderPass::~ABufferRenderPass() = default;
 vtkTextureObject* ABufferRenderPass::GetHeadPointerImage() const
 {
   return mPrivate->mHeadPointerTex;
+}
+
+void ABufferRenderPass::SetRenderActorCollection(vtkActorCollection* collection)
+{
+  mPrivate->mRenderCollections = collection;
 }

@@ -4,6 +4,7 @@ project(Passes LANGUAGES CXX)
 
 file(GLOB_RECURSE Header_files "include/*.hpp" "include/*.ipp")
 file(GLOB_RECURSE Source_files "src/*.cpp")
+file(GLOB_RECURSE Shader_files "shader/*.glsl" "shader/*.comp" "shader/*.frag" "shader/*.vert" "shader/*.geom")
 
 if(NOT TARGET VTK::RenderingCore)
     find_package(VTK 9.5 REQUIRED COMPONENTS RenderingCore RenderingOpenGL2)
@@ -12,7 +13,8 @@ endif()
 message(STATUS "find vtk ${VTK_VERSION}")
 
 set(library_name ${MODULE_NAME}${PROJECT_NAME})
-add_library(${library_name} SHARED ${Header_files} ${Source_files})
+add_library(${library_name} SHARED ${Header_files} ${Source_files} ${Shader_files})
+source_group(Shaders FILES ${Shader_files})
 target_link_libraries(${library_name} PUBLIC
     Common
     Grinding::Base
