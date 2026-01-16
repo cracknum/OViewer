@@ -34,6 +34,7 @@ struct ABufferRenderPass::Private
   vtkSmartPointer<vtkTextureObject> mHeadPointerTex;
   // manage resource self
   GLuint mHeadPointerId;
+  int mHeadPointerTexSize[2];
 
   // link list atomic counter buffer
   unsigned int mAtomicCounterBuffer;
@@ -55,6 +56,7 @@ struct ABufferRenderPass::Private
     , mSSBONodes(0)
     , mMaxNodes(0)
     , mHeadPointerId(0)
+    , mHeadPointerTexSize{}
   {
   }
 };
@@ -101,9 +103,10 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
   }
 
   bool windowResized = false;
+
   if (mPrivate->mHeadPointerId &&
-    (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
-      mPrivate->mHeadPointerTex->GetHeight() != windowSize[1]))
+    !std::equal(mPrivate->mHeadPointerTexSize, mPrivate->mHeadPointerTexSize + 2, windowSize)
+    )
   {
     windowResized = true;
     glDeleteTextures(1, &mPrivate->mHeadPointerId);
@@ -116,7 +119,8 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     // TODO: head pointer分配可能有错误，需要检查，通过glGetTexLevelParameteriv无法获取对应尺寸
     // 原因是在vtkTextureObject::GetDefaultFormat()时使用硬编码无法获取GL_RED_INTEGER，只能返回GL_RED
     // 从而导致出现无效枚举的错误，只能将这里改为原始的opengl代码
-
+    mPrivate->mHeadPointerTexSize[0] = windowSize[0];
+    mPrivate->mHeadPointerTexSize[1] = windowSize[1];
     glGenTextures(1, &mPrivate->mHeadPointerId);
     glBindTexture(GL_TEXTURE_2D, mPrivate->mHeadPointerId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -158,6 +162,7 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
 
   if (!mPrivate->mSSBONodes || windowResized)
   {
+    SPDLOG_INFO("gen ssbo");
     mPrivate->mMaxNodes = windowSize[0] * windowSize[1] * 4 * 2;
     glGenBuffers(1, &mPrivate->mSSBONodes);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, mPrivate->mSSBONodes);
