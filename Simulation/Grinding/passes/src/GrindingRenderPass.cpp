@@ -181,8 +181,9 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
   this->UpdateLights(renderer);
   {
     ostate->PushFramebufferBindings();
+    vtkOpenGLState::ScopedglClearColor clearColorSave(ostate);
+    ostate->vtkglClearColor(0, 0, 0, 1);
     mPrivate->mRenderFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
-
     mPrivate->mOpaqueDepthRenderPass->Render(s);
     mPrivate->mUpdateToolRenderPass->Render(s);
     mPrivate->mABufferRenderPass->Render(s);

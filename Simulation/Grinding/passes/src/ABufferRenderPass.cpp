@@ -80,11 +80,13 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     mPrivate->mColorTexture = vtkSmartPointer<vtkTextureObject>::New();
     mPrivate->mColorTexture->SetContext(renderWindow);
     mPrivate->mColorTexture->Allocate2D(windowSize[0], windowSize[1], 4, VTK_UNSIGNED_CHAR, 0);
+    SPDLOG_ERROR("{}", glGetError());
   }
   else if (mPrivate->mColorTexture->GetWidth() != windowSize[0] ||
     mPrivate->mColorTexture->GetHeight() != windowSize[1])
   {
     mPrivate->mColorTexture->Resize(windowSize[0], windowSize[1]);
+    SPDLOG_ERROR("{}", glGetError());
   }
 
   if (!mPrivate->mFrameBuffer)
@@ -95,9 +97,18 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     mPrivate->mFrameBuffer->Bind();
     mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
     ostate->PopDrawFramebufferBinding();
+    SPDLOG_ERROR("{}", glGetError());
   }
 
   bool windowResized = false;
+  if (mPrivate->mHeadPointerId &&
+    (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
+      mPrivate->mHeadPointerTex->GetHeight() != windowSize[1]))
+  {
+    windowResized = true;
+    glDeleteTextures(1, &mPrivate->mHeadPointerId);
+    mPrivate->mHeadPointerTex = 0;
+  }
   if (!mPrivate->mHeadPointerTex)
   {
     mPrivate->mHeadPointerTex = vtkSmartPointer<vtkTextureObject>::New();
@@ -115,31 +126,20 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, windowSize[0], windowSize[1], 0, GL_RED_INTEGER,
       GL_UNSIGNED_INT, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
-
     mPrivate->mHeadPointerTex->AssignToExistingTexture(mPrivate->mHeadPointerId, GL_TEXTURE_2D);
     mPrivate->mHeadPointerTex->SetDataType(GL_UNSIGNED_INT);
     mPrivate->mHeadPointerTex->SetFormat(GL_RED);
     mPrivate->mHeadPointerTex->SetInternalFormat(GL_R32UI);
-    mPrivate->mHeadPointerTex->SetMagnificationFilter(GL_LINEAR);
-    mPrivate->mHeadPointerTex->SetMinificationFilter(GL_LINEAR);
+    mPrivate->mHeadPointerTex->SetMagnificationFilter(GL_NEAREST);
+    mPrivate->mHeadPointerTex->SetMinificationFilter(GL_NEAREST);
     mPrivate->mHeadPointerTex->SetWrapS(GL_CLAMP_TO_BORDER);
     mPrivate->mHeadPointerTex->SetWrapT(GL_CLAMP_TO_BORDER);
-    mPrivate->mHeadPointerTex->Activate();
   }
-  else if (mPrivate->mHeadPointerTex->GetWidth() != windowSize[0] ||
-    mPrivate->mHeadPointerTex->GetHeight() != windowSize[1])
+
   {
-    windowResized = true;
-    mPrivate->mHeadPointerTex->Resize(windowSize[0], windowSize[1]);
-    mPrivate->mHeadPointerTex->Activate();
-    mPrivate->mHeadPointerTex->Deactivate();
-  }
-  {
-    mPrivate->mHeadPointerTex->Activate();
-    auto handle = mPrivate->mHeadPointerTex->GetHandle();
+    glBindImageTexture(2, mPrivate->mHeadPointerId, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
     unsigned int null = 0xffffffff;
-    glClearTexImage(handle, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
-    mPrivate->mHeadPointerTex->Deactivate();
+    glClearTexImage(mPrivate->mHeadPointerId, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, &null);
   }
 
   if (!mPrivate->mAtomicCounterBuffer)
@@ -176,7 +176,7 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetDrawMode());
     vtkOpenGLState::ScopedglColorMask saveColorMask(ostate);
     vtkOpenGLState::ScopedglDepthMask saveDepthMask(ostate);
-
+    ostate->vtkglClear(GL_COLOR_BUFFER_BIT);
     // ostate->vtkglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     ostate->vtkglDepthMask(GL_FALSE);
 
@@ -195,7 +195,6 @@ void ABufferRenderPass::Render(const vtkRenderState* s)
     GLuint counterVal;
     glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &counterVal);
     std::cout << "Total nodes written: " << counterVal << std::endl;
-
     ostate->PopFramebufferBindings();
   }
 

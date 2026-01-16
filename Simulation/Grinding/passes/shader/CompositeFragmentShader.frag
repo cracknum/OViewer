@@ -1,7 +1,5 @@
 #version 440 core
 
-layout(r32ui, binding = 2) uniform uimage2D headPointerTexImage;
-
 struct ABufferNode
 {
   vec4 color;
@@ -18,6 +16,7 @@ layout(std430, binding = 0) buffer ABufferStorage
 // samplerxx和imagexx拥有独立的命名空间，所以可以使用重复的binding
 // layout(binding = 0) uniform sampler3D opaqueDepthTex;
 uniform sampler3D toolTex;
+uniform usampler2D headPointerTexImage;
 
 uniform ivec2 windowSize;
 uniform int maxLayer;
@@ -30,23 +29,11 @@ in vec2 texCoord;
 
 #define RAY_MARCH_MAX_STEP 1024
 #define REFINE_ITEMS 5
-#ifndef USE_FEATURE_X
-#define DEPTH_DEBUG 1
-#endif
+// #define DEPTH_DEBUG 1
+
 
 out vec4 fragColor;
 
-void swapBufferNode(in ABufferNode bufferNode[64], int firstIndex, int secondIndex)
-{
-  ABufferNode node = bufferNode[firstIndex];
-  bufferNode[firstIndex].color = bufferNode[secondIndex].color;
-  bufferNode[firstIndex].position = bufferNode[secondIndex].position;
-  bufferNode[firstIndex].next = bufferNode[secondIndex].next;
-
-  bufferNode[secondIndex].color = node.color;
-  bufferNode[secondIndex].position = node.position;
-  bufferNode[secondIndex].next = node.next;
-}
 void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
 {
   for (int i = fragmentCount - 1; i > 0; i--)
@@ -56,7 +43,9 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
     {
       if (bufferNode[j].next > bufferNode[j + 1].next)
       {
-        swapBufferNode(bufferNode, j, j + 1);
+        ABufferNode node = bufferNode[j];
+        bufferNode[j] = bufferNode[j+1];
+        bufferNode[j+1] = node;
         swaped = true;
       }
     }
@@ -200,74 +189,72 @@ bool rayMarch(in sampler3D tex, vec3 ro, vec3 rd, in float maxd, in int startSte
 
 void main()
 {  
-  ivec2 coord = ivec2(texCoord.xy);
-  vec2 normalizedCoord = coord / windowSize;
-  fragColor = vec4(normalizedCoord.x, 1.0, 0.5, 1.0);
-//   ABufferNode fragments[64];
-//   int fragmentCount = 0;
-//   uint currentNode = imageLoad(headPointerTexImage, coord).r;
+  vec2 coord = vec2(texCoord.xy);
+  
+  ABufferNode fragments[64];
+  int fragmentCount = 0;
+  uint currentNode = texture(headPointerTexImage, coord).r;
+ /*
+  while (currentNode != 0xffffffff && fragmentCount < maxLayer)
+  {
+    fragments[fragmentCount] = nodes[currentNode];
+    currentNode = nodes[currentNode].next;
+    fragmentCount++;
+  }
+  */
 
-//   while (currentNode != 0xffffffff && fragmentCount < maxLayer)
-//   {
-//     fragments[fragmentCount] = nodes[currentNode];
-//     currentNode = nodes[currentNode].next;
-//     fragmentCount++;
-//   }
+  fragColor = vec4(coord.x, 1, 0, 1);
+/*
+#if DEPTH_DEBUG
+  if (currentNode == 0xffffffffu)
+  {
+    fragColor = vec4(fragmentCount * 1.0/ 10, 0, 0, 1);
+    gl_FragDepth = 0;
+  }
+  else
+  {
+    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_FragDepth = fragments[0].position.z;
+  }
+#endif
 
-// #if DEPTH_DEBUG
-//   if (fragmentCount == 0)
-//   {
-//     fragColor = vec4(1, 1, 0, 1);
-//     gl_FragDepth = 0;
-//   }
-//   else
-//   {
-//     fragColor = vec4(fragmentCount * 1.0 / 10, 0.0, 0.0, 1.0);
-//     gl_FragDepth = fragments[0].position.z;
-//   }
-// #endif
 
-//   if (fragmentCount == 0)
-//   {
-//     fragColor = vec4(0, 0, 0, 1);
-//     gl_FragDepth = 0;
-//     return;
-//   }
 
-//   sortFragments(fragments, fragmentCount);
+ sortFragments(fragments, fragmentCount);
 
-//   for(int i = 0; i < fragmentCount; i += 2){
-//     vec3 start = vec3(fragments[i].position.xyz);
-//     vec3 end = vec3(fragments[i+1].position.xyz);
-//     vec3 rayOrigin = start;
-//     vec3 rayDirection = normalize(end - start);
+ for(int i = 0; i < fragmentCount; i += 2){
+   vec3 start = vec3(fragments[i].position.xyz);
+   vec3 end = vec3(fragments[i+1].position.xyz);
+   vec3 rayOrigin = start;
+   vec3 rayDirection = normalize(end - start);
 
-//     float sdfValue = sampleSDF(toolTex, start);
+   float sdfValue = sampleSDF(toolTex, start);
 
-//     if (sdfValue > 0)
-//     {
-//         fragColor = fragments[i].color;
-//         gl_FragDepth = start.z;
-//         return;
-//     }
+   if (sdfValue > 0)
+   {
+     fragColor = vec4(0, 1, 0, 1);
+     // gl_FragDepth = start.z;
+     return;
+   }
+   /*
+    float maxDist = distance(end, start);
+    vec3 hitp, hitn;
+    float hitDist;
+    int hitStep;
+    bool face = false;
 
-//     float maxDist = distance(end, start);
-//     vec3 hitp, hitn;
-//     float hitDist;
-//     int hitStep;
-//     bool face = false;
+    if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
+    {
+        continue;
+    }
 
-//     if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
-//     {
-//         continue;
-//     }
+    float sdepth = fragments[i].position.z;
+    float tdepth = fragments[i+1].position.z - sdepth;
+    float ndepth = sdepth + tdepth * hitDist / maxDist;
 
-//     float sdepth = fragments[i].position.z;
-//     float tdepth = fragments[i+1].position.z - sdepth;
-//     float ndepth = sdepth + tdepth * hitDist / maxDist;
-
-//     fragColor = vec4(0.0, 1.0, 0.0, 1.0);
-//     gl_FragDepth = ndepth;
-//     break;
-//   }
+    fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    gl_FragDepth = ndepth;
+    break;
+    
+  }*/
  }

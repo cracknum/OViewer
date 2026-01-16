@@ -4,7 +4,6 @@
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLQuadHelper.h>
-#include <vtkOpenGLQuadHelper.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkOpenGLState.h>
@@ -107,11 +106,21 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
   {
     mPrivate->mDepthTexture = vtkSmartPointer<vtkTextureObject>::New();
     mPrivate->mDepthTexture->SetContext(renderWindow);
-    mPrivate->mDepthTexture->SetWrapS(vtkTextureObject::Nearest);
-    mPrivate->mDepthTexture->SetWrapT(vtkTextureObject::Nearest);
-    mPrivate->mDepthTexture->SetMinificationFilter(vtkTextureObject::ClampToEdge);
-    mPrivate->mDepthTexture->SetMagnificationFilter(vtkTextureObject::ClampToEdge);
-    mPrivate->mDepthTexture->AllocateDepth(windowSize[0], windowSize[1], vtkTextureObject::Fixed24);
+    int dbits = renderWindow->GetDepthBufferSize();
+    if (renderWindow->GetStencilCapable())
+    {
+      mPrivate->mDepthTexture->AllocateDepthStencil(windowSize[0], windowSize[1]);
+    }
+    else if (dbits == 32)
+    {
+      mPrivate->mDepthTexture->AllocateDepth(
+        windowSize[0], windowSize[1], vtkTextureObject::Fixed32);
+    }
+    else
+    {
+      mPrivate->mDepthTexture->AllocateDepth(
+        windowSize[0], windowSize[1], vtkTextureObject::Fixed24);
+    }
   }
   else if (mPrivate->mDepthTexture->GetWidth() != windowSize[0] ||
     mPrivate->mDepthTexture->GetHeight() != windowSize[1])
@@ -126,7 +135,7 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     ostate->PushFramebufferBindings();
     mPrivate->mFrameBuffer->Bind();
     mPrivate->mFrameBuffer->AddColorAttachment(0, mPrivate->mColorTexture);
-    mPrivate->mFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
+    // mPrivate->mFrameBuffer->AddDepthAttachment(mPrivate->mDepthTexture);
     ostate->PopFramebufferBindings();
   }
 
@@ -143,8 +152,10 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
   {
     ostate->PushFramebufferBindings();
     mPrivate->mFrameBuffer->Bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     auto program = mPrivate->mDrawHelper->Program;
     renderWindow->GetShaderCache()->ReadyShaderProgram(program);
+
     program->SetUniform2i("windowSize", windowSize);
     program->SetUniformi("maxLayer", 16);
 
@@ -155,7 +166,11 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     program->SetUniform3f("gridSize", mPrivate->mWorkpieceDimensions);
     program->SetUniform3f("gridSpacing", mPrivate->mWorkpieceSpacing);
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mPrivate->mHeadPointerImageTexture->GetHandle());
+    program->SetUniformi("headPointerTexImage", 1);
     mPrivate->mDrawHelper->Render();
+
     ostate->PopFramebufferBindings();
   }
 
@@ -164,8 +179,8 @@ void CompositeRenderPass::Render(const vtkRenderState* s)
     mPrivate->mFrameBuffer->Bind(vtkOpenGLFramebufferObject::GetReadMode());
     ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
       windowSize[1], GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
-      windowSize[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    /*ostate->vtkglBlitFramebuffer(0, 0, windowSize[0], windowSize[1], 0, 0, windowSize[0],
+      windowSize[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST);*/
     ostate->PopFramebufferBindings();
   }
 }
