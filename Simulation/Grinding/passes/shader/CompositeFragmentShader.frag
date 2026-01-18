@@ -194,17 +194,14 @@ void main()
   ABufferNode fragments[64];
   int fragmentCount = 0;
   uint currentNode = texture(headPointerTexImage, coord).r;
- /*
+
   while (currentNode != 0xffffffff && fragmentCount < maxLayer)
   {
     fragments[fragmentCount] = nodes[currentNode];
     currentNode = nodes[currentNode].next;
     fragmentCount++;
   }
-  */
 
-  fragColor = vec4(coord.x, 1, 0, 1);
-/*
 #if DEPTH_DEBUG
   if (currentNode == 0xffffffffu)
   {
@@ -232,11 +229,11 @@ void main()
 
    if (sdfValue > 0)
    {
-     fragColor = vec4(0, 1, 0, 1);
-     // gl_FragDepth = start.z;
+     fragColor = fragments[i].color;
+     gl_FragDepth = start.z;
      return;
    }
-   /*
+
     float maxDist = distance(end, start);
     vec3 hitp, hitn;
     float hitDist;
@@ -252,9 +249,9 @@ void main()
     float tdepth = fragments[i+1].position.z - sdepth;
     float ndepth = sdepth + tdepth * hitDist / maxDist;
 
-    fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    fragColor = vec4(1.0, 1.0, 0.0, 1.0);
     gl_FragDepth = ndepth;
     break;
     
-  }*/
+  }
  }

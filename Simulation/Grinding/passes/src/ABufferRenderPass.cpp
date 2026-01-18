@@ -266,6 +266,8 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
 		uniform uint maxNodes;
 	)",
     false);
+  // TODO: 这里获取的颜色不正确
+
   vtkShaderProgram::Substitute(fragmentShader, "//VTK::Coincident::Impl",
     R"(
 	 	//VTK::Coincident::Impl
@@ -275,7 +277,7 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		{
   		  return;
   		}
-		
+
   		nodes[newNodeIndex].color = fragOutput0;
   		nodes[newNodeIndex].position = vertexVC;
 		

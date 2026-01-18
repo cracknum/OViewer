@@ -68,6 +68,7 @@ int main()
   auto renderWindowStyle = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
   renderWindow->AddRenderer(renderer);
   renderWindow->SetSize(1920, 1080);
+  renderWindow->SetMultiSamples(0);
   renderWindowInteractor->SetRenderWindow(renderWindow);
   renderWindowInteractor->SetInteractorStyle(renderWindowStyle);
   renderWindowInteractor->Initialize();
