@@ -151,6 +151,12 @@ void GrindingRenderPass::Render(const vtkRenderState* s)
     mPrivate->mUpdateToolRenderPass = vtkSmartPointer<UpdateToolRenderPass>::New();
     mPrivate->mUpdateToolRenderPass->SetWorkpieceParams(origin, spacing, dimensions);
     mPrivate->mUpdateToolRenderPass->SetTool(Grinding::GrindingTool::Sphere, mPrivate->mToolTex);
+    auto toolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+    toolMatrix->Identity();
+    toolMatrix->SetElement(0, 3, origin[0]);
+    toolMatrix->SetElement(1, 3, origin[1]);
+    toolMatrix->SetElement(2, 3, origin[2]);
+    mPrivate->mUpdateToolRenderPass->UpdateToolMatrix(toolMatrix);
   }
 
   if (!mPrivate->mABufferRenderPass)

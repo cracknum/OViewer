@@ -29,8 +29,6 @@ in vec2 texCoord;
 
 #define RAY_MARCH_MAX_STEP 1024
 #define REFINE_ITEMS 5
-// #define DEPTH_DEBUG 1
-
 
 out vec4 fragColor;
 
@@ -41,7 +39,7 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
     bool swaped = false;
     for (int j = 0; j < i; j++)
     {
-      if (bufferNode[j].next > bufferNode[j + 1].next)
+      if (bufferNode[j].position.z > bufferNode[j + 1].position.z)
       {
         ABufferNode node = bufferNode[j];
         bufferNode[j] = bufferNode[j+1];
@@ -202,20 +200,6 @@ void main()
     fragmentCount++;
   }
 
-#if DEPTH_DEBUG
-  if (currentNode == 0xffffffffu)
-  {
-    fragColor = vec4(fragmentCount * 1.0/ 10, 0, 0, 1);
-    gl_FragDepth = 0;
-  }
-  else
-  {
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    gl_FragDepth = fragments[0].position.z;
-  }
-#endif
-
-
 
  sortFragments(fragments, fragmentCount);
 
@@ -226,7 +210,7 @@ void main()
    vec3 rayDirection = normalize(end - start);
 
    float sdfValue = sampleSDF(toolTex, start);
-
+  
    if (sdfValue > 0)
    {
      fragColor = fragments[i].color;
@@ -239,19 +223,19 @@ void main()
     float hitDist;
     int hitStep;
     bool face = false;
-
+    hitn = vec3(0, 1, 0);
+    
     if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
     {
-        continue;
+      continue;
     }
-
+    
     float sdepth = fragments[i].position.z;
     float tdepth = fragments[i+1].position.z - sdepth;
     float ndepth = sdepth + tdepth * hitDist / maxDist;
 
     fragColor = vec4(1.0, 1.0, 0.0, 1.0);
     gl_FragDepth = ndepth;
-    break;
     
   }
  }

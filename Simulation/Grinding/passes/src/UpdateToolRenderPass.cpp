@@ -80,7 +80,7 @@ struct UpdateToolRenderPass::Private
   Private()
     : mGrindingTool(Grinding::GrindingTool::None)
     , mToolUpdateProgram(0)
-    , mToolSize{ 3, 3, 3 }
+    , mToolSize{ 1, 1, 1 }
   {
     mToolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
     mToolMatrix->Identity();
@@ -216,6 +216,7 @@ void UpdateToolRenderPass::UpdateToolMatrix(vtkMatrix4x4* matrix)
     mPrivate->mToolInverseMatrix->Identity();
   }
   vtkMatrix4x4::Invert(matrix, mPrivate->mToolInverseMatrix);
+
 }
 void UpdateToolRenderPass::SetWorkpieceParams(double* origin, double* spacing, int* dimensions)
 {
@@ -238,13 +239,14 @@ UpdateToolRenderPass::UpdateToolRenderPass()
 }
 
 UpdateToolRenderPass::~UpdateToolRenderPass() = default;
+// 数据会被直接转置,因为OpenGL是行主序的数据，vtk使用的是列主序的数据
 void UpdateToolRenderPass::GetFloatMatrix4x4(const vtkMatrix4x4* matrix, float fMatrix[16])
 {
   for (int i = 0; i < 4; ++i)
   {
     for (int j = 0; j < 4; j++)
     {
-      fMatrix[i * 4 + j] = static_cast<float>(matrix->GetElement(i, j));
+      fMatrix[i * 4 + j] = static_cast<float>(matrix->GetElement(j, i));
     }
   }
 }

@@ -37,7 +37,7 @@ void main()
   vec3 texWorld = texIndexToWorld(threadIdx);
   vec4 toolLocalCoord = toolInverseMatrix * vec4(texWorld, 1.0);
 
-  float ndist = sdSphere(vec3(toolLocalCoord.xyz) / toolLocalCoord.w, toolSize.x);
+  float ndist = sdSphere(vec3(toolLocalCoord.xyz), toolSize.x);
 
   if (odist > ndist)
   {
