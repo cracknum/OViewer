@@ -39,7 +39,7 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
     bool swaped = false;
     for (int j = 0; j < i; j++)
     {
-      if (bufferNode[j].position.z > bufferNode[j + 1].position.z)
+      if (bufferNode[j].position.z < bufferNode[j + 1].position.z)
       {
         ABufferNode node = bufferNode[j];
         bufferNode[j] = bufferNode[j+1];
@@ -56,12 +56,9 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
 
 vec3 worldToTexCoord(in vec3 worldPos)
 {
-   vec3 minCenter = gridOrigin + 0.5 * gridSpacing;
-   vec3 maxCenter = gridOrigin + (gridSize - 0.5) * gridSpacing;
-    
-   vec3 t = (worldPos - minCenter) / (maxCenter - minCenter);
-    
-   return clamp(t, 0.0, 1.0);
+    vec3 voxelCoords = ((worldPos - gridOrigin) / gridSpacing) + 0.5;
+    vec3 texCoords = voxelCoords / vec3(20);
+    return voxelCoords;
 }
 
 float sampleSDF(in sampler3D tex, in vec3 worldPosition)
@@ -200,7 +197,6 @@ void main()
     fragmentCount++;
   }
 
-
  sortFragments(fragments, fragmentCount);
 
  for(int i = 0; i < fragmentCount; i += 2){
@@ -210,7 +206,6 @@ void main()
    vec3 rayDirection = normalize(end - start);
 
    float sdfValue = sampleSDF(toolTex, start);
-  
    if (sdfValue > 0)
    {
      fragColor = fragments[i].color;
@@ -223,19 +218,16 @@ void main()
     float hitDist;
     int hitStep;
     bool face = false;
-    hitn = vec3(0, 1, 0);
     
     if (!rayMarch(toolTex, rayOrigin, rayDirection, maxDist, 0, 0, hitp, hitn, hitDist, hitStep, face))
     {
-      continue;
+       continue;
     }
-    
     float sdepth = fragments[i].position.z;
     float tdepth = fragments[i+1].position.z - sdepth;
     float ndepth = sdepth + tdepth * hitDist / maxDist;
 
     fragColor = vec4(1.0, 1.0, 0.0, 1.0);
     gl_FragDepth = ndepth;
-    
   }
  }
