@@ -80,7 +80,7 @@ struct UpdateToolRenderPass::Private
   Private()
     : mGrindingTool(Grinding::GrindingTool::None)
     , mToolUpdateProgram(0)
-    , mToolSize{ 1, 1, 1 }
+    , mToolSize{ 3, 1, 1 }
   {
     mToolMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
     mToolMatrix->Identity();

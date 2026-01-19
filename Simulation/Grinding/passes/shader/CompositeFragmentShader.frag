@@ -32,6 +32,7 @@ in vec2 texCoord;
 
 out vec4 fragColor;
 
+// 由近及远排序（深度值从大到小）
 void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
 {
   for (int i = fragmentCount - 1; i > 0; i--)
@@ -57,8 +58,8 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
 vec3 worldToTexCoord(in vec3 worldPos)
 {
     vec3 voxelCoords = ((worldPos - gridOrigin) / gridSpacing) + 0.5;
-    vec3 texCoords = voxelCoords / vec3(20);
-    return voxelCoords;
+    vec3 texCoords = voxelCoords / gridSize;
+    return clamp(texCoords, 0, 1);
 }
 
 float sampleSDF(in sampler3D tex, in vec3 worldPosition)
@@ -212,7 +213,7 @@ void main()
      gl_FragDepth = start.z;
      return;
    }
-
+   
     float maxDist = distance(end, start);
     vec3 hitp, hitn;
     float hitDist;

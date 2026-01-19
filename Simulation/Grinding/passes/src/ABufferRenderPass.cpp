@@ -279,7 +279,7 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		}
 
   		nodes[newNodeIndex].color = fragOutput0;
-  		nodes[newNodeIndex].position = vertexVC;
+  		nodes[newNodeIndex].position = vertexVCVSOutput;
 		
   		// insert new node in head
   		uint prevNodeIndex = imageAtomicExchange(headPointerImage, pos, newNodeIndex);
@@ -297,6 +297,8 @@ bool ABufferRenderPass::SetShaderParameters(vtkShaderProgram* program, vtkAbstra
 {
   glUniform1ui(glGetUniformLocation(program->GetHandle(), "maxNodes"), mPrivate->mMaxNodes);
   glBindImageTexture(2, mPrivate->mHeadPointerId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+
+  SPDLOG_INFO("fragment shader: {}", program->GetFragmentShader()->GetSource());
 
   return true;
 }
