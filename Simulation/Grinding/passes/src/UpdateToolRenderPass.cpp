@@ -10,11 +10,16 @@
 #include <vtkTextureObject.h>
 
 #include <algorithm>
+#include <vtkFloatArray.h>
 #include <vtkImageData.h>
+#include <vtkNIFTIImageWriter.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkOpenGLState.h>
+#include <vtkPixelBufferObject.h>
+#include <vtkPointData.h>
 #include <vtkRenderState.h>
+#include <vtkXMLImageDataWriter.h>
 
 #if defined(GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG)
 #include <vtkNIFTIImageWriter.h>
@@ -174,7 +179,35 @@ void UpdateToolRenderPass::Render(const vtkRenderState* s)
     (mPrivate->mToolTex->GetHeight() + 7) / 8, (mPrivate->mToolTex->GetDepth() + 7) / 8 };
   glDispatchCompute(blockSize[0], blockSize[1], blockSize[2]);
   glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+  /*auto pbo = mPrivate->mToolTex->Download();
+
+    unsigned int workpieceDim[3] = { static_cast<unsigned int>(
+                                 mPrivate->mWorkpieceParams->mDimensions[0]),
+    static_cast<unsigned int>(mPrivate->mWorkpieceParams->mDimensions[1]),
+    static_cast<unsigned int>(mPrivate->mWorkpieceParams->mDimensions[2]) };
+  auto data =
+    std::unique_ptr<float>(new float[workpieceDim[0] * workpieceDim[1] * workpieceDim[2]]);
+  vtkIdType increments[3]{0, 0, 0};
+
+  pbo->Download3D(VTK_FLOAT, data.get(), workpieceDim, 1, increments);
+  vtkNew<vtkImageData> saveData;
+  saveData->SetDimensions(workpieceDim[0], workpieceDim[1], workpieceDim[2]);
+  saveData->SetSpacing(0.1, 0.1, 0.1);
+  saveData->SetOrigin(mPrivate->mToolMatrix->GetElement(0, 3),
+    mPrivate->mToolMatrix->GetElement(1, 3), mPrivate->mToolMatrix->GetElement(2, 3));
+  vtkNew<vtkFloatArray> dataArray;
+  dataArray->SetArray(data.get(), workpieceDim[0] * workpieceDim[1] * workpieceDim[2], 0);
+  dataArray->SetName("Scalars");
+  saveData->GetPointData()->AddArray(dataArray);
+
+  vtkNew<vtkNIFTIImageWriter> imageDataWriter;
+  imageDataWriter->SetInputData(saveData);
+  imageDataWriter->SetFileName("toolTex.nii.gz");
+  imageDataWriter->Write();*/
+
   glUseProgram(0);
+  
+  
 #if defined(GRINDING_UPDATE_TOOL_RENDER_PASS_DEBUG)
 
   auto texSize = mPrivate->mToolTex->GetWidth() *

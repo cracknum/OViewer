@@ -40,7 +40,7 @@ void sortFragments(inout ABufferNode bufferNode[64], int fragmentCount)
     bool swaped = false;
     for (int j = 0; j < i; j++)
     {
-      if (bufferNode[j].position.z < bufferNode[j + 1].position.z)
+      if (bufferNode[j].position.w < bufferNode[j + 1].position.w)
       {
         ABufferNode node = bufferNode[j];
         bufferNode[j] = bufferNode[j+1];
@@ -207,6 +207,7 @@ void main()
    vec3 rayDirection = normalize(end - start);
 
    float sdfValue = sampleSDF(toolTex, start);
+   
    if (sdfValue > 0)
    {
      fragColor = fragments[i].color;

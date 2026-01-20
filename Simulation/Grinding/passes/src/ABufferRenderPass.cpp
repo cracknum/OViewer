@@ -3,6 +3,7 @@
 #include <vtkAbstractMapper.h>
 #include <vtkActorCollection.h>
 #include <vtkObjectFactory.h>
+#include <vtkOpenGLActor.h>
 #include <vtkOpenGLError.h>
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLQuadHelper.h>
@@ -243,8 +244,19 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   std::string& geometryShader, std::string& fragmentShader, vtkAbstractMapper* mapper,
   vtkProp* prop)
 {
-  vtkShaderProgram::Substitute(fragmentShader, "//VTK::System::Dec", "#version 440 core", false);
   vtkShaderProgram::Substitute(vertexShader, "//VTK::System::Dec", "#version 440 core", false);
+  vtkShaderProgram::Substitute(vertexShader, "//VTK::Clip::Dec",
+    R"(//VTK::Clip::Dec
+		 uniform mat4 MCWCMatrix;
+		 out vec4 worldPose;
+	)");
+
+  vtkShaderProgram::Substitute(vertexShader, " //VTK::PrimID::Impl",
+    R"( //VTK::PrimID::Impl
+		 worldPose = MCWCMatrix * vertexMC;
+	)");
+
+  vtkShaderProgram::Substitute(fragmentShader, "//VTK::System::Dec", "#version 440 core", false);
   vtkShaderProgram::Substitute(fragmentShader, "//VTK::CustomUniforms::Dec",
     R"(
 		//VTK::CustomUniforms::Dec
@@ -264,6 +276,7 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
 		layout(r32ui, binding = 2) uniform uimage2D headPointerImage;
 
 		uniform uint maxNodes;
+		in vec4 worldPose;
 	)",
     false);
   // TODO: 这里获取的颜色不正确
@@ -279,7 +292,7 @@ bool ABufferRenderPass::PreReplaceShaderValues(std::string& vertexShader,
   		}
 
   		nodes[newNodeIndex].color = fragOutput0;
-  		nodes[newNodeIndex].position = vertexVCVSOutput;
+  		nodes[newNodeIndex].position = vec4(worldPose.xyz, gl_FragCoord.z);
 		
   		// insert new node in head
   		uint prevNodeIndex = imageAtomicExchange(headPointerImage, pos, newNodeIndex);
@@ -298,7 +311,14 @@ bool ABufferRenderPass::SetShaderParameters(vtkShaderProgram* program, vtkAbstra
   glUniform1ui(glGetUniformLocation(program->GetHandle(), "maxNodes"), mPrivate->mMaxNodes);
   glBindImageTexture(2, mPrivate->mHeadPointerId, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
 
-  SPDLOG_INFO("fragment shader: {}", program->GetFragmentShader()->GetSource());
+  SPDLOG_INFO("vertex shader: {}", program->GetVertexShader()->GetSource());
+  if (program->IsUniformUsed("MCWCMatrix"))
+  {
+    vtkMatrix4x4* mcwc;
+    vtkMatrix3x3* anorms;
+    static_cast<vtkOpenGLActor*>(prop)->GetKeyMatrices(mcwc, anorms);
+    program->SetUniformMatrix("MCWCMatrix", mcwc);
+  }
 
   return true;
 }

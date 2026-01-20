@@ -7,7 +7,7 @@ file(GLOB_RECURSE Source_files "src/*.cpp")
 file(GLOB_RECURSE Shader_files "shader/*.glsl" "shader/*.comp" "shader/*.frag" "shader/*.vert" "shader/*.geom")
 
 if(NOT TARGET VTK::RenderingCore)
-    find_package(VTK 9.5 REQUIRED COMPONENTS RenderingCore RenderingOpenGL2)
+    find_package(VTK 9.5 REQUIRED COMPONENTS RenderingCore RenderingOpenGL2 IOXML)
 endif()
 
 message(STATUS "find vtk ${VTK_VERSION}")
@@ -21,6 +21,7 @@ target_link_libraries(${library_name} PUBLIC
     Grinding::Shaders
     VTK::RenderingCore
     VTK::RenderingOpenGL2
+    VTK::IOXML
 )
 
 add_library(${MODULE_NAME}::${PROJECT_NAME} ALIAS ${library_name})
