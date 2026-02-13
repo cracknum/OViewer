@@ -2,8 +2,8 @@
 #define UI_MAIN_WINDOW_H
 
 #include "UIExport.h"
-#include <SARibbonMainWindow.h>
 #include <memory>
+#include <SARibbonMainWindow.h>
 
 class UI_API MainWindow final : public SARibbonMainWindow
 {
@@ -12,15 +12,11 @@ public:
   explicit MainWindow(QWidget* parent = nullptr);
   ~MainWindow() override;
 
-protected slots:
-  void slotOpenImage(const QString& seriesId);
-
 private:
   void initUI();
   void initHeader();
   void initCentral();
-private slots:
-  void openFolder();
+
 
 private:
   struct Impl;

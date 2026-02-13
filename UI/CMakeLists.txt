@@ -36,6 +36,7 @@ if (NOT "${Source_files}")
             SARibbonBar::SARibbonBar
             spdlog::spdlog
             glm::glm
+            Plugins::ViewInterface
             ${vtk_libs}
     )
     target_include_directories(${PROJECT_NAME}

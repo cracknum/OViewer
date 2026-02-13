@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.19...4.0)
+set(MINI_VERSION 3.19...4.0)
+cmake_minimum_required(VERSION ${MINI_VERSION})
 
 # OPENGL Viewer
 project(OViewer)
@@ -51,6 +52,8 @@ option(enable_testing OFF)
 if (enable_testing)
     add_subdirectory(Testing)
 endif ()
+
+add_subdirectory(Plugins)
 
 
 
